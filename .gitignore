@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Bien moi truong - KHONG BAO GIO commit file .env that
+.env
+.env.local
+
+# Build output
+dist/
+build/
+
+# Log
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
