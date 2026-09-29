@@ -1,6 +1,6 @@
 // controllers/auth.controller.js
-// Vi du khung san cho UC dang ky / dang nhap - thay logic that vao day.
-// Dung mau nay de tat ca controller sau nay theo cung 1 phong cach.
+// Khung sẵn cho UC001 (đăng ký) và UC002 (đăng nhập). Thay logic thật vào đây.
+// Mọi controller sau này theo cùng phong cách: mỏng, dùng utils/response.js.
 
 const pool = require('../config/db.config');
 const { success, fail, serverError } = require('../utils/response');
