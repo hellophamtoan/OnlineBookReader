@@ -1,21 +1,16 @@
 // config/env.config.js
-// Doc va kiem tra cac bien moi truong bat buoc ngay luc khoi dong server,
-// tranh loi mo ho khi chay den giua chung moi bao thieu config.
+// Đọc và kiểm tra các biến môi trường bắt buộc ngay lúc khởi động server,
+// tránh lỗi mơ hồ khi chạy đến giữa chừng mới báo thiếu config.
 
 require('dotenv').config();
 
-const REQUIRED_ENV_VARS = [
-  'DB_HOST',
-  'DB_USER',
-  'DB_NAME',
-  'JWT_SECRET',
-];
+const REQUIRED_ENV_VARS = ['DB_HOST', 'DB_USER', 'DB_NAME', 'JWT_SECRET'];
 
 const validateEnv = () => {
   const missing = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
   if (missing.length > 0) {
-    console.error(`Thieu bien moi truong bat buoc: ${missing.join(', ')}`);
-    console.error('Hay copy .env.example thanh .env va dien day du gia tri.');
+    console.error(`Thiếu biến môi trường bắt buộc: ${missing.join(', ')}`);
+    console.error('Hãy copy .env.example thành .env và điền đầy đủ giá trị.');
     process.exit(1);
   }
 };
