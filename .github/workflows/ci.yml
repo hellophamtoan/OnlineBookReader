@@ -1,5 +1,5 @@
 
-name: OnlineBookReader CI
+name: OnlineBookReader Backend CI
 
 on:
   push:
@@ -42,28 +42,3 @@ jobs:
 
       - name: Run Jest unit tests
         run: npx jest --runInBand
-
-  frontend-ci:
-    name: Frontend CI
-    runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: frontend
-
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build frontend
-        run: npm run build
