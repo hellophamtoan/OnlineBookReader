@@ -1,30 +1,34 @@
-// middlewares/auth.middleware.js
-// Kiem tra JWT trong header Authorization: Bearer <token>.
-// Gan req.user de cac controller phia sau dung lai.
-
 const jwt = require('jsonwebtoken');
-const { fail } = require('../utils/response');
+const { fail, serverError } = require('../utils/response');
+const pool = require('../config/db.config');
 
-const verifyToken = (req, res, next) => {
+const verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return fail(res, 401, 'Thieu token xac thuc');
+  if (!authHeader || !/^Bearer\s+\S+$/i.test(authHeader)) {
+    return fail(res, 401, 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn');
   }
-
-  const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // { id, email, role, ... }
-    next();
+    const token = authHeader.split(/\s+/)[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
+    if (!decoded || !Number.isInteger(decoded.id)) {
+      return fail(res, 401, 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn');
+    }
+    const [rows] = await pool.execute('SELECT id, email, role, is_active FROM users WHERE id = ? LIMIT 1', [decoded.id]);
+    if (!rows.length) return fail(res, 401, 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn');
+    if (!rows[0].is_active) return fail(res, 403, 'Tài khoản đã bị khóa');
+    req.user = { id: rows[0].id, email: rows[0].email, role: rows[0].role };
+    return next();
   } catch (error) {
-    return fail(res, 401, 'Token khong hop le hoac da het han');
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'NotBeforeError') {
+      return fail(res, 401, 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn');
+    }
+    return serverError(res, 'Xác thực tài khoản', error);
   }
 };
 
-// Vi du dung cho phan quyen sau nay: requireRole('ADMIN')
 const requireRole = (...allowedRoles) => (req, res, next) => {
   if (!req.user || !allowedRoles.includes(req.user.role)) {
-    return fail(res, 403, 'Ban khong co quyen truy cap chuc nang nay');
+    return fail(res, 403, 'Bạn không có quyền truy cập chức năng này');
   }
   next();
 };

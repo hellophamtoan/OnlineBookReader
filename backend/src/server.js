@@ -1,3 +1,4 @@
+
 // server.js
 // File goc de chay server backend.
 
@@ -11,18 +12,26 @@ const routes = require('./routes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || '*'
+}));
+
 app.use(express.json());
 
 app.get('/', (req, res) => {
-  res.json({ message: 'Online Book Reader API dang chay' });
+  res.json({
+    message: 'Online Book Reader API dang chay'
+  });
 });
 
 app.use('/api', routes);
 
-// Middleware xu ly 404 - dat cuoi cung, sau tat ca route
+// Xu ly duong dan khong ton tai
 app.use((req, res) => {
-  res.status(404).json({ success: false, message: 'Khong tim thay duong dan nay' });
+  res.status(404).json({
+    success: false,
+    message: 'Khong tim thay duong dan nay'
+  });
 });
 
 app.listen(PORT, () => {

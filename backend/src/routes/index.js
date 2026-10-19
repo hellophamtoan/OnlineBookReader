@@ -1,13 +1,13 @@
-// routes/index.js
-// Gom tat ca route con lai, server.js chi can import 1 file nay.
-
+// Tập trung các nhóm API của hệ thống.
 const express = require('express');
 const router = express.Router();
 
-// const authRoutes = require('./auth.routes');
-// router.use('/auth', authRoutes);
+const authRoutes = require('./auth.routes');
+const bookRoutes = require('./book.routes');
+const categoryRoutes = require('./category.routes');
 
-// const bookRoutes = require('./book.routes');
-// router.use('/books', bookRoutes);
+router.use('/auth', authRoutes);
+router.use('/books', bookRoutes);
+router.use('/categories', categoryRoutes);
 
 module.exports = router;
