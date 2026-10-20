@@ -59,3 +59,32 @@ npm run dev
 ## Database
 1. Tao database `online_book_reader` tren MySQL.
 2. Chay lan luot cac file trong `backend/database/migrations/` theo thu tu so (001, 002...).
+
+## Cach chay du an
+
+### 1. Co so du lieu
+```bash
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS online_book_reader CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -p online_book_reader < backend/database/migrations/001_create_users.sql
+```
+Cac migration sau chay theo thu tu so (002, 003, ...).
+
+### 2. Backend (cong 5000)
+```bash
+cd backend
+cp .env.example .env      # Windows: copy .env.example .env, roi dien DB_PASSWORD, JWT_SECRET
+npm install
+npm run dev
+```
+Kiem tra: mo http://localhost:5000 se thay `{"success":true,...}`.
+
+### 3. Frontend (cong 3000)
+```bash
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+```
+
+## Quy uoc
+Xem file `CLAUDE.md` (quy uoc code, quy tac nghiep vu, quy trinh Git).

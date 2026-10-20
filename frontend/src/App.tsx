@@ -1,17 +1,19 @@
-import { useState } from 'react';
+import { Route, Routes } from 'react-router-dom';
+import HomePage from './pages/HomePage';
+import NotFoundPage from './pages/NotFoundPage';
+// import ProtectedRoute from './components/ProtectedRoute';
 
-// Khung dieu huong don gian bang state, giong cach App.tsx cua du an phong kham.
-// Sau nay them page nao thi import va them 1 nhanh case o day.
-
-type PageName = 'home';
-
+// Thêm trang mới: import page, rồi thêm <Route> tương ứng.
+// Ví dụ trang chỉ Admin vào được:
+//   <Route element={<ProtectedRoute roles={['ADMIN']} />}>
+//     <Route path="/admin/books" element={<AdminBooksPage />} />
+//   </Route>
 function App() {
-  const [currentPage] = useState<PageName>('home');
-
   return (
-    <div>
-      {currentPage === 'home' && <h1>Online Book Reader - Trang chu (dang xay dung)</h1>}
-    </div>
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
   );
 }
 

@@ -1,6 +1,6 @@
 
 // server.js
-// File goc de chay server backend.
+// File gốc để chạy server backend.
 
 const { validateEnv } = require('./config/env.config');
 validateEnv();
@@ -8,6 +8,7 @@ validateEnv();
 const express = require('express');
 const cors = require('cors');
 const routes = require('./routes');
+const { notFound, errorHandler } = require('./middlewares/error.middleware');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -35,5 +36,5 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server dang chay tai http://localhost:${PORT}`);
+  console.log(`Server đang chạy tại http://localhost:${PORT}`);
 });
