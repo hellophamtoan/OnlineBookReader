@@ -26,7 +26,7 @@ describe('UC003 - GET /api/books', () => {
     expectResponse(res, 200, 'Lấy danh sách sách thành công');
     expect(getData(res)).toEqual({
       items: [{ id: 14, title: 'Những cuộc phiêu lưu của Sherlock Holmes', coverUrl: null,
-        authorNames: ['Arthur Conan Doyle'], categoryNames: ['Trinh thám'] }],
+        publisher: null, authorNames: ['Arthur Conan Doyle'], categoryNames: ['Trinh thám'] }],
       page: 1, limit: 12, total: 1
     });
     expect(pool.query).toHaveBeenCalledTimes(4);
@@ -125,7 +125,7 @@ describe('UC003 - GET /api/books/:id', () => {
     const res = resMock();
     await getBookById({ params: { id: '14' } }, res);
     expectResponse(res, 200, 'Lấy chi tiết sách thành công');
-    expect(getData(res)).toEqual({ ...book, authors, categories });
+    expect(getData(res)).toEqual({ ...book, publisher: null, authors, categories });
     expect(pool.query.mock.calls.map(call => call[1])).toEqual([[14], [14], [14]]);
   });
 
@@ -153,5 +153,42 @@ describe('UC003 - GET /api/books/:id', () => {
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false }));
     } finally { spy.mockRestore(); }
+  });
+});
+
+
+describe('UC003 - Dong bo bo loc va truong thong tin voi frontend', () => {
+  test('Loc ket hop tac gia, NXB, ebook va phan trang', async () => {
+    pool.query.mockResolvedValueOnce([[{ total: 0 }]]).mockResolvedValueOnce([[]]);
+    const res = resMock();
+    await getBooks({ query: { authorId: '2', publisherId: '3', hasEbook: 'true', page: '2', limit: '5' } }, res);
+    expectResponse(res, 200, 'Lấy danh sách sách thành công');
+    const [sql, params] = pool.query.mock.calls[0];
+    expect(sql).toContain('ba3.author_id = ?');
+    expect(sql).toContain('b.publisher_id = ?');
+    expect(sql).toContain('b.has_ebook = ?');
+    expect(params).toEqual([2, 3, 1]);
+    expect(pool.query.mock.calls[1][1]).toEqual([2, 3, 1, 5, 5]);
+  });
+
+  test.each([{ authorId: 'x' }, { publisherId: '0' }, { hasEbook: 'yes' }])('Tu choi bo loc sai: %j', async query => {
+    const res = resMock();
+    await getBooks({ query }, res);
+    expectResponse(res, 400, 'Tham số tìm kiếm, lọc hoặc phân trang không hợp lệ');
+    expect(pool.query).not.toHaveBeenCalled();
+  });
+
+  test('Danh sach tra gia, ton kho, loai sach va NXB', async () => {
+    pool.query.mockResolvedValueOnce([[{ total: 1 }]])
+      .mockResolvedValueOnce([[{ id: 1, title: 'Sach mau', price: '79000.00', stockQuantity: 4,
+        hasEbook: 1, hasPhysical: 1, publisherId: 2, publisherName: 'NXB Tre' }]])
+      .mockResolvedValueOnce([[]]).mockResolvedValueOnce([[]]);
+    const res = resMock();
+    await getBooks({ query: {} }, res);
+    expect(getData(res).items[0]).toEqual(expect.objectContaining({
+      price: '79000.00', stockQuantity: 4, hasEbook: 1, hasPhysical: 1,
+      publisher: { id: 2, name: 'NXB Tre' }
+    }));
+    expect(pool.query.mock.calls[1][0]).toContain('b.price');
   });
 });
