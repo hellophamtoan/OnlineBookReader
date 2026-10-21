@@ -1,52 +1,31 @@
-// middlewares/auth.middleware.js
-// Kiểm tra JWT trong header Authorization: Bearer <token>.
-// Sau khi giải mã, đọc lại user từ DB để:
-//   - chặn tài khoản bị khóa dùng token cũ (UC010)
-//   - lấy role mới nhất, không tin role trong token
-// Gắn req.user = { id, email, role } cho các controller phía sau.
-
 const jwt = require('jsonwebtoken');
-const pool = require('../config/db.config');
 const { fail, serverError } = require('../utils/response');
+const pool = require('../config/db.config');
 
 const verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return fail(res, 401, 'Thiếu token xác thực');
+  if (!authHeader || !/^Bearer\s+\S+$/i.test(authHeader)) {
+    return fail(res, 401, 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn');
   }
-
-  const token = authHeader.split(' ')[1];
-
-  let decoded;
   try {
-    // Chỉ chấp nhận HS256, tránh tấn công đổi thuật toán
-    decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
-  } catch (error) {
-    return fail(res, 401, 'Token không hợp lệ hoặc đã hết hạn');
-  }
-
-  try {
-    const [rows] = await pool.query(
-      'SELECT id, email, role, is_active FROM users WHERE id = ?',
-      [decoded.id]
-    );
-    const user = rows[0];
-
-    if (!user) {
-      return fail(res, 401, 'Tài khoản không tồn tại');
+    const token = authHeader.split(/\s+/)[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
+    if (!decoded || !Number.isInteger(decoded.id)) {
+      return fail(res, 401, 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn');
     }
-    if (!user.is_active) {
-      return fail(res, 403, 'Tài khoản đã bị khóa');
-    }
-
-    req.user = { id: user.id, email: user.email, role: user.role };
-    next();
+    const [rows] = await pool.execute('SELECT id, email, role, is_active FROM users WHERE id = ? LIMIT 1', [decoded.id]);
+    if (!rows.length) return fail(res, 401, 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn');
+    if (!rows[0].is_active) return fail(res, 403, 'Tài khoản đã bị khóa');
+    req.user = { id: rows[0].id, email: rows[0].email, role: rows[0].role };
+    return next();
   } catch (error) {
-    return serverError(res, 'verifyToken', error);
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'NotBeforeError') {
+      return fail(res, 401, 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn');
+    }
+    return serverError(res, 'Xác thực tài khoản', error);
   }
 };
 
-// Ví dụ: router.get('/users', verifyToken, requireRole(ROLES.ADMIN), handler)
 const requireRole = (...allowedRoles) => (req, res, next) => {
   if (!req.user || !allowedRoles.includes(req.user.role)) {
     return fail(res, 403, 'Bạn không có quyền truy cập chức năng này');
