@@ -5,9 +5,12 @@ const isPositiveInteger = (value) => /^\d+$/.test(String(value)) && Number.isSaf
 
 const getBooks = async (req, res) => {
   try {
-    const { search = '', categoryId, page = '1', limit = '12', sort = 'newest' } = req.query;
+    const { search = '', categoryId, authorId, publisherId, hasEbook, page = '1', limit = '12', sort = 'newest' } = req.query;
     if (!isPositiveInteger(page) || !isPositiveInteger(limit) || Number(limit) > 100 ||
         (categoryId !== undefined && !isPositiveInteger(categoryId)) ||
+        (authorId !== undefined && !isPositiveInteger(authorId)) ||
+        (publisherId !== undefined && !isPositiveInteger(publisherId)) ||
+        (hasEbook !== undefined && !['true', 'false'].includes(String(hasEbook))) ||
         typeof search !== 'string' || !['newest', 'title_asc', 'title_desc'].includes(sort)) {
       return fail(res, 400, 'Tham số tìm kiếm, lọc hoặc phân trang không hợp lệ');
     }
@@ -34,6 +37,21 @@ const getBooks = async (req, res) => {
       )`);
       params.push(Number(categoryId));
     }
+    if (authorId !== undefined) {
+      conditions.push(`EXISTS (
+        SELECT 1 FROM book_authors ba3 JOIN authors a3 ON a3.id = ba3.author_id
+        WHERE ba3.book_id = b.id AND ba3.author_id = ? AND a3.status = 'active'
+      )`);
+      params.push(Number(authorId));
+    }
+    if (publisherId !== undefined) {
+      conditions.push('b.publisher_id = ?');
+      params.push(Number(publisherId));
+    }
+    if (hasEbook !== undefined) {
+      conditions.push('b.has_ebook = ?');
+      params.push(String(hasEbook) === 'true' ? 1 : 0);
+    }
     const where = conditions.join(' AND ');
     const order = {
       newest: 'b.created_at DESC, b.id DESC',
@@ -43,8 +61,11 @@ const getBooks = async (req, res) => {
 
     const [[countRow]] = await pool.query(`SELECT COUNT(*) AS total FROM books b WHERE ${where}`, params);
     const [books] = await pool.query(
-      `SELECT b.id, b.title, b.cover_url AS coverUrl
-       FROM books b WHERE ${where} ORDER BY ${order} LIMIT ? OFFSET ?`,
+      `SELECT b.id, b.title, b.description, b.cover_url AS coverUrl,
+              b.price, b.stock AS stockQuantity, b.has_ebook AS hasEbook,
+              b.has_physical AS hasPhysical, b.created_at AS createdAt,
+              p.id AS publisherId, p.name AS publisherName
+       FROM books b LEFT JOIN publishers p ON p.id = b.publisher_id WHERE ${where} ORDER BY ${order} LIMIT ? OFFSET ?`,
       [...params, limitNumber, offset]
     );
 
@@ -64,8 +85,9 @@ const getBooks = async (req, res) => {
          WHERE bc.book_id IN (${placeholders}) ORDER BY c.name`, ids
       );
     }
-    const items = books.map(book => ({
+    const items = books.map(({ publisherId, publisherName, ...book }) => ({
       ...book,
+      publisher: publisherId == null ? null : { id: publisherId, name: publisherName },
       authorNames: authorRows.filter(row => row.bookId === book.id).map(row => row.name),
       categoryNames: categoryRows.filter(row => row.bookId === book.id).map(row => row.name)
     }));
@@ -82,8 +104,12 @@ const getBookById = async (req, res) => {
     const { id } = req.params;
     if (!isPositiveInteger(id)) return fail(res, 400, 'Mã sách không hợp lệ');
     const [[book]] = await pool.query(
-      `SELECT id, title, description, cover_url AS coverUrl
-       FROM books WHERE id = ? AND status = 'active' LIMIT 1`, [Number(id)]
+      `SELECT b.id, b.title, b.description, b.cover_url AS coverUrl,
+              b.price, b.stock AS stockQuantity, b.has_ebook AS hasEbook,
+              b.has_physical AS hasPhysical, b.created_at AS createdAt,
+              p.id AS publisherId, p.name AS publisherName
+       FROM books b LEFT JOIN publishers p ON p.id = b.publisher_id
+       WHERE b.id = ? AND b.status = 'active' LIMIT 1`, [Number(id)]
     );
     if (!book) return fail(res, 404, 'Không tìm thấy sách');
     const [authors] = await pool.query(
@@ -94,7 +120,12 @@ const getBookById = async (req, res) => {
       `SELECT c.id, c.name FROM categories c JOIN book_categories bc ON bc.category_id = c.id
        WHERE bc.book_id = ? AND c.status = 'active' ORDER BY c.name`, [Number(id)]
     );
-    return success(res, 200, 'Lấy chi tiết sách thành công', { ...book, authors, categories });
+    const { publisherId, publisherName, ...bookData } = book;
+    return success(res, 200, 'Lấy chi tiết sách thành công', {
+      ...bookData,
+      publisher: publisherId == null ? null : { id: publisherId, name: publisherName },
+      authors, categories
+    });
   } catch (error) {
     return serverError(res, 'Lấy chi tiết sách', error);
   }
