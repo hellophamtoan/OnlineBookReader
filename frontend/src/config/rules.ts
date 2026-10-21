@@ -4,6 +4,14 @@ import type { BookSort } from '../types';
 
 export const BRAND_NAME = 'Nhà sách Nhóm 14';
 
+// Thông tin liên hệ hiển thị ở chân trang. Đây là giá trị DỰ PHÒNG: có backend (GET /store-info) thì lấy từ backend,
+// backend chưa có hoặc lỗi thì dùng các giá trị này; mock server cũng trả đúng các giá trị này. Đổi thành thông tin thật của nhóm.
+export const STORE_INFO = {
+  address: 'Số 3 phố Cầu Giấy, phường Láng Thượng, quận Đống Đa, Hà Nội',
+  hotline: '1900 1234',
+  email: 'lienhe@nhasach14.local',
+};
+
 export const RULES = {
   FULL_NAME_MIN: 2,
   FULL_NAME_MAX: 100,

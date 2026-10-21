@@ -14,7 +14,7 @@
 //
 // Khi BE chốt một dạng, có thể xóa nhánh còn lại ở đây mà không đụng tới trang/component.
 import { env } from '../config/env';
-import type { AuthUser, Book, BookListResult, NamedRef, Option, Pagination, Role } from '../types';
+import type { AuthUser, Book, BookListResult, NamedRef, Option, Pagination, Role, StoreInfo } from '../types';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Raw = Record<string, any>;
@@ -106,4 +106,18 @@ export const mapBookDetail = (data: unknown): Book => mapBook(isObj(data) && isO
 export const mapOptions = (data: unknown): Option[] => {
   const items = isObj(data) && Array.isArray(data.items) ? data.items : [];
   return items.flatMap((i: unknown) => (isObj(i) && typeof i.name === 'string' ? [{ id: Number(i.id), name: i.name }] : []));
+};
+
+// Thông tin cửa hàng: nhận data trực tiếp hoặc { store }; thiếu trường nào thì dùng giá trị dự phòng
+export const mapStoreInfo = (data: unknown, fallback: StoreInfo): StoreInfo => {
+  const d: Raw = isObj(data) && isObj(data.store) ? data.store : isObj(data) ? data : {};
+  const pick = (...values: unknown[]) => {
+    const v = values.find((x) => typeof x === 'string' && x.trim() !== '');
+    return typeof v === 'string' ? v.trim() : '';
+  };
+  return {
+    address: pick(d.address, d.storeAddress) || fallback.address,
+    hotline: pick(d.hotline, d.phone) || fallback.hotline,
+    email: pick(d.email, d.contactEmail) || fallback.email,
+  };
 };

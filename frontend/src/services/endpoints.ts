@@ -14,5 +14,6 @@ export const ENDPOINTS = {
   categories: '/categories', // API-07
   authors: '/authors', // MNM C04 (mở rộng)
   publishers: '/publishers', // MNM C05 (mở rộng)
+  storeInfo: '/store-info', // địa chỉ, hotline, email chân trang (mở rộng, chưa có trong hợp đồng)
   // TODO UC004+: cart, orders... | UC005: plans, subscriptions | UC006: reading
 } as const;

@@ -110,16 +110,7 @@ select.input { cursor: pointer; }
 .tag--low { background: var(--warn-tint); color: var(--warn); }
 .tag--out { background: var(--danger-tint); color: var(--danger); }
 
-.overlay {
-  position: fixed;
-  inset: 0; /* tương đương top:0; right:0; bottom:0; left:0; */
-  z-index: 9999; /* Đảm bảo nổi lên trên cùng */
-  display: flex;
-  align-items: center;    /* Căn giữa theo chiều dọc */
-  justify-content: center; /* Căn giữa theo chiều ngang */
-  padding: 16px;
-  background: rgba(26, 27, 46, 0.55);
-}
+.overlay { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(26, 27, 46, 0.55); }
 .dialog { width: 100%; max-width: 420px; padding: 26px; background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-pop); }
 .dialog__title { font-size: 20px; margin-bottom: 8px; }
 .dialog__actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
@@ -144,10 +135,11 @@ select.input { cursor: pointer; }
 
 .header { position: sticky; top: 0; z-index: 50; background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
 .header__inner { display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; gap: 24px; min-height: var(--header-h); }
-.logo { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; letter-spacing: -0.01em; color: var(--brand); text-decoration: none; }
+.logo { flex-shrink: 0; display: inline-flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; letter-spacing: -0.01em; color: var(--brand); text-decoration: none; }
 .logo:hover { color: var(--brand-dark); }
+/* Ảnh logo (đã được Logo.tsx xóa nền) */
 .logo__img { display: block; height: 40px; width: auto; max-width: 200px; object-fit: contain; mix-blend-mode: darken; filter: contrast(120%) brightness(105%); }
-.header__nav { display: flex; gap: 4px; }
+.header__nav { display: flex; gap: 4px; white-space: nowrap; }
 .header__link { padding: 8px 12px; font-weight: 500; color: var(--ink-soft); text-decoration: none; border-radius: 8px; }
 .header__link:hover { color: var(--brand); background: var(--brand-tint); }
 .header__link.is-active { color: var(--brand); font-weight: 700; background: var(--brand-tint); }
@@ -160,6 +152,7 @@ select.input { cursor: pointer; }
 .user__name { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; color: var(--ink); }
 .user__role { font-size: 12px; color: var(--muted); }
 
+/* Chân trang: nhãn + giá trị cùng một hàng; giá trị chữ trắng, không phải liên kết */
 .footer { margin-top: 24px; padding-top: 40px; background: var(--brand-dark); color: #d9d9f2; }
 .footer__inner { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 24px; padding-bottom: 28px; }
 .footer__brand { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 6px; }
@@ -268,11 +261,12 @@ select.input { cursor: pointer; }
 
 /* ---------- 9) Responsive ---------- */
 @media (max-width: 960px) {
-  .header__inner { grid-template-columns: 1fr auto; gap: 10px 16px; padding-top: 10px; padding-bottom: 10px; }
-  .header__nav { order: 3; grid-column: 1; }
-  .header__search { order: 4; grid-column: 1 / -1; max-width: none; }
-  .header__account { grid-column: 2; grid-row: 1; }
-  .user__text { display: none; }
+  /* Hàng 1: logo + Trang chủ + Sách (+ tài khoản); hàng 2: ô tìm kiếm */
+  .header__inner { grid-template-columns: auto 1fr auto; grid-template-areas: 'logo nav account' 'search search search'; gap: 10px 16px; padding-top: 10px; padding-bottom: 10px; }
+  .header__inner > .logo { grid-area: logo; }
+  .header__nav { grid-area: nav; }
+  .header__search { grid-area: search; max-width: none; justify-self: stretch; }
+  .header__account { grid-area: account; }
   .hero__inner { grid-template-columns: 1fr; gap: 36px; }
   .shelf { max-width: 460px; margin: 0 auto; }
   .catalog { grid-template-columns: 1fr; gap: 24px; }
@@ -283,6 +277,34 @@ select.input { cursor: pointer; }
   .detail { grid-template-columns: 1fr; gap: 28px; }
   .detail__cover { max-width: 240px; }
   .main { min-height: 0; }
+}
+@media (max-width: 760px) {
+  .footer__inner { grid-template-columns: 1fr; gap: 24px; }
+}
+/* Đầu trang thu hẹp dần, luôn giữ: hàng 1 = logo + Trang chủ + Sách + tên đăng nhập + Đăng xuất; hàng 2 = ô tìm kiếm */
+@media (max-width: 640px) {
+  .header__inner { gap: 10px 8px; }
+  .logo__img { height: 36px; }
+  .header__link { padding: 6px 8px; font-size: 14px; }
+  .header__account { gap: 6px; }
+  .header__account .btn { min-height: 36px; padding: 0 12px; font-size: 14px; }
+  .user { gap: 6px; }
+  .user__avatar { width: 32px; height: 32px; }
+  .user__name { max-width: 110px; }
+}
+@media (max-width: 520px) {
+  .user__text { display: none; } /* chỉ còn avatar, tên ẩn đi cho đủ chỗ */
+}
+@media (max-width: 440px) {
+  .logo__img { height: 32px; }
+  .header__link { padding: 6px; }
+  .header__account .btn { padding: 0 10px; font-size: 13px; }
+}
+@media (max-width: 380px) {
+  /* Quá hẹp (điện thoại nhỏ): tài khoản mới xuống hàng riêng để không tràn */
+  .header { position: static; }
+  .header__inner { grid-template-columns: auto 1fr; grid-template-areas: 'logo nav' 'search search' 'account account'; }
+  .header__account { justify-self: end; }
 }
 @media (max-width: 560px) {
   .container { padding-left: 16px; padding-right: 16px; }

@@ -7,11 +7,12 @@
 import { MESSAGES } from '../../config/rules';
 import { authRoutes } from './handlers/auth';
 import { bookRoutes } from './handlers/books';
+import { storeRoutes } from './handlers/store';
 import { MockHttpError, delay, flag } from './http';
 import { matchRoute } from './router';
 import type { Route } from './router';
 
-const ROUTES: Route[] = [...authRoutes, ...bookRoutes];
+const ROUTES: Route[] = [...authRoutes, ...bookRoutes, ...storeRoutes];
 
 interface MockRequest {
   method: string;

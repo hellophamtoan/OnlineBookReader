@@ -78,3 +78,9 @@ export interface LoginResult {
   token: string;
   user: AuthUser;
 }
+
+export interface StoreInfo {
+  address: string;
+  hotline: string;
+  email: string;
+}
