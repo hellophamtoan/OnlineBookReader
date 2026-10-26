@@ -58,9 +58,4 @@ export const ENDPOINTS = {
     item: (bookId: number) => `/library/${bookId}`,
     status: (bookId: number) => `/library/${bookId}/status`,
   },
-  favorites: {
-    root: '/favorites',
-    toggle: (bookId: number) => `/favorites/${bookId}/toggle`,
-    status: (bookId: number) => `/favorites/${bookId}/status`,
-  },
 } as const;

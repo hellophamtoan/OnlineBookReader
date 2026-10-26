@@ -14,7 +14,6 @@ export const ROUTES = {
   // UC012 - Thông tin cá nhân
   PROFILE: '/profile',
   LIBRARY: '/library',
-  FAVORITES: '/favorites',
   // UC007+ - Khu quản trị
   ADMIN_HOME: '/admin',
   ADMIN_PROFILE: '/admin/profile',

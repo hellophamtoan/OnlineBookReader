@@ -14,7 +14,6 @@ import { readingRoutes } from './handlers/reading';
 import { userRoutes } from './handlers/users';
 import { storeRoutes } from './handlers/store';
 import { libraryRoutes } from './handlers/library';
-import { favoriteRoutes } from './handlers/favorites';
 import { MockHttpError, delay, flag } from './http';
 import { matchRoute } from './router';
 import type { Route } from './router';
@@ -24,7 +23,7 @@ import type { Route } from './router';
 const ROUTES: Route[] = [
   ...authRoutes, ...userRoutes, ...bookRoutes, ...storeRoutes, // UC001-UC003, UC012
   ...readingRoutes, // UC006
-  ...libraryRoutes, ...favoriteRoutes,
+  ...libraryRoutes,
   ...adminTaxonomyRoutes, ...adminBookRoutes, ...adminChapterRoutes, // UC007
 ];
 
