@@ -24,7 +24,9 @@ export default function AdminHomePage() {
   const error = books.error || authors.error || categories.error || publishers.error;
 
   const bookItems = books.data?.items ?? [];
-  const totalBooks = books.data?.pagination.total ?? bookItems.length;
+  // 👇 Đã khắc phục lỗi: dùng totalElements / count hoặc fallback về bookItems.length
+  const totalBooks = (books.data as any)?.totalElements ?? (books.data as any)?.count ?? bookItems.length;
+  
   const activeBooks = bookItems.filter((b) => b.status === 'active').length;
   const ebookBooks = bookItems.filter((b) => b.hasEbook).length;
   const physicalBooks = bookItems.filter((b) => b.hasPhysical).length;

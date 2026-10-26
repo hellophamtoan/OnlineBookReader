@@ -212,7 +212,7 @@ export default function AdminBookDetailPage() {
               </div>
             </div>
             {preview.loading && !preview.data && <LoadingBlock label="Đang tải nội dung..." />}
-            {preview.error ? <ErrorState message={toMessage(preview.error)} onRetry={preview.reload} /> : null}
+            {preview.error != null && (<ErrorState message={toMessage(preview.error)}onRetry={preview.reload}/>)}
             {preview.data && (
               <div className="prose" dangerouslySetInnerHTML={{ __html: sanitizeChapterHtml(preview.data.content) }} />
             )}

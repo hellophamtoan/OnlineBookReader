@@ -184,9 +184,7 @@
   flex-direction: column;
   gap: 12px;
 }
-.reader-settings-panel--bottom {
-  /* panel mở lên trên vì nằm cuối trang */
-}
+
 .reader-settings-panel__label {
   display: block;
   font-size: 12px;
