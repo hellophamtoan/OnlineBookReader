@@ -6,6 +6,7 @@ on:
       - main
       - master
       - develop
+      - BE-UC006-007-012
       - BE-UC001-002-003
   pull_request:
     branches:
