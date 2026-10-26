@@ -11,6 +11,8 @@ interface AuthContextValue {
   // Gọi sau khi API đăng nhập thành công
   login: (token: string, user: AuthUser) => void;
   logout: () => void;
+  // UC012: sau khi sửa hồ sơ thành công, cập nhật tên/email/ảnh đang hiển thị (Header, khung quản trị)
+  updateUser: (patch: Partial<AuthUser>) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -39,6 +41,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  const updateUser = useCallback((patch: Partial<AuthUser>) => {
+    setUser((u) => (u ? { ...u, ...patch } : u));
+  }, []);
+
+  // Giữ bản sao ở localStorage khớp với state (updateUser chỉ đổi state)
+  useEffect(() => {
+    if (user && localStorage.getItem(TOKEN_KEY)) localStorage.setItem(USER_KEY, JSON.stringify(user));
+  }, [user]);
+
   // API trả 401 (token hết hạn) hoặc tài khoản bị khóa => tự đăng xuất
   useEffect(() => {
     window.addEventListener(UNAUTHORIZED_EVENT, logout);
@@ -63,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const value = useMemo(() => ({ user, login, logout }), [user, login, logout]);
+  const value = useMemo(() => ({ user, login, logout, updateUser }), [user, login, logout, updateUser]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

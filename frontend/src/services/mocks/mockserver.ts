@@ -5,14 +5,28 @@
 //
 // Thêm UC mới: tạo handlers/<tên>.ts export mảng Route, rồi thêm vào ROUTES bên dưới.
 import { MESSAGES } from '../../config/rules';
+import { adminBookRoutes } from './handlers/adminBooks';
+import { adminChapterRoutes } from './handlers/adminChapters';
+import { adminTaxonomyRoutes } from './handlers/adminTaxonomy';
 import { authRoutes } from './handlers/auth';
 import { bookRoutes } from './handlers/books';
+import { readingRoutes } from './handlers/reading';
+import { userRoutes } from './handlers/users';
 import { storeRoutes } from './handlers/store';
+import { libraryRoutes } from './handlers/library';
+import { favoriteRoutes } from './handlers/favorites';
 import { MockHttpError, delay, flag } from './http';
 import { matchRoute } from './router';
 import type { Route } from './router';
 
-const ROUTES: Route[] = [...authRoutes, ...bookRoutes, ...storeRoutes];
+// Mỗi nhóm UC một mảng route. Thêm UC mới: tạo handlers/<tên>.ts rồi thêm vào đây.
+// Đã gỡ cartRoutes / orderRoutes (UC004 ngoài phạm vi hợp đồng hiện tại).
+const ROUTES: Route[] = [
+  ...authRoutes, ...userRoutes, ...bookRoutes, ...storeRoutes, // UC001-UC003, UC012
+  ...readingRoutes, // UC006
+  ...libraryRoutes, ...favoriteRoutes,
+  ...adminTaxonomyRoutes, ...adminBookRoutes, ...adminChapterRoutes, // UC007
+];
 
 interface MockRequest {
   method: string;

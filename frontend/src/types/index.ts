@@ -84,3 +84,82 @@ export interface StoreInfo {
   hotline: string;
   email: string;
 }
+
+// ---------- UC004: giỏ hàng, đơn hàng ----------
+export type OrderStatus = 'PENDING' | 'PREPARING' | 'SHIPPING' | 'DELIVERED' | 'FAILED' | 'CANCELLED';
+export type PaymentMethod = 'COD' | 'WALLET';
+
+export interface CartItem {
+  bookId: number;
+  title: string;
+  coverUrl: string | null;
+  unitPrice: number;
+  quantity: number;
+  stockQuantity: number;
+  available: boolean; // false: sách ngừng bán / hết hàng (D8) -> FE chặn thanh toán
+  subtotal: number;
+}
+
+export interface Cart {
+  items: CartItem[];
+  totalAmount: number;
+}
+
+export interface OrderItem {
+  bookId: number;
+  title: string;
+  quantity: number;
+  unitPrice: number; // đơn giá đã chốt tại thời điểm đặt
+  subtotal: number;
+}
+
+export interface Order {
+  id: number;
+  status: OrderStatus;
+  paymentMethod: PaymentMethod;
+  totalAmount: number;
+  receiverName: string;
+  receiverPhone: string;
+  shippingAddress: string;
+  note: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+  items: OrderItem[];
+}
+
+export interface OrderListResult {
+  items: Order[];
+  pagination: Pagination;
+}
+
+export interface OrderQuery {
+  status?: OrderStatus;
+  page?: number;
+  limit?: number;
+}
+
+// Body của O01 POST /orders
+export interface CheckoutPayload {
+  receiverName: string;
+  receiverPhone: string;
+  shippingAddress: string;
+  paymentMethod: PaymentMethod;
+  note: string;
+}
+
+// API-08 GET /users/me (UC004 dùng điền sẵn + số dư ví; UC012 xem/sửa hồ sơ)
+export interface UserProfile {
+  id: number;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  address: string | null; // không có trong API-08; chỉ dùng điền sẵn địa chỉ ở trang đặt hàng nếu BE có gửi
+  avatarUrl: string | null; // UC012
+  role: Role; // UC012
+  createdAt: string | null; // UC012
+  walletBalance: number;
+}
+
+// ---------- Kiểu theo nhóm chức năng: mỗi nhóm một file, thêm UC mới thì thêm một dòng ở đây ----------
+export * from './reader'; // UC006
+export * from './admin'; // UC007+

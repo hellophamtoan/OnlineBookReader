@@ -10,7 +10,8 @@ export function useForm<T extends Record<string, string>>(initial: T) {
     Object.fromEntries(Object.keys(initial).map((k) => [k, ''])) as Errors
   );
 
-  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
+  // Dùng được cho <input>, <textarea> và <select>
+  const onChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setValues((v) => ({ ...v, [name]: value }));
     setErrors((er) => (er[name as keyof T] ? { ...er, [name]: '' } : er));
