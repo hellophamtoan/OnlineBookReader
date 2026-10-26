@@ -6,6 +6,7 @@ on:
       - main
       - master
       - develop
+      - BE-UC006-007-012
       - feature/FE-UC001-UC003
 
   pull_request:

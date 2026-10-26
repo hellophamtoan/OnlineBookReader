@@ -17,7 +17,8 @@ app.use(cors({
   origin: process.env.CORS_ORIGIN || '*'
 }));
 
-app.use(express.json());
+// Nội dung chương e-book có thể lớn hơn mặc định 100kb
+app.use(express.json({ limit: '5mb' }));
 
 app.get('/', (req, res) => {
   res.json({

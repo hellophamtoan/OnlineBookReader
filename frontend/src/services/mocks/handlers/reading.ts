@@ -144,6 +144,7 @@ export const readingRoutes: Route[] = [
         scrollPercent,
         fontFamily: hasFont ? str(b.fontFamily).trim() : old?.fontFamily ?? DEFAULTS.fontFamily,
         fontSize: hasSize ? fontSize : old?.fontSize ?? DEFAULTS.fontSize,
+        updatedAt: new Date().toISOString(),
       };
       saveProgress(row);
       return {
