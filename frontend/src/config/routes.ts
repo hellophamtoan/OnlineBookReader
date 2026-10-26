@@ -15,9 +15,13 @@ export const ROUTES = {
   PROFILE: '/profile',
   LIBRARY: '/library',
   
-  // 👉 THÊM ĐOẠN NÀY CHO ĐƠN HÀNG (UC002 / Đơn hàng của tôi)
+  // Đơn hàng & Thanh toán & Gói cước
   ORDERS: '/orders',
+  MY_ORDERS: '/orders', // 👈 Thêm alias này vì OrderDetailPage đang gọi ROUTES.MY_ORDERS
   ORDER_DETAIL: (id: number | string) => `/orders/${id}`,
+  CART: '/cart',             // 👈 Thêm cho CartPage / CheckoutPage
+  CHECKOUT: '/checkout',     // 👈 Thêm cho trang thanh toán
+  PLANS: '/plans',           // 👈 Thêm cho SubscriptionRequired
 
   // UC007+ - Khu quản trị
   ADMIN_HOME: '/admin',
@@ -38,7 +42,7 @@ export const ROUTES = {
 export const ROUTE_PATTERNS = {
   BOOK_DETAIL: '/books/:id',
   READER: '/read/:bookId',
-  ORDER_DETAIL: '/orders/:id', // 👉 Thêm pattern nếu cần thiết cho Router
+  ORDER_DETAIL: '/orders/:id',
   ADMIN_BOOK_DETAIL: '/admin/books/:id',
   ADMIN_BOOK_EDIT: '/admin/books/:id/edit',
   ADMIN_BOOK_CHAPTERS: '/admin/books/:id/chapters',
