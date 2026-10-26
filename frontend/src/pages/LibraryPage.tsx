@@ -5,13 +5,11 @@ import { EmptyState, ErrorState, LoadingBlock } from '../components/common/State
 import { ROUTES } from '../config/routes';
 import { useAsync } from '../hooks/useAsync';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
-import { favoritesService } from '../services/favoritesservice';
 import { libraryService } from '../services/libraryservice';
-import type { FavoriteBook } from '../services/favoritesservice';
 import type { LibraryBook } from '../services/libraryservice';
 import { toMessage } from '../utils/errors';
 
-type Tab = 'reading' | 'saved' | 'favorites';
+type Tab = 'reading' | 'saved';
 
 type LibraryCardModel = {
   id: number;
@@ -114,36 +112,18 @@ function toSavedCard(book: LibraryBook, onRemove: () => void): LibraryCardModel 
   };
 }
 
-function toFavoriteCard(book: FavoriteBook, onToggle: () => void): LibraryCardModel {
-  return {
-    id: book.id,
-    title: book.title,
-    coverUrl: book.coverUrl ?? null,
-    authors: book.authors ?? [],
-    hasEbook: book.hasEbook,
-    meta: book.hasEbook ? 'Có bản e-book' : 'Chỉ xem thông tin',
-    primaryLabel: book.hasEbook ? 'Đọc ngay' : 'Xem chi tiết',
-    primaryTo: book.hasEbook ? ROUTES.READER(book.id) : ROUTES.BOOK_DETAIL(book.id),
-    secondaryLabel: 'Bỏ yêu thích',
-    onSecondary: onToggle,
-  };
-}
-
 export default function LibraryPage() {
   useDocumentTitle('Thư viện của tôi');
   const [tab, setTab] = useState<Tab>('reading');
   const reading = useAsync(() => libraryService.listReading(), []);
   const saved = useAsync(() => libraryService.list(), []);
-  const favs = useAsync(() => favoritesService.list(), []);
 
-  const active =
-    tab === 'reading' ? reading : tab === 'saved' ? saved : favs;
+  const active = tab === 'reading' ? reading : saved;
   const loading = active.loading && !active.data;
   const error = active.error;
   const reload = () => {
     reading.reload();
     saved.reload();
-    favs.reload();
   };
 
   if (loading) {
@@ -163,14 +143,13 @@ export default function LibraryPage() {
 
   const readingItems = reading.data ?? [];
   const savedItems = saved.data ?? [];
-  const favItems = favs.data ?? [];
 
   return (
     <div className="container page library-page">
       <header className="library-page__head">
         <h1 className="page__title">Thư viện của tôi</h1>
         <p className="field__hint library-page__intro">
-          Sách đang đọc, đã lưu và yêu thích — cùng một kiểu thẻ để dễ duyệt.
+          Sách đang đọc và sách đã lưu — cùng một kiểu thẻ để dễ duyệt.
         </p>
       </header>
 
@@ -192,15 +171,6 @@ export default function LibraryPage() {
           onClick={() => setTab('saved')}
         >
           Đã lưu ({savedItems.length})
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'favorites'}
-          className={`library-tabs__btn${tab === 'favorites' ? ' is-active' : ''}`}
-          onClick={() => setTab('favorites')}
-        >
-          Yêu thích ({favItems.length})
         </button>
       </div>
 
@@ -243,31 +213,6 @@ export default function LibraryPage() {
                   await libraryService.remove(b.id);
                   saved.reload();
                   reading.reload();
-                })}
-              />
-            ))}
-          </div>
-        ))}
-
-      {tab === 'favorites' &&
-        (favItems.length === 0 ? (
-          <EmptyState
-            title="Chưa có sách yêu thích"
-            hint="Mở trang chi tiết sách và chọn «Yêu thích»."
-            action={
-              <Link className="btn btn--primary" to={ROUTES.BOOKS}>
-                Xem sách
-              </Link>
-            }
-          />
-        ) : (
-          <div className="book-grid library-grid">
-            {favItems.map((b) => (
-              <LibraryCard
-                key={b.id}
-                item={toFavoriteCard(b, async () => {
-                  await favoritesService.toggle(b.id);
-                  favs.reload();
                 })}
               />
             ))}
