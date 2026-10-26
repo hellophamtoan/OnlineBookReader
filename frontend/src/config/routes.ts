@@ -14,6 +14,11 @@ export const ROUTES = {
   // UC012 - Thông tin cá nhân
   PROFILE: '/profile',
   LIBRARY: '/library',
+  
+  // 👉 THÊM ĐOẠN NÀY CHO ĐƠN HÀNG (UC002 / Đơn hàng của tôi)
+  ORDERS: '/orders',
+  ORDER_DETAIL: (id: number | string) => `/orders/${id}`,
+
   // UC007+ - Khu quản trị
   ADMIN_HOME: '/admin',
   ADMIN_PROFILE: '/admin/profile',
@@ -33,6 +38,7 @@ export const ROUTES = {
 export const ROUTE_PATTERNS = {
   BOOK_DETAIL: '/books/:id',
   READER: '/read/:bookId',
+  ORDER_DETAIL: '/orders/:id', // 👉 Thêm pattern nếu cần thiết cho Router
   ADMIN_BOOK_DETAIL: '/admin/books/:id',
   ADMIN_BOOK_EDIT: '/admin/books/:id/edit',
   ADMIN_BOOK_CHAPTERS: '/admin/books/:id/chapters',
