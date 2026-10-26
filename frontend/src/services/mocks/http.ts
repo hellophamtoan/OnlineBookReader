@@ -24,3 +24,7 @@ export const flag = (key: string) => {
     return false;
   }
 };
+
+// Đọc số nguyên từ body JSON (chấp nhận số hoặc chuỗi toàn chữ số); sai kiểu -> NaN
+export const toInt = (v: unknown): number =>
+  typeof v === 'number' ? v : typeof v === 'string' && /^-?\d+$/.test(v.trim()) ? Number(v) : NaN;

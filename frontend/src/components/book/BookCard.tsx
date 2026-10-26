@@ -5,12 +5,13 @@ import { formatPrice } from '../../utils/format';
 import type { Book } from '../../types';
 import BookCover from './BookCover';
 
-// Thẻ sách trong lưới (UC003 bước 2/4). Cả thẻ là một liên kết tới trang chi tiết.
 export default function BookCard({ book }: { book: Book }) {
   const stock = stockLabel(book);
   return (
     <Link to={ROUTES.BOOK_DETAIL(book.id)} className="book-card">
-      <BookCover book={book} />
+      <div className="book-card__cover-wrap">
+        <BookCover book={book} enableZoom={false} />
+      </div>
       <div className="book-card__body">
         <h3 className="book-card__title">{book.title}</h3>
         <p className="book-card__author">{authorLine(book)}</p>
