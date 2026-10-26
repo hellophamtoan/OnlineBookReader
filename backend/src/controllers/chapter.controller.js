@@ -1,6 +1,7 @@
 const pool = require('../config/db.config');
 const { success, fail, serverError } = require('../utils/response');
 const { isPositiveInt } = require('../utils/validators');
+const { hasActiveSubscription, FREE_CHAPTER_LIMIT } = require('../middlewares/subscription.middleware');
 
 // Sách phải đang hiển thị và có bản e-book
 const findReadableBook = async (bookId) => {
@@ -22,7 +23,15 @@ const listChapters = async (req, res) => {
       'SELECT id, chapter_number AS chapterNumber, title FROM chapters WHERE book_id = ? ORDER BY chapter_number ASC',
       [book.id]
     );
-    return success(res, 200, 'Lấy mục lục sách thành công', { book, items });
+    const subscribed = await hasActiveSubscription(req.user.id);
+    const mappedItems = items.map(item => ({
+      ...item,
+      isFree: Number(item.chapterNumber) <= FREE_CHAPTER_LIMIT,
+      locked: !subscribed && Number(item.chapterNumber) > FREE_CHAPTER_LIMIT
+    }));
+    return success(res, 200, 'Lấy mục lục sách thành công', {
+      book, items: mappedItems, freeChapterLimit: FREE_CHAPTER_LIMIT, hasActiveSubscription: subscribed
+    });
   } catch (error) {
     return serverError(res, 'Lấy mục lục sách', error);
   }
@@ -45,6 +54,14 @@ const getChapter = async (req, res) => {
       [book.id, Number(chapterNumber)]
     );
     if (!rows.length) return fail(res, 404, 'Không tìm thấy chương');
+    // Không tiết lộ nội dung chương trả phí nếu người dùng chưa có gói.
+    if (Number(chapterNumber) > FREE_CHAPTER_LIMIT && !await hasActiveSubscription(req.user.id)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Cần đăng ký gói đọc còn hiệu lực để mở khóa chương này',
+        code: 'SUBSCRIPTION_REQUIRED'
+      });
+    }
     return success(res, 200, 'Lấy nội dung chương thành công', { bookId: book.id, ...rows[0] });
   } catch (error) {
     return serverError(res, 'Lấy nội dung chương', error);

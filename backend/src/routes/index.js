@@ -10,6 +10,7 @@ const publisherRoutes = require('./publisher.routes');
 const readingRoutes = require('./reading.routes');
 const userRoutes = require('./user.routes');
 const adminRoutes = require('./admin.routes');
+const libraryRoutes = require('./library.routes');
 
 router.use('/auth', authRoutes);
 router.use('/books', bookRoutes);
@@ -18,6 +19,7 @@ router.use('/authors', authorRoutes);
 router.use('/publishers', publisherRoutes);
 router.use('/reading', readingRoutes);
 router.use('/users', userRoutes);
+router.use('/library', libraryRoutes);
 router.use('/admin', adminRoutes);
 
 module.exports = router;

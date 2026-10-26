@@ -1,7 +1,9 @@
 // UC003 bước 5-6 - Chi tiết sách (API-06)
-// Nút "Đặt mua" (UC004) và "Đọc trực tuyến" (UC006) sẽ gắn vào <BookActions /> ở bản sau.
 import { Link, useParams } from 'react-router-dom';
+import BookActions from '../components/book/BookActions';
 import BookCover from '../components/book/BookCover';
+import BookDetailActions from '../components/book/BookDetailActions';
+import BookToc from '../components/book/BookToc';
 import { EmptyState, ErrorState, LoadingBlock } from '../components/common/States';
 import { useAsync } from '../hooks/useAsync';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
@@ -11,6 +13,7 @@ import { ROUTES } from '../config/routes';
 import { isPhysical, stockLabel } from '../utils/book';
 import { formatDate, formatPrice } from '../utils/format';
 import { toMessage } from '../utils/errors';
+import ReadBookButton from '../components/reader/ReadBookButton';
 
 export default function BookDetailPage() {
   const id = Number(useParams().id);
@@ -18,18 +21,32 @@ export default function BookDetailPage() {
 
   const { data: book, loading, error, reload } = useAsync(
     () => (validId ? bookService.getBook(id) : Promise.reject(new ApiError('Không tìm thấy sách', 404))),
-    [id]
+    [id],
   );
   useDocumentTitle(book?.title);
 
-  if (loading && !book) return <div className="container page"><LoadingBlock label="Đang tải thông tin sách..." /></div>;
+  if (loading && !book) {
+    return (
+      <div className="container page">
+        <LoadingBlock label="Đang tải thông tin sách..." />
+      </div>
+    );
+  }
 
   if (error || !book) {
     const notFound = error instanceof ApiError && (error.status === 404 || error.status === 400);
     return (
       <div className="container page">
         {notFound ? (
-          <EmptyState title="Không tìm thấy sách" hint="Sách này không tồn tại hoặc đã ngừng bán." action={<Link className="btn btn--ghost" to={ROUTES.BOOKS}>Xem tất cả sách</Link>} />
+          <EmptyState
+            title="Không tìm thấy sách"
+            hint="Sách này không tồn tại hoặc đã ngừng bán."
+            action={
+              <Link className="btn btn--ghost" to={ROUTES.BOOKS}>
+                Xem tất cả sách
+              </Link>
+            }
+          />
         ) : (
           <ErrorState message={toMessage(error)} onRetry={reload} />
         )}
@@ -49,17 +66,22 @@ export default function BookDetailPage() {
       </nav>
 
       <article className="detail">
-        <BookCover book={book} className="detail__cover" />
+        <div className="detail__cover-col">
+          <BookCover book={book} className="detail__cover" />
+          <BookDetailActions book={book} />
+        </div>
 
         <div className="detail__info">
           <h1 className="detail__title">{book.title}</h1>
           <p className="detail__authors">
-            {book.authors.length === 0 ? 'Chưa rõ tác giả' : book.authors.map((a, i) => (
-              <span key={`${a.id ?? a.name}`}>
-                {i > 0 && ', '}
-                {a.id ? <Link to={`${ROUTES.BOOKS}?authorId=${a.id}`}>{a.name}</Link> : a.name}
-              </span>
-            ))}
+            {book.authors.length === 0
+              ? 'Chưa rõ tác giả'
+              : book.authors.map((a, i) => (
+                  <span key={`${a.id ?? a.name}`}>
+                    {i > 0 && ', '}
+                    {a.id ? <Link to={`${ROUTES.BOOKS}?authorId=${a.id}`}>{a.name}</Link> : a.name}
+                  </span>
+                ))}
           </p>
 
           <div className="detail__buy">
@@ -70,7 +92,12 @@ export default function BookDetailPage() {
           </div>
 
           <dl className="detail__meta">
-            {book.publisher && (<><dt>Nhà xuất bản</dt><dd>{book.publisher.name}</dd></>)}
+            {book.publisher && (
+              <>
+                <dt>Nhà xuất bản</dt>
+                <dd>{book.publisher.name}</dd>
+              </>
+            )}
             {book.categories.length > 0 && (
               <>
                 <dt>Thể loại</dt>
@@ -84,16 +111,35 @@ export default function BookDetailPage() {
                 </dd>
               </>
             )}
-            {forms && (<><dt>Hình thức</dt><dd>{forms}</dd></>)}
-            {book.createdAt && (<><dt>Ngày thêm</dt><dd>{formatDate(book.createdAt)}</dd></>)}
+            {forms && (
+              <>
+                <dt>Hình thức</dt>
+                <dd>{forms}</dd>
+              </>
+            )}
+            {book.createdAt && (
+              <>
+                <dt>Ngày thêm</dt>
+                <dd>{formatDate(book.createdAt)}</dd>
+              </>
+            )}
           </dl>
 
+          {/* Đọc trực tuyến nằm trên mục giới thiệu */}
+          <div className="detail__read-block">
+            <ReadBookButton book={book} />
+          </div>
+
           <section aria-labelledby="desc-title">
-            <h2 id="desc-title" className="detail__heading">Giới thiệu</h2>
+            <h2 id="desc-title" className="detail__heading">
+              Giới thiệu
+            </h2>
             <p className="detail__desc">{book.description || 'Chưa có mô tả cho cuốn sách này.'}</p>
           </section>
 
-          {/* TODO UC004/UC006: <BookActions book={book} /> với nút Đặt mua / Đọc trực tuyến */}
+          {/* Chỉ phần mua sách giấy */}
+          <BookActions book={book} hideRead />
+          <BookToc bookId={book.id} hasEbook={!!book.hasEbook} />
         </div>
       </article>
     </div>

@@ -8,7 +8,7 @@ import type { Route } from '../router';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const str = (v: unknown) => (typeof v === 'string' ? v : '');
-const publicUser = (u: MockUser) => ({ id: u.id, fullName: u.fullName, email: u.email, role: u.role, avatarUrl: null });
+const publicUser = (u: MockUser) => ({ id: u.id, fullName: u.fullName, email: u.email, role: u.role, avatarUrl: u.avatarUrl ?? null });
 
 // Tương đương middleware verifyToken của BE (kiểm tra cả trạng thái tài khoản trong DB - quyết định D1)
 export const requireUser = (token: string | null): MockUser => {
@@ -40,7 +40,7 @@ export const authRoutes: Route[] = [
       if (!EMAIL_REGEX.test(email) || email.length > RULES.EMAIL_MAX) {
         throw new MockHttpError(400, MESSAGES.emailInvalid, 'VALIDATION_ERROR', [{ field: 'email', message: MESSAGES.emailInvalid }]);
       }
-      if (password.length < RULES.PASSWORD_MIN || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+      if (password.length < RULES.PASSWORD_MIN) {
         throw new MockHttpError(400, MESSAGES.passwordWeak, 'VALIDATION_ERROR', [{ field: 'password', message: MESSAGES.passwordWeak }]);
       }
       if (password !== confirmPassword) {
@@ -60,7 +60,7 @@ export const authRoutes: Route[] = [
     path: '/auth/login',
     handler: ({ body }) => {
       const b = (body ?? {}) as Record<string, unknown>;
-      const email = str(b.email).trim();
+      const email = str(b.email).trim().toLowerCase();
       const password = str(b.password);
       if (!email || !password) throw new MockHttpError(400, 'Vui lòng nhập email và mật khẩu', 'VALIDATION_ERROR');
 
@@ -73,7 +73,7 @@ export const authRoutes: Route[] = [
 
       return {
         message: 'Đăng nhập thành công',
-        data: { token: makeToken(user), expiresIn: '1d', user: { id: user.id, fullName: user.fullName, email: user.email, role: user.role } },
+        data: { token: makeToken(user), expiresIn: '1d', user: publicUser(user) },
       };
     },
   },

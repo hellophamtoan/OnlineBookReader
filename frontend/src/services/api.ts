@@ -108,11 +108,18 @@ async function request<T>(method: Method, path: string, body?: unknown): Promise
     | (Partial<ApiResponse<T>> & { code?: string; errors?: unknown })
     | null;
 
-  if (status < 200 || status >= 300) {
+  // Một số BE trả HTTP 200 kèm success:false — vẫn coi là lỗi nghiệp vụ
+  const businessFail = json && json.success === false;
+  if (status < 200 || status >= 300 || businessFail) {
     const locked = status === 403 && (json?.code === 'ACCOUNT_LOCKED' || /bị khóa/i.test(json?.message ?? ''));
     // Chỉ tự đăng xuất khi ĐÃ gửi token; đăng nhập sai mật khẩu (401) thì không
     if (token && (status === 401 || locked)) window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
-    throw new ApiError(json?.message || MESSAGES.generic, status, json?.code, toFieldErrors(json?.errors));
+    throw new ApiError(
+      json?.message || MESSAGES.generic,
+      status >= 200 && status < 300 && businessFail ? 400 : status,
+      json?.code,
+      toFieldErrors(json?.errors),
+    );
   }
 
   return (json ?? { success: true, message: '', data: null }) as ApiResponse<T>;

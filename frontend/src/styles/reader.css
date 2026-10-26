@@ -1,0 +1,227 @@
+/* styles/reader.css - giao diện UC006 (đọc sách trực tuyến). Import sau global.css trong main.tsx.
+   Bố cục: 1) tiện ích  2) nút "Đọc trực tuyến"  3) thanh công cụ  4) bài đọc  5) mục lục + thông báo  6) responsive
+   Lưu ý: .prose được dùng cả ở phần xem trước nội dung chương của khu quản trị. */
+
+/* ---------- 1) Tiện ích ---------- */
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---------- 2) Trang chi tiết sách ---------- */
+.read-action { margin-bottom: 28px; }
+.reader-state__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+
+/* ---------- 3) Thanh công cụ ---------- */
+.reader { min-height: 100vh; background: var(--paper); }
+.reader-bar { position: sticky; top: 0; z-index: 50; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.reader-bar__inner { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 16px; max-width: 1180px; margin: 0 auto; padding: 10px 24px; }
+.reader-bar__title { flex: 1 1 180px; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+.reader-bar__book { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; color: var(--ink); }
+.reader-bar__chapter { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: var(--muted); }
+.reader-bar__tools { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.reader-bar__font .input { width: auto; min-width: 150px; }
+.reader-bar__status { min-width: 96px; font-size: 13px; color: var(--muted); }
+.reader-bar__status.is-saved { color: var(--ok); }
+.reader-bar__status.is-error { color: var(--danger); }
+
+.reader-size { display: inline-flex; align-items: center; background: var(--surface); border: 1.5px solid var(--line); border-radius: 8px; }
+.reader-size button { min-width: 40px; height: 40px; padding: 0 8px; font-weight: 700; color: var(--brand); background: transparent; border: 0; cursor: pointer; }
+.reader-size button:hover:not(:disabled) { background: var(--brand-tint); }
+.reader-size button:disabled { opacity: 0.4; cursor: not-allowed; }
+.reader-size span { min-width: 36px; text-align: center; font-weight: 600; color: var(--ink); }
+.reader-size .reader-size__reset { min-width: 0; padding: 0 12px; font-size: 13px; font-weight: 600; border-left: 1px solid var(--line); }
+
+/* ---------- 4) Bài đọc ---------- */
+.reader__main { max-width: 800px; margin: 0 auto; padding: 36px 24px 96px; }
+.reader__alert { max-width: 800px; margin: 16px auto 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.reader__alert-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.reader-article { padding: 48px 56px; color: var(--ink); line-height: 1.85; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); }
+.reader-article__title { margin-bottom: 1.2em; font-size: 1.6em; line-height: 1.25; }
+.reader-nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 28px; }
+.reader-nav__pos { font-size: 14px; color: var(--muted); }
+
+/* Định dạng nội dung chương (HTML đã làm sạch): mọi cỡ chữ tính theo em để đổi cỡ chữ là cả bài đổi theo */
+.prose { color: inherit; }
+.prose > * + * { margin-top: 1.1em; }
+.prose h1, .prose h2, .prose h3, .prose h4 { margin-top: 1.6em; line-height: 1.3; }
+.prose h1 { font-size: 1.6em; }
+.prose h2 { font-size: 1.4em; }
+.prose h3 { font-size: 1.15em; }
+.prose h4 { font-size: 1em; }
+.prose blockquote { margin-left: 0; padding: 0.2em 0 0.2em 1.2em; font-style: italic; color: var(--ink-soft); border-left: 4px solid var(--accent); }
+.prose ul, .prose ol { padding-left: 1.5em; }
+.prose ul { list-style: disc; }
+.prose ol { list-style: decimal; }
+.prose li + li { margin-top: 0.4em; }
+.prose hr { margin: 2em 0; border: 0; border-top: 1px solid var(--line); }
+
+/* ---------- 5) Mục lục + thông báo ---------- */
+.drawer-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(26, 27, 46, 0.55); }
+.drawer { display: flex; flex-direction: column; width: min(360px, 90vw); height: 100%; background: var(--surface); box-shadow: var(--shadow-pop); }
+.drawer__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 20px; border-bottom: 1px solid var(--line); }
+.drawer__title { font-size: 20px; }
+.drawer__list { flex: 1; padding: 8px 12px 24px; overflow-y: auto; list-style: none; }
+.drawer__item { width: 100%; padding: 11px 12px; text-align: left; line-height: 1.4; color: var(--ink-soft); background: transparent; border: 0; border-left: 3px solid transparent; border-radius: 0 6px 6px 0; cursor: pointer; }
+.drawer__item:hover { background: var(--brand-tint); }
+.drawer__item[aria-current='true'] { font-weight: 700; color: var(--brand); background: var(--brand-tint); border-left-color: var(--brand); }
+
+.reader__toast { position: fixed; left: 50%; bottom: 28px; z-index: 900; padding: 12px 22px; font-weight: 600; color: #fff; background: var(--ok); border-radius: 999px; box-shadow: var(--shadow-pop); transform: translateX(-50%); }
+
+/* ---------- 6) Responsive ---------- */
+@media (max-width: 760px) {
+  .reader-bar__inner { padding: 10px 16px; }
+  .reader__main { padding: 20px 12px 72px; }
+  .reader-article { padding: 28px 20px; }
+  .reader-bar__font .input { min-width: 120px; }
+}
+
+
+/* Thanh tiêu đề: nhóm thoát + chuyển chương */
+.reader-bar__left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.reader-bar__nav {
+  min-width: 36px;
+  padding: 0 8px;
+  font-size: 20px;
+  line-height: 1;
+}
+.reader-nav {
+  position: sticky;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+  padding: 14px 8px;
+  border-top: 1px solid var(--line);
+  margin-top: 32px;
+  z-index: 5;
+}
+.reader-nav__btn { min-width: 140px; }
+
+@media (max-width: 760px) {
+  .reader-nav__btn { min-width: 0; flex: 1; }
+}
+
+
+/* Trên cùng: chỉ thanh tiêu đề */
+.reader-bar__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 12px 24px;
+}
+.reader-bar .reader-bar__inner { display: none; }
+
+/* Dưới Header site: mũi tên trở về */
+.reader-back-row {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 16px 24px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.reader-back-row__btn {
+  font-weight: 600;
+  min-height: 36px;
+  padding: 0 12px;
+}
+.reader {
+  min-height: auto;
+  background: transparent;
+}
+
+/* Cuối trang: Mục lục + bánh răng cạnh nhau */
+.reader-nav__toc { font-weight: 700; }
+.reader-nav__gear {
+  font-size: 20px;
+  min-width: 40px;
+  padding: 0 8px;
+  line-height: 1;
+}
+.reader-nav__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.reader-nav__gear-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.reader-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  margin-top: 28px;
+}
+.reader-nav__pos {
+  font-size: 14px;
+  color: var(--muted);
+  text-align: center;
+  margin: 0;
+}
+.reader-settings-panel {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  z-index: 20;
+  min-width: 240px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-pop);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.reader-settings-panel--bottom {
+  /* panel mở lên trên vì nằm cuối trang */
+}
+.reader-settings-panel__label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+@media (max-width: 640px) {
+  .reader-bar__title-row { padding-left: 16px; padding-right: 16px; }
+  .reader-back-row { padding-left: 16px; padding-right: 16px; }
+  .reader-nav__btn { min-width: 0; flex: 1; }
+}
+
+.drawer__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+}
+.drawer__item.is-locked { opacity: 0.55; cursor: not-allowed; }
+.drawer__item-title { flex: 1; min-width: 0; }
+.drawer__badge {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ok, #0a7a3e);
+  background: #e8f8ee;
+  border-radius: 999px;
+}
+.drawer__badge--lock {
+  color: var(--muted);
+  background: #f0f0f4;
+}
+.drawer__empty { padding: 16px; color: var(--muted); }

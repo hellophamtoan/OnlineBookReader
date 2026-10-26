@@ -48,24 +48,59 @@ test('Admin API: ADMIN gọi được', async () => {
   expect(r.status).toBe(200);
   expect(r.json.data.items).toHaveLength(1);
 });
-test('Đọc chương: không có gói -> 403 và KHÔNG truy vấn nội dung', async () => {
+test('Đọc chương 11: không có gói -> 403 SUBSCRIPTION_REQUIRED', async () => {
   asUser('USER');
-  pool.execute.mockResolvedValueOnce([[]]); // subscriptions rỗng
-  const r = await call('GET', '/books/3/chapters/1', { auth: token(5) });
+  pool.execute.mockResolvedValueOnce([[{ id: 3, title: 'A' }]])
+    .mockResolvedValueOnce([[{ id: 11, chapterNumber: 11, title: 'C11', content: '<p>paid</p>' }]])
+    .mockResolvedValueOnce([[]]);
+  const r = await call('GET', '/books/3/chapters/11', { auth: token(5) });
   expect(r.status).toBe(403);
-  expect(pool.execute).toHaveBeenCalledTimes(2); // chỉ verifyToken + kiểm tra gói
+  expect(r.json.code).toBe('SUBSCRIPTION_REQUIRED');
+  expect(JSON.stringify(r.json)).not.toContain('paid');
+});
+test('Đọc chương 1: USER không có gói vẫn được đọc', async () => {
+  asUser('USER');
+  pool.execute.mockResolvedValueOnce([[{ id: 3, title: 'A' }]])
+    .mockResolvedValueOnce([[{ id: 1, chapterNumber: 1, title: 'C1', content: '<p>free</p>' }]]);
+  const r = await call('GET', '/books/3/chapters/1', { auth: token(5) });
+  expect(r.status).toBe(200);
+  expect(r.json.data.content).toContain('free');
+});
+test('Mục lục: hiện khóa chương > 10 khi chưa có gói', async () => {
+  asUser('USER');
+  pool.execute.mockResolvedValueOnce([[{ id: 3, title: 'A' }]])
+    .mockResolvedValueOnce([[{ id: 1, chapterNumber: 1, title: 'C1' }, { id: 11, chapterNumber: 11, title: 'C11' }]])
+    .mockResolvedValueOnce([[]]);
+  const r = await call('GET', '/books/3/chapters', { auth: token(5) });
+  expect(r.status).toBe(200);
+  expect(r.json.data.freeChapterLimit).toBe(10);
+  expect(r.json.data.items[0].locked).toBe(false);
+  expect(r.json.data.items[1].locked).toBe(true);
+});
+test('Tiến trình: không gói vẫn được lấy, USER có JWT', async () => {
+  asUser('USER');
+  pool.execute.mockResolvedValueOnce([[{ id: 3, title: 'A' }]]).mockResolvedValueOnce([[]]);
+  const r = await call('GET', '/reading/progress/3', { auth: token(5) });
+  expect(r.status).toBe(200);
+});
+test('Thư viện: ADMIN bị từ chối', async () => {
+  asUser('ADMIN');
+  expect((await call('GET', '/library', { auth: token(5) })).status).toBe(403);
+});
+test('Thư viện: cần JWT', async () => {
+  expect((await call('GET', '/library')).status).toBe(401);
 });
 test('Đọc chương: không token -> 401', async () => {
   expect((await call('GET', '/books/3/chapters/1')).status).toBe(401);
 });
-test('Đọc chương: có gói -> 200', async () => {
+test('Đọc chương > 10: có gói -> 200', async () => {
   asUser('USER');
-  pool.execute.mockResolvedValueOnce([[{ id: 1 }]])
-    .mockResolvedValueOnce([[{ id: 3, title: 'A' }]])
-    .mockResolvedValueOnce([[{ id: 9, chapterNumber: 1, title: 'C1', content: '<p>a</p>', prevChapterNumber: null, nextChapterNumber: 2 }]]);
-  const r = await call('GET', '/books/3/chapters/1', { auth: token(5) });
+  pool.execute.mockResolvedValueOnce([[{ id: 3, title: 'A' }]])
+    .mockResolvedValueOnce([[{ id: 19, chapterNumber: 11, title: 'C11', content: '<p>a</p>', prevChapterNumber: 10, nextChapterNumber: 12 }]])
+    .mockResolvedValueOnce([[{ id: 1 }]]);
+  const r = await call('GET', '/books/3/chapters/11', { auth: token(5) });
   expect(r.status).toBe(200);
-  expect(r.json.data.nextChapterNumber).toBe(2);
+  expect(r.json.data.nextChapterNumber).toBe(12);
 });
 test('Route sách công khai cũ vẫn chạy, không cần token', async () => {
   pool.query.mockResolvedValueOnce([[{ total: 0 }]]).mockResolvedValueOnce([[]]);

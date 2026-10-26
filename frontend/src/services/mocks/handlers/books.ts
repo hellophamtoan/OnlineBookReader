@@ -1,38 +1,42 @@
 // services/mocks/handlers/books.ts
-// Giả lập API-05 (danh sách), API-06 (chi tiết), API-07 (thể loại) + tác giả/NXB.
-// Dạng response theo hợp đồng UC001–UC003; các trường price/stockQuantity/hasEbook/publisher lấy tên theo MNM.
-import { MOCK_AUTHORS, MOCK_BOOKS, MOCK_CATEGORIES, MOCK_PUBLISHERS } from '../data';
-import type { MockBook } from '../data';
+// Giả lập API-05 (danh sách), API-06 (chi tiết), API-07 (thể loại) + tác giả/NXB. CÔNG KHAI: chỉ hiện mục đang hoạt động.
+// Dữ liệu đọc từ catalogdb.ts (cùng nguồn với khu quản trị UC007) nên Admin sửa thì trang người dùng đổi theo.
 import { MockHttpError } from '../http';
 import type { Route } from '../router';
 import { normalizeText } from '../../../utils/text';
+import { getCatalog } from '../catalogdb';
+import type { CatalogBook, CatalogRef, CatalogState } from '../catalogdb';
 
 const byName = <T extends { name: string }>(list: T[]) => [...list].sort((a, b) => a.name.localeCompare(b.name, 'vi'));
-const name = (list: { id: number; name: string }[], id: number) => list.find((x) => x.id === id)?.name ?? '';
-const ref = (list: { id: number; name: string }[], id: number) => ({ id, name: name(list, id) });
+const nameOf = (list: CatalogRef[], id: number) => list.find((x) => x.id === id)?.name ?? '';
+const refOf = (list: CatalogRef[], id: number | null) => {
+  const r = list.find((x) => x.id === id);
+  return r ? { id: r.id, name: r.name } : null;
+};
+const publicRefs = (list: CatalogRef[]) => byName(list.filter((x) => x.status === 'active')).map(({ id, name }) => ({ id, name }));
 
-const common = (b: MockBook) => ({
+const common = (b: CatalogBook, c: CatalogState) => ({
   id: b.id,
   title: b.title,
-  coverUrl: null as string | null, // null -> FE tự vẽ bìa; BE thật trả "/uploads/covers/xxx.jpg"
+  coverUrl: b.coverUrl, // null -> FE tự vẽ bìa; BE thật trả "/uploads/covers/xxx.jpg"
   price: b.price,
-  stockQuantity: b.stock,
+  stockQuantity: b.stock, // tồn kho thực tế (đã trừ các đơn mới đặt)
   hasEbook: b.hasEbook,
   hasPhysical: b.hasPhysical,
-  publisher: ref(MOCK_PUBLISHERS, b.publisherId),
+  publisher: refOf(c.publishers, b.publisherId),
 });
 
-const toListItem = (b: MockBook) => ({
-  ...common(b),
-  authorNames: [name(MOCK_AUTHORS, b.authorId)],
-  categoryNames: [name(MOCK_CATEGORIES, b.categoryId)],
+const toListItem = (b: CatalogBook, c: CatalogState) => ({
+  ...common(b, c),
+  authorNames: b.authorIds.map((id) => nameOf(c.authors, id)).filter(Boolean),
+  categoryNames: b.categoryIds.map((id) => nameOf(c.categories, id)).filter(Boolean),
 });
 
-const toDetail = (b: MockBook) => ({
-  ...common(b),
+const toDetail = (b: CatalogBook, c: CatalogState) => ({
+  ...common(b, c),
   description: b.description,
-  authors: [ref(MOCK_AUTHORS, b.authorId)],
-  categories: [ref(MOCK_CATEGORIES, b.categoryId)],
+  authors: b.authorIds.map((id) => refOf(c.authors, id)).filter(Boolean),
+  categories: b.categoryIds.map((id) => refOf(c.categories, id)).filter(Boolean),
   createdAt: b.createdAt,
 });
 
@@ -63,11 +67,15 @@ export const bookRoutes: Route[] = [
       if (hasEbookRaw !== null && hasEbookRaw !== 'true' && hasEbookRaw !== 'false') throw validation('hasEbook không hợp lệ');
 
       const kw = normalizeText(query.get('search') ?? '');
+      const c = getCatalog();
 
-      let list = MOCK_BOOKS.filter((b) => b.status === 'active'); // chỉ sách đang hiển thị
-      if (kw) list = list.filter((b) => normalizeText(`${b.title} ${name(MOCK_AUTHORS, b.authorId)}`).includes(kw)); // tên sách + tác giả (D-06)
-      if (categoryId) list = list.filter((b) => b.categoryId === categoryId);
-      if (authorId) list = list.filter((b) => b.authorId === authorId);
+      let list = c.books.filter((b) => b.status === 'active'); // chỉ sách đang hiển thị
+      if (kw) {
+        // tên sách + tác giả (D-06)
+        list = list.filter((b) => normalizeText(`${b.title} ${b.authorIds.map((id) => nameOf(c.authors, id)).join(' ')}`).includes(kw));
+      }
+      if (categoryId) list = list.filter((b) => b.categoryIds.includes(categoryId));
+      if (authorId) list = list.filter((b) => b.authorIds.includes(authorId));
       if (publisherId) list = list.filter((b) => b.publisherId === publisherId);
       if (hasEbookRaw === 'true') list = list.filter((b) => b.hasEbook);
       if (hasEbookRaw === 'false') list = list.filter((b) => !b.hasEbook);
@@ -79,7 +87,7 @@ export const bookRoutes: Route[] = [
       );
 
       const total = list.length;
-      const items = list.slice((page - 1) * limit, page * limit).map(toListItem);
+      const items = list.slice((page - 1) * limit, page * limit).map((b) => toListItem(b, c));
       // Danh sách rỗng vẫn là 200 với items = [] (không trả 404)
       return { message: 'Lấy danh sách sách thành công', data: { items, page, limit, total } };
     },
@@ -92,14 +100,15 @@ export const bookRoutes: Route[] = [
     handler: ({ params }) => {
       const id = Number(params.id);
       if (!Number.isInteger(id) || id < 1) throw validation('id không hợp lệ');
-      const book = MOCK_BOOKS.find((b) => b.id === id && b.status === 'active'); // inactive -> 404 (D-08)
+      const c = getCatalog();
+      const book = c.books.find((b) => b.id === id && b.status === 'active'); // inactive -> 404 (D-08)
       if (!book) throw new MockHttpError(404, 'Không tìm thấy sách', 'NOT_FOUND');
-      return { message: 'Lấy chi tiết sách thành công', data: toDetail(book) };
+      return { message: 'Lấy chi tiết sách thành công', data: toDetail(book, c) };
     },
   },
 
   // ===== API-07 GET /categories (+ authors, publishers) =====
-  { method: 'GET', path: '/categories', handler: () => ({ message: 'Lấy danh mục sách thành công', data: { items: byName(MOCK_CATEGORIES) } }) },
-  { method: 'GET', path: '/authors', handler: () => ({ message: 'Lấy danh sách tác giả thành công', data: { items: byName(MOCK_AUTHORS) } }) },
-  { method: 'GET', path: '/publishers', handler: () => ({ message: 'Lấy danh sách nhà xuất bản thành công', data: { items: byName(MOCK_PUBLISHERS) } }) },
+  { method: 'GET', path: '/categories', handler: () => ({ message: 'Lấy danh mục sách thành công', data: { items: publicRefs(getCatalog().categories) } }) },
+  { method: 'GET', path: '/authors', handler: () => ({ message: 'Lấy danh sách tác giả thành công', data: { items: publicRefs(getCatalog().authors) } }) },
+  { method: 'GET', path: '/publishers', handler: () => ({ message: 'Lấy danh sách nhà xuất bản thành công', data: { items: publicRefs(getCatalog().publishers) } }) },
 ];

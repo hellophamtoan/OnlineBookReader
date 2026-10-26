@@ -1,0 +1,33 @@
+/* styles/profile.css - giao diện UC012 (thông tin cá nhân) + ảnh đại diện dùng chung. Import sau global.css trong main.tsx.
+   Chỉ dùng token của global.css. Bố cục: 1) ảnh đại diện  2) khung hồ sơ  3) responsive */
+
+/* ---------- 1) Ảnh đại diện ---------- */
+.avatar { display: inline-grid; place-items: center; flex-shrink: 0; overflow: hidden; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-weight: 700; line-height: 1; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.avatar--sm { width: 36px; height: 36px; font-size: 15px; }
+.avatar--md { width: 48px; height: 48px; font-size: 19px; }
+.avatar--lg { width: 96px; height: 96px; font-size: 38px; }
+
+/* Khối "tên + ảnh" ở Header / khung quản trị thành liên kết tới trang hồ sơ */
+.user--link { padding: 4px 10px 4px 4px; border-radius: 999px; text-decoration: none; }
+.user--link:hover { background: var(--brand-tint); }
+
+/* ---------- 2) Khung hồ sơ ---------- */
+.profile-page { max-width: 720px; }
+.profile-page__notice { margin-bottom: 20px; }
+.profile-card { display: flex; flex-direction: column; gap: 20px; padding: 28px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); }
+.profile-card__head { display: flex; align-items: center; gap: 20px; }
+.profile-card__name { font-size: 24px; font-weight: 800; letter-spacing: -0.01em; }
+.profile-card__email { color: var(--muted); }
+.profile-card__meta { margin-bottom: 0; }
+.profile-card__row { display: contents; } /* mỗi cặp dt/dd vẫn nằm trên lưới 2 cột của .detail__meta */
+.profile-card__actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.profile-form__avatar { display: flex; align-items: flex-start; gap: 20px; }
+.profile-form__avatar-field { flex: 1; min-width: 0; }
+
+/* ---------- 3) Responsive ---------- */
+@media (max-width: 560px) {
+  .profile-card { padding: 20px 16px; }
+  .profile-card__head, .profile-form__avatar { flex-direction: column; align-items: flex-start; gap: 14px; }
+  .profile-form__avatar-field { width: 100%; }
+}
