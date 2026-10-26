@@ -14,6 +14,13 @@ export const ROUTES = {
   // UC012 - Thông tin cá nhân
   PROFILE: '/profile',
   LIBRARY: '/library',
+  // Các đường dẫn dành cho UC004/UC005: hiện App.tsx chưa khai báo trang tương ứng.
+  // Giữ khai báo để các component cũ biên dịch, không có nghĩa backend đã hỗ trợ.
+  CART: '/cart',
+  CHECKOUT: '/checkout',
+  MY_ORDERS: '/my-orders',
+  ORDER_DETAIL: (id: number | string) => `/orders/${id}`,
+  PLANS: '/plans',
   // UC007+ - Khu quản trị
   ADMIN_HOME: '/admin',
   ADMIN_PROFILE: '/admin/profile',
@@ -33,6 +40,11 @@ export const ROUTES = {
 export const ROUTE_PATTERNS = {
   BOOK_DETAIL: '/books/:id',
   READER: '/read/:bookId',
+  CART: '/cart',
+  CHECKOUT: '/checkout',
+  MY_ORDERS: '/my-orders',
+  ORDER_DETAIL: '/orders/:id',
+  PLANS: '/plans',
   ADMIN_BOOK_DETAIL: '/admin/books/:id',
   ADMIN_BOOK_EDIT: '/admin/books/:id/edit',
   ADMIN_BOOK_CHAPTERS: '/admin/books/:id/chapters',

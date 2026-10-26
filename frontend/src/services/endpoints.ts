@@ -23,6 +23,24 @@ export const ENDPOINTS = {
   publishers: '/publishers',
   storeInfo: '/store-info',
 
+  // ----- Các API thương mại/yêu thích dành cho FE UC004: BE hiện tại có thể chưa hỗ trợ.
+  // Chỉ phục hồi type/đường dẫn; KHÔNG tuyên bố backend đã triển khai.
+  cart: {
+    root: '/cart',
+    item: (bookId: number) => `/cart/${bookId}`,
+  },
+  orders: {
+    root: '/orders',
+    my: '/orders/my',
+    detail: (id: number) => `/orders/${id}`,
+    cancel: (id: number) => `/orders/${id}/cancel`,
+  },
+  favorites: {
+    root: '/favorites',
+    toggle: (bookId: number) => `/favorites/${bookId}/toggle`,
+    status: (bookId: number) => `/favorites/${bookId}/status`,
+  },
+
   // ----- UC012 -----
   users: {
     me: '/users/me', // API-08 GET | API-09 PUT
