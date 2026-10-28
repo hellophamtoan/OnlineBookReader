@@ -7,7 +7,7 @@ import { useAuth } from './AuthContext';
 
 interface CartContextValue {
   cart: Cart;
-  count: number; // tổng số cuốn, hiện ở huy hiệu trên Header
+  count: number; // số loại sách, hiện ở huy hiệu trên Header
   loading: boolean; // đang tải giỏ lần đầu sau khi đăng nhập
   // Các thao tác gọi API rồi thay state bằng giỏ mới mà API trả về. Lỗi được ném ra để nơi gọi hiển thị.
   refresh: () => Promise<void>;

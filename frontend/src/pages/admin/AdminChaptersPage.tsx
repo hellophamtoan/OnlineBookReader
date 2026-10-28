@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import AdminPageHeader from '../../components/admin/AdminPageHeader';
+import EpubChapterImportPanel from '../../components/admin/EpubChapterImportPanel';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import { EmptyState, ErrorState, LoadingBlock } from '../../components/common/States';
 import { ROUTES } from '../../config/routes';
@@ -24,7 +25,7 @@ export default function AdminChaptersPage() {
   const list = useAsync(() => (validId ? chapterAdminService.list(bookId) : invalid()), [bookId]);
   const book = useAsync(() => (validId ? bookAdminService.get(bookId) : invalid()), [bookId]);
 
-  const [notice, setNotice] = useFlashNotice();
+  const [notice, setNotice, noticeTone, setNoticeTone] = useFlashNotice();
   const [error, setError] = useState('');
   const [removing, setRemoving] = useState<ChapterSummary | null>(null);
   const [busy, setBusy] = useState(false);
@@ -82,18 +83,39 @@ export default function AdminChaptersPage() {
       />
 
       {!hasEbook && <div className="alert alert--error admin-alert" role="alert">Sách này chưa bật hình thức e-book nên không thể thêm chương. Hãy bật e-book trong trang sửa sách.</div>}
-      {notice && <div className="alert alert--success admin-alert" role="status">{notice}</div>}
+      {notice && (
+        <div
+          className={`alert admin-alert ${noticeTone === 'error' ? 'alert--error' : noticeTone === 'warning' ? 'alert--error' : 'alert--success'}`}
+          role={noticeTone === 'error' ? 'alert' : 'status'}
+        >
+          {notice}
+        </div>
+      )}
       {error && <div className="alert alert--error admin-alert" role="alert">{error}</div>}
+
+      {hasEbook && (
+        <EpubChapterImportPanel
+          bookId={bookId}
+          existing={chapters}
+          disabled={busy}
+          onDone={() => list.reload()}
+          onNotice={(message, tone) => {
+            setNotice(message);
+            setNoticeTone(tone === 'error' ? 'error' : 'success');
+            setError('');
+          }}
+        />
+      )}
 
       {chapters.length === 0 ? (
         <EmptyState title="Sách chưa có chương nào" hint={hasEbook ? 'Bấm "Thêm chương" để tạo chương đầu tiên.' : undefined} />
       ) : (
         <div className={`table-wrap${list.loading ? ' is-loading' : ''}`}>
-          <table className="table">
+          <table className="table table--chapters">
             <thead>
               <tr>
                 <th scope="col" className="table__num">Số chương</th>
-                <th scope="col">Tiêu đề</th>
+                <th scope="col" className="table__title-col">Tiêu đề</th>
                 <th scope="col" className="table__actions-col">Thao tác</th>
               </tr>
             </thead>
@@ -101,7 +123,7 @@ export default function AdminChaptersPage() {
               {chapters.map((c) => (
                 <tr key={c.id}>
                   <td className="table__num">{c.chapterNumber}</td>
-                  <td className="table__strong">{c.title}</td>
+                  <td className="table__strong table__title-col">{c.title}</td>
                   <td className="table__actions">
                     <Link to={ROUTES.ADMIN_CHAPTER_EDIT(bookId, c.id)} className="btn btn--ghost">Sửa</Link>
                     <button type="button" className="btn btn--ghost btn--danger" onClick={() => setRemoving(c)}>Xóa</button>

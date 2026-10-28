@@ -17,6 +17,17 @@
 .admin__body { min-width: 0; display: flex; flex-direction: column; }
 .admin__top { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 32px; background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
 .admin__site-link { font-weight: 600; }
+.admin__top-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+.admin__top-left .admin__back,
+.admin__top-left .page-back {
+  min-height: 34px;
+  padding: 0 10px;
+}
 .admin__user { display: flex; align-items: center; gap: 10px; }
 .admin__content { width: 100%; max-width: 1240px; padding: 28px 32px 72px; }
 
@@ -43,11 +54,50 @@
 .table tbody tr:hover { background: #fbfaff; }
 .table tr.is-muted td, .table tr.is-muted .table__strong { color: var(--muted); }
 .table__strong { font-weight: 600; color: var(--ink); }
-.table__num { text-align: right; white-space: nowrap; }
+.table__num { text-align: center; white-space: nowrap; width: 7rem; }
 .table__bio { max-width: 360px; color: var(--muted); }
-.table__actions-col { text-align: right; }
-.table__actions { text-align: right; white-space: nowrap; }
+.table__actions-col { text-align: right; width: 12rem; }
+.table__actions { text-align: right; white-space: nowrap; vertical-align: middle; }
 .table__actions .btn { min-height: 34px; margin-left: 8px; padding: 0 12px; font-size: 14px; }
+
+/* Bảng chương e-book: số chương / tiêu đề / thao tác thẳng hàng; thao tác căn giữa */
+.table--chapters th,
+.table--chapters td {
+  vertical-align: middle;
+}
+.table--chapters .table__num {
+  text-align: center;
+  width: 7rem;
+}
+.table--chapters .table__title-col {
+  text-align: left;
+}
+.table--chapters .table__actions-col,
+.table--chapters .table__actions {
+  text-align: center;
+  width: 12rem;
+}
+.table--chapters .table__actions .btn {
+  margin-left: 6px;
+  margin-right: 6px;
+}
+.table--chapters .table__actions .btn:first-child {
+  margin-left: 0;
+}
+
+/* Hàng nút admin (Sửa / Chương / Ngừng) — kiểu «Đọc trực tuyến» phía user */
+.admin-book-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.admin-book-actions .btn--lg {
+  min-height: 48px;
+  padding: 0 20px;
+  font-weight: 700;
+}
 .table__book { display: flex; align-items: center; gap: 12px; min-width: 220px; }
 .table__cover { width: 36px; flex-shrink: 0; }
 .table__cover.cover--drawn { padding: 4px 3px 4px 8px; }
@@ -147,22 +197,53 @@
   }
   .admin__menu-btn { display: inline-flex; }
   .admin__side-close { display: inline-flex; margin-left: auto; color: var(--ink); }
+  /* Khi hẹp: ☰ · trở về · xem trang bán sách · tài khoản · đăng xuất — cùng một hàng trên cùng */
   .admin__top {
     position: sticky;
     top: 0;
     z-index: 20;
-    flex-wrap: wrap;
-    padding: 10px 16px;
-    /* Khi hẹp: hàng user (tên + đăng xuất) luôn ở trên */
-    flex-direction: column-reverse;
-    align-items: stretch;
-    gap: 10px;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 12px;
   }
-  .admin__top-left { justify-content: flex-start; }
+  .admin__top-left {
+    flex: 1 1 auto;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    min-width: 0;
+    width: auto;
+    gap: 6px 8px;
+  }
+  .admin__top-left .admin__site-link {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    font-size: 13px;
+  }
+  .admin__top-left .admin__back,
+  .admin__top-left .page-back {
+    min-height: 32px;
+    padding: 0 8px;
+    font-size: 13px;
+  }
   .admin__user {
+    flex: 0 0 auto;
     justify-content: flex-end;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--line);
+    gap: 6px;
+    padding: 0;
+    border: 0;
+  }
+  .admin__user .user__role { display: none; }
+  .admin__user .user__name {
+    max-width: 72px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
   }
   .admin__content { padding: 20px 16px 56px; }
 }
@@ -170,4 +251,110 @@
   .admin-form__row, .admin-form__row--chapter { grid-template-columns: 1fr; }
   .admin-form .form-section { padding: 16px; }
   .editor__preview { padding: 18px 16px; }
+}
+
+/* Form gói đọc / nạp ví căn hàng */
+.admin-form--aligned .field {
+  margin-bottom: 12px;
+}
+.admin-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 640px) {
+  .admin-form__row {
+    grid-template-columns: 1fr;
+  }
+}
+.admin-plan-panel {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px 20px;
+  background: var(--surface);
+  max-width: 560px;
+}
+.admin-user-preview {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: 12px 0 16px;
+  background: var(--bg, #f8f9fb);
+}
+.admin-user-preview .detail__meta {
+  margin: 0;
+}
+
+/* ---- Gói đọc: nút thao tác cùng hàng, cùng cột ---- */
+.table--plans .table__actions-col--center {
+  text-align: center;
+  width: 280px;
+  min-width: 280px;
+}
+.table--plans .table__actions--center {
+  text-align: center;
+  vertical-align: middle;
+}
+.plan-actions {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.plan-actions__btn {
+  min-width: 88px;
+  min-height: 34px;
+  margin: 0 !important;
+  padding: 0 10px;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+/* ---- Nạp ví: thẻ user không đè chữ ---- */
+.admin-user-card {
+  margin: 12px 0 18px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.admin-user-card__title {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 800;
+}
+.admin-user-card__sub {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.admin-user-card__list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.admin-user-card__row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 12px 20px;
+  align-items: start;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.admin-user-card__row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.admin-user-card__row dt {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 600;
+  line-height: 1.45;
+}
+.admin-user-card__row dd {
+  margin: 0;
+  line-height: 1.45;
+  word-break: break-word;
 }

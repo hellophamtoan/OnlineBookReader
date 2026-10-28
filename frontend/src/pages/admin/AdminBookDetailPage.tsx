@@ -79,27 +79,6 @@ export default function AdminBookDetailPage() {
           { label: 'Sách & kho', to: ROUTES.ADMIN_BOOKS },
           { label: b.title },
         ]}
-        actions={
-          <div className="admin-detail-actions">
-            <Link to={ROUTES.ADMIN_BOOK_EDIT(b.id)} className="btn btn--primary">
-              Sửa
-            </Link>
-            {b.hasEbook && (
-              <Link to={ROUTES.ADMIN_BOOK_CHAPTERS(b.id)} className="btn btn--ghost">
-                Chương (viết)
-              </Link>
-            )}
-            {b.status === 'active' ? (
-              <button type="button" className="btn btn--ghost btn--danger" disabled={busy} onClick={() => setConfirmOff(true)}>
-                Ngừng hoạt động
-              </button>
-            ) : (
-              <button type="button" className="btn btn--ghost" disabled={busy} onClick={() => runStatus(true)}>
-                Kích hoạt lại
-              </button>
-            )}
-          </div>
-        }
       />
 
       {notice && (
@@ -146,10 +125,39 @@ export default function AdminBookDetailPage() {
             <dt>Cập nhật</dt>
             <dd>{b.updatedAt ? formatDate(b.updatedAt) : '—'}</dd>
           </dl>
+
           <section>
             <h2 className="detail__heading">Giới thiệu</h2>
             <p className="detail__desc">{b.description || 'Chưa có mô tả.'}</p>
           </section>
+
+          {/* Dưới phần giới thiệu — cùng kiểu «Đọc trực tuyến» phía user */}
+          <div className="detail__read-block admin-book-actions-row" role="group" aria-label="Thao tác sách">
+            <div className="read-action admin-book-actions">
+              <Link to={ROUTES.ADMIN_BOOK_EDIT(b.id)} className="btn btn--primary btn--lg">
+                Sửa
+              </Link>
+              {b.hasEbook && (
+                <Link to={ROUTES.ADMIN_BOOK_CHAPTERS(b.id)} className="btn btn--ghost btn--lg">
+                  Chương (viết)
+                </Link>
+              )}
+              {b.status === 'active' ? (
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--lg btn--danger"
+                  disabled={busy}
+                  onClick={() => setConfirmOff(true)}
+                >
+                  Ngừng hoạt động
+                </button>
+              ) : (
+                <button type="button" className="btn btn--ghost btn--lg" disabled={busy} onClick={() => runStatus(true)}>
+                  Kích hoạt lại
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </article>
 
@@ -174,21 +182,34 @@ export default function AdminBookDetailPage() {
             <p className="field__hint">Chưa có chương. Bấm «Thêm chương» hoặc «Quản lý / viết chương».</p>
           ) : (
             <ol className="book-toc-panel__list">
-              {chapters.data.items.map((c) => (
-                <li key={c.id} className="book-toc-panel__item is-unread">
-                  <button
-                    type="button"
-                    className="admin-chapter-link"
-                    onClick={() => setPreviewChapterId(c.id)}
-                    style={{ background: 'none', border: 0, padding: 0, cursor: 'pointer', color: 'inherit', font: 'inherit', textAlign: 'left', width: '100%' }}
-                  >
-                    Chương {c.chapterNumber}. {c.title}
-                    <span className="field__hint" style={{ display: 'block', fontWeight: 400 }}>
-                      Xem dạng đọc · chỉnh sửa qua nút Chương
-                    </span>
-                  </button>
-                </li>
-              ))}
+              {chapters.data.items.map((c) => {
+                // Admin xem được hết; vẫn hiện 🔒 để biết chương thuộc phần cần gói (từ chương 11)
+                const pack =
+                  c.isFree === false ||
+                  (c.isFree !== true && c.chapterNumber > (chapters.data?.freeChapterLimit ?? 10));
+                return (
+                  <li key={c.id} className="book-toc-panel__item is-unread">
+                    <div className="book-toc-panel__row">
+                      <Link
+                        to={`${ROUTES.READER(b.id)}?chapter=${c.chapterNumber}`}
+                        className="book-toc-panel__link"
+                      >
+                        <span className="book-toc-panel__text">
+                          Chương {c.chapterNumber}. {c.title}
+                        </span>
+                        {pack ? <span className="toc-lock" aria-label="Chương cần gói đọc">🔒</span> : null}
+                      </Link>
+                      <button
+                        type="button"
+                        className="btn btn--ghost btn--sm book-toc-panel__preview"
+                        onClick={() => setPreviewChapterId(c.id)}
+                      >
+                        Xem nhanh
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
             </ol>
           )}
         </section>

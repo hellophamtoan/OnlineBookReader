@@ -11,6 +11,8 @@ export const READER = {
   FONT_SIZE_STEP: 2,
   AUTOSAVE_DELAY_MS: 1500, // dừng cuộn / đổi cài đặt bao lâu thì tự lưu
   EXIT_DELAY_MS: 900, // hiện "Đã lưu tiến trình" bao lâu trước khi rời trang
+  /** Số chương đầu miễn phí (khớp BE / mock FREE_CHAPTER_LIMIT) — dùng hiển thị 🔒 chương cần gói */
+  FREE_CHAPTER_LIMIT: 10,
 } as const;
 
 export const DEFAULT_SETTINGS: ReadingSettings = { fontFamily: READER.FONT_DEFAULT, fontSize: READER.FONT_SIZE_DEFAULT };

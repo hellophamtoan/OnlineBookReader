@@ -56,7 +56,19 @@ export const orderRoutes: Route[] = [
       if (note.length > RULES.NOTE_MAX) errors.push({ field: 'note', message: MESSAGES.noteTooLong });
       if (errors.length) throw new MockHttpError(400, errors[0].message, 'VALIDATION_ERROR', errors);
 
-      const lines = getCartLines(user.id);
+      // items trong body: đặt một phần giỏ / mua ngay; không gửi = cả giỏ
+      const cartLines = getCartLines(user.id);
+      const reqItems = Array.isArray(b.items) ? (b.items as { bookId?: unknown; quantity?: unknown }[]) : null;
+      let lines: { bookId: number; quantity: number }[];
+      if (reqItems && reqItems.length > 0) {
+        lines = reqItems.map((it) => ({
+          bookId: Number(it.bookId),
+          quantity: Number(it.quantity),
+        })).filter((l) => Number.isInteger(l.bookId) && l.bookId >= 1 && Number.isInteger(l.quantity) && l.quantity >= 1);
+        if (lines.length === 0) throw new MockHttpError(400, 'Danh sách sách đặt hàng không hợp lệ', 'VALIDATION_ERROR');
+      } else {
+        lines = cartLines;
+      }
       if (lines.length === 0) throw new MockHttpError(400, 'Giỏ hàng đang trống', 'EMPTY_CART');
 
       // Tồn kho: sách ngừng bán / không bán bản giấy / không đủ số lượng -> OUT_OF_STOCK (D8)
@@ -68,7 +80,7 @@ export const orderRoutes: Route[] = [
       if (bad.length) {
         const titles = bad.map((l) => findBook(l.bookId)?.title ?? `#${l.bookId}`);
         throw new MockHttpError(
-          400,
+          409,
           `Sách đã hết hàng hoặc không đủ số lượng: ${titles.join(', ')}`,
           'OUT_OF_STOCK',
           bad.map((l, i) => ({ field: 'bookId', message: titles[i] }))
@@ -93,7 +105,9 @@ export const orderRoutes: Route[] = [
         addWalletTx({ userId: user.id, type: 'PAY_ORDER', amount: -total, refType: 'ORDER', refId: order.id });
       }
       saveOrders([order, ...allOrders()]);
-      saveCartLines(user.id, []);
+      // Chỉ gỡ khỏi giỏ các sách đã đặt (giữ lại sách chưa chọn)
+      const orderedIds = new Set(lines.map((l) => l.bookId));
+      saveCartLines(user.id, cartLines.filter((l) => !orderedIds.has(l.bookId)));
 
       return { status: 201, message: 'Đặt hàng thành công', data: { order: publicOrder(order) } };
     },
@@ -122,7 +136,10 @@ export const orderRoutes: Route[] = [
         message: 'Lấy danh sách đơn hàng thành công',
         data: {
           items: mine.slice((page - 1) * limit, page * limit).map(publicOrder),
-          pagination: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) },
+          page,
+          limit,
+          total,
+          totalPages: Math.max(1, Math.ceil(total / limit)),
         },
       };
     },
@@ -146,7 +163,7 @@ export const orderRoutes: Route[] = [
       const user = requireCustomer(token);
       const order = ownOrder(user.id, orderIdOf(params.id));
       if (order.status !== 'PENDING') {
-        throw new MockHttpError(400, 'Chỉ có thể hủy đơn đang chờ xác nhận', 'INVALID_STATUS_TRANSITION');
+        throw new MockHttpError(409, 'Chỉ có thể hủy đơn đang chờ xử lý (PENDING)', 'INVALID_STATUS_TRANSITION');
       }
 
       // Hoàn tồn kho; đã trả bằng ví thì hoàn ví + ghi REFUND (D4)

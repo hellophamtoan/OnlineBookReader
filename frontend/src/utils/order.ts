@@ -11,12 +11,15 @@ export const paymentLabel = (m: PaymentMethod) => PAYMENT_METHODS.find((x) => x.
 // Chỉ đơn PENDING mới được người dùng hủy (O04, BR7)
 export const canCancel = (o: Pick<Order, 'status'>) => o.status === 'PENDING';
 
-// Tổng số cuốn trong giỏ (hiện ở huy hiệu trên Header)
-export const cartCount = (c: Cart) => c.items.reduce((n, i) => n + i.quantity, 0);
+// Số loại sách trong giỏ (hiện ở huy hiệu trên Header — không đếm theo số lượng từng dòng)
+export const cartCount = (c: Cart) => c.items.length;
 
 // Vấn đề của một dòng giỏ hàng; null = ổn. FE chặn thanh toán khi còn dòng có vấn đề (K01 / D8).
 export const lineProblem = (i: CartItem): string | null => {
-  if (!i.available || i.stockQuantity <= 0) return 'Sách đã ngừng bán hoặc hết hàng';
+  if (i.statusReason === 'INACTIVE') return 'Ngừng hoạt động';
+  if (i.statusReason === 'OUT_OF_STOCK') return 'Hết hàng';
+  if (i.statusReason === 'NOT_PHYSICAL') return 'Chỉ có e-book — không mua giấy';
+  if (!i.available || i.stockQuantity <= 0) return 'Hết hàng hoặc ngừng hoạt động';
   if (i.quantity > i.stockQuantity) return `Chỉ còn ${i.stockQuantity} cuốn trong kho`;
   return null;
 };

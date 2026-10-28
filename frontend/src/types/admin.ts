@@ -103,3 +103,29 @@ export interface AdminChapterSaved {
   chapterNumber: number;
   title: string;
 }
+
+/** Kết quả phân tích EPUB trước khi tạo sách */
+export interface EpubParsedChapter {
+  chapterNumber: number;
+  title: string;
+  content: string;
+  textLength?: number;
+}
+
+export interface EpubParseResult {
+  title: string;
+  description: string;
+  /** Tên tác giả từ dc:creator */
+  authors: string[];
+  /** Tên NXB từ dc:publisher */
+  publishers: string[];
+  /** Chủ đề / thể loại gợi ý từ dc:subject */
+  subjects: string[];
+  /** data:image/... nếu có ảnh bìa; null nếu không */
+  coverUrl: string | null;
+  illustrationCount: number;
+  tocTitles: string[];
+  chapterCount: number;
+  chapters: EpubParsedChapter[];
+  skipped: { title: string; reason: string | null }[];
+}

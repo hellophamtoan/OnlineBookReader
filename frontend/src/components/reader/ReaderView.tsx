@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { READER, READER_MESSAGES } from '../../config/reader';
 import { ROUTES } from '../../config/routes';
+import { useAuth } from '../../context/AuthContext';
 import { useAsync } from '../../hooks/useAsync';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useReadingProgress } from '../../hooks/useReadingProgress';
@@ -24,8 +25,11 @@ interface ReaderViewProps {
 }
 
 // UC006 bước 3-9: mở đúng chỗ đọc dở, hiện chương + công cụ, tự lưu, thoát thì lưu và báo.
+// Admin xem sách: không lưu tiến trình.
 export default function ReaderView({ book, chapters, initial }: ReaderViewProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
   const [sp, setSp] = useSearchParams();
 
   // Chương đang mở: ?chapter=N, không có thì chương đã lưu, chưa lưu thì chương đầu (bước 4)
@@ -52,16 +56,17 @@ export default function ReaderView({ book, chapters, initial }: ReaderViewProps)
     bookId: book.id,
     chapterNumber,
     settings,
-    initialPercent: chapterNumber === initial.chapterNumber ? initial.scrollPercent : 0,
-    active: loaded !== null,
+    initialPercent: isAdmin ? 0 : chapterNumber === initial.chapterNumber ? initial.scrollPercent : 0,
+    active: loaded !== null && !isAdmin,
+    persist: !isAdmin,
   });
 
-  // Chương hiện ra: lần mở đầu đúng chương đã lưu thì cuộn tới chỗ đọc dở, còn lại về đầu trang
+  // Chương hiện ra: user mở đúng chương đã lưu thì cuộn tới chỗ đọc dở; admin luôn về đầu trang
   const firstOpen = useRef(true);
   useLayoutEffect(() => {
     const c = chapter.data;
     if (!c || c.chapterNumber !== chapterNumber) return;
-    if (firstOpen.current && chapterNumber === initial.chapterNumber) scrollToPercent(initial.scrollPercent);
+    if (!isAdmin && firstOpen.current && chapterNumber === initial.chapterNumber) scrollToPercent(initial.scrollPercent);
     else window.scrollTo(0, 0);
     firstOpen.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -72,14 +77,20 @@ export default function ReaderView({ book, chapters, initial }: ReaderViewProps)
     setSp({ chapter: String(n) }); // đẩy lịch sử trình duyệt: nút Back quay lại chương trước
   };
 
-  // Bước 7-9: lưu tiến trình, báo thành công rồi về trang sách. Lưu lỗi thì cho thử lại hoặc thoát không lưu.
+  const backToBook = () => (isAdmin ? ROUTES.ADMIN_BOOK_DETAIL(book.id) : ROUTES.BOOK_DETAIL(book.id));
+
+  // User: lưu tiến trình rồi về trang sách. Admin: thoát ngay, không lưu.
   const exit = async () => {
     setExitError('');
     setExiting(true);
+    if (isAdmin) {
+      navigate(backToBook());
+      return;
+    }
     try {
       await progress.saveNow();
       setNotice(READER_MESSAGES.saved);
-      exitTimer.current = window.setTimeout(() => navigate(ROUTES.BOOK_DETAIL(book.id)), READER.EXIT_DELAY_MS);
+      exitTimer.current = window.setTimeout(() => navigate(backToBook()), READER.EXIT_DELAY_MS);
     } catch (err) {
       setExiting(false);
       setExitError(toMessage(err));
@@ -134,9 +145,9 @@ export default function ReaderView({ book, chapters, initial }: ReaderViewProps)
           disabled={exiting}
           aria-label="Trở về trang sách"
         >
-          {exiting ? 'Đang lưu...' : '← Trở về'}
+          {exiting && !isAdmin ? 'Đang lưu...' : '← Trở về'}
         </button>
-        {progress.status !== 'idle' && (
+        {!isAdmin && progress.status !== 'idle' && (
           <span className={`reader-bar__status is-${progress.status}`} role="status">
             {progress.status === 'saving' ? 'Đang lưu...' : progress.status === 'saved' ? 'Đã lưu' : 'Lưu thất bại'}
           </span>
@@ -148,7 +159,7 @@ export default function ReaderView({ book, chapters, initial }: ReaderViewProps)
           <span>Chưa lưu được tiến trình: {exitError}</span>
           <span className="reader__alert-actions">
             <button type="button" className="btn btn--ghost" onClick={exit}>Thử lại</button>
-            <Link to={ROUTES.BOOK_DETAIL(book.id)} className="btn btn--ghost btn--danger">Thoát không lưu</Link>
+            <Link to={backToBook()} className="btn btn--ghost btn--danger">Thoát không lưu</Link>
           </span>
         </div>
       )}

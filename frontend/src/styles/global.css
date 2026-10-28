@@ -161,6 +161,10 @@ select.input { cursor: pointer; }
 .header__search .input { min-width: 0; flex: 1 1 auto; }
 .header__search .btn { min-height: 40px; flex-shrink: 0; }
 /* Khối tài khoản + đăng xuất: luôn sát mép phải, không bị co méo */
+
+/* Icon giỏ hàng luôn giữ trên thanh tiêu đề */
+.header__cart { flex-shrink: 0; }
+
 .header__account {
   display: flex;
   align-items: center;
@@ -495,14 +499,19 @@ select.input { cursor: pointer; }
   .library-item__btn { font-size: 12px; min-height: 34px; padding: 0 8px; }
 }
 
-/* Mục lục chi tiết sách trong khung */
+/* Mục lục chi tiết sách trong khung — luôn ~90% kể cả màn rộng, căn đều */
 .book-toc-panel {
+  width: 90%;
+  max-width: none;
   margin-top: 28px;
+  margin-left: auto;
+  margin-right: auto;
   padding: 20px 22px;
   border: 1.5px solid var(--line);
   border-radius: 14px;
   background: var(--surface);
   box-shadow: 0 4px 14px -8px rgba(26, 27, 46, 0.18);
+  box-sizing: border-box;
 }
 .book-toc-panel__head { margin-bottom: 12px; }
 .book-toc-panel__title {
@@ -526,15 +535,44 @@ select.input { cursor: pointer; }
   line-height: 1.4;
 }
 .book-toc-panel__item:last-child { border-bottom: 0; }
-.book-toc-panel__item a {
+/* Mỗi chương một dòng: không xuống hàng phụ */
+.book-toc-panel__item a,
+.book-toc-panel__link {
   color: inherit;
   text-decoration: none;
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
 }
-.book-toc-panel__item a:hover { text-decoration: underline; }
+.book-toc-panel__item a:hover,
+.book-toc-panel__link:hover { text-decoration: underline; }
+.book-toc-panel__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.book-toc-panel__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+.book-toc-panel__row .book-toc-panel__link { flex: 1 1 auto; }
+.book-toc-panel__preview { flex-shrink: 0; }
+/* Xám = đã đọc (tiến trình); xanh = chưa đọc. Chương cần gói không dùng xám — chỉ hiện 🔒 */
 .book-toc-panel__item.is-unread { color: #16a34a; font-weight: 600; }
 .book-toc-panel__item.is-read { color: #6b7280; font-weight: 400; }
-.book-toc-panel__item.is-locked { color: #9ca3af; font-weight: 400; }
+.book-toc-panel__item .toc-lock {
+  margin-left: 2px;
+  flex-shrink: 0;
+  font-size: 0.9em;
+  opacity: 0.85;
+}
 
 /* Ảnh bìa chi tiết: căn giữa khi 1 cột */
 @media (max-width: 960px) {
@@ -653,7 +691,15 @@ select.input { cursor: pointer; }
 
 .detail__cover-col { display: flex; flex-direction: column; gap: 12px; align-items: stretch; }
 .detail-actions { display: flex; flex-direction: column; gap: 8px; }
+.detail-actions .btn { width: 100%; justify-content: center; }
 .detail__read-block { margin: 16px 0 8px; }
 .table__book-link { display: flex; align-items: center; gap: 12px; color: inherit; text-decoration: none; }
 .table__book-link:hover .table__strong { color: var(--brand); text-decoration: underline; }
 .admin-detail-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Nút trở về — chỉ dùng cùng hàng với «Xem trang bán sách» (admin top) */
+.page-back {
+  min-height: 36px;
+  padding: 0 12px;
+  font-weight: 600;
+}
