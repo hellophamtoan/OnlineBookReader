@@ -1,15 +1,22 @@
 // Mock gói đọc + đăng ký (UC005 / UC008)
 import { flag } from './http';
 import { readJson, writeJson } from './storage';
+import type { PlanKind } from '../../utils/planDates';
+import { LIFETIME_DAYS } from '../../utils/planDates';
 
 export interface MockPlan {
   id: number;
   name: string;
   description: string;
+  /** Giá niêm yết (cố định / trọn đời). Gói tùy chọn: 0 — tính khi user chọn ngày */
   price: number;
   durationDays: number;
   status: 'active' | 'inactive';
   isFree?: boolean;
+  /** fixed | lifetime | custom */
+  planKind: PlanKind;
+  /** Giá cơ sở 30 ngày (gói tùy chọn + tham chiếu) */
+  basePrice30: number;
 }
 
 export interface MockSubscription {
@@ -20,10 +27,12 @@ export interface MockSubscription {
   pricePaid: number;
   startDate: string;
   endDate: string;
+  planKind?: PlanKind;
+  isLifetime?: boolean;
 }
 
 const DAY = 24 * 60 * 60 * 1000;
-const PLANS_KEY = 'mock_reading_plans';
+const PLANS_KEY = 'mock_reading_plans_v2';
 const SUBS_KEY = 'mock_subscriptions';
 const FREE_CLAIM_KEY = 'mock_free_plan_claims';
 
@@ -32,9 +41,11 @@ const seedPlans = (): MockPlan[] => [
     id: 1,
     name: 'Gói đọc 1 tháng',
     description: 'Đọc không giới hạn e-book trong 30 ngày',
-    price: 49000,
+    price: 60000,
     durationDays: 30,
     status: 'active',
+    planKind: 'fixed',
+    basePrice30: 60000,
   },
   {
     id: 2,
@@ -43,6 +54,8 @@ const seedPlans = (): MockPlan[] => [
     price: 129000,
     durationDays: 90,
     status: 'active',
+    planKind: 'fixed',
+    basePrice30: 60000,
   },
   {
     id: 3,
@@ -52,6 +65,28 @@ const seedPlans = (): MockPlan[] => [
     durationDays: 30,
     status: 'active',
     isFree: true,
+    planKind: 'fixed',
+    basePrice30: 0,
+  },
+  {
+    id: 4,
+    name: 'Gói trọn đời',
+    description: 'Đọc không giới hạn vĩnh viễn — không đăng ký thêm gói khác',
+    price: 990000,
+    durationDays: LIFETIME_DAYS,
+    status: 'active',
+    planKind: 'lifetime',
+    basePrice30: 60000,
+  },
+  {
+    id: 5,
+    name: 'Gói tùy chọn',
+    description: 'Bạn chọn ngày kết thúc (≥ 30 ngày). Giá tính theo đơn giá 30 ngày.',
+    price: 0,
+    durationDays: 30,
+    status: 'active',
+    planKind: 'custom',
+    basePrice30: 60000,
   },
 ];
 
@@ -63,14 +98,14 @@ const seedSubs = (): MockSubscription[] => {
       userId: 2,
       planId: 1,
       planName: 'Gói đọc 1 tháng',
-      pricePaid: 49000,
+      pricePaid: 60000,
       startDate: new Date(now - 5 * DAY).toISOString(),
       endDate: new Date(now + 25 * DAY).toISOString(),
+      planKind: 'fixed',
     },
   ];
 };
 
-// Sửa thành seedPlans() và seedSubs() ở đây:
 export const allPlans = () => readJson<MockPlan[]>(PLANS_KEY, seedPlans());
 export const savePlans = (list: MockPlan[]) => writeJson(PLANS_KEY, list);
 export const publicPlans = () => allPlans().filter((p) => p.status === 'active');
@@ -82,6 +117,18 @@ export const hasActiveSubscription = (userId: number): boolean => {
   if (flag('mock_sub_expired')) return false;
   const now = Date.now();
   return subscriptionsOf(userId).some((s) => Date.parse(s.startDate) <= now && now < Date.parse(s.endDate));
+};
+
+/** Đang có gói trọn đời còn hiệu lực → không được mua gói khác */
+export const hasLifetimeSubscription = (userId: number): boolean => {
+  if (flag('mock_sub_expired')) return false;
+  const now = Date.now();
+  return subscriptionsOf(userId).some(
+    (s) =>
+      (s.isLifetime || s.planKind === 'lifetime') &&
+      Date.parse(s.startDate) <= now &&
+      now < Date.parse(s.endDate),
+  );
 };
 
 export const currentEndDate = (userId: number): string | null => {

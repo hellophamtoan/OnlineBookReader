@@ -6,6 +6,7 @@ import { chapterAdminService } from '../services/admin/chapteradminservice';
 import type { EpubParsedChapter } from '../types';
 import type { ChapterSummary } from '../types';
 import { toMessage } from './errors';
+import { markAsSection, unmarkSection } from './chapterMeta';
 
 export type ChapterImportFailure = {
   chapterNumber: number;
@@ -247,7 +248,11 @@ export type EpubDiffKind = 'new' | 'same' | 'conflict' | 'serverOnly';
 
 export type EpubDiffRow = {
   kind: EpubDiffKind;
-  chapterNumber: number;
+  /** Thứ tự mục lục (trên → dưới), dùng làm khóa lưu chapter_number */
+  stt: number;
+  /** Số chương hiển thị; null = phần phụ (không tính chương) */
+  chapterNumber: number | null;
+  countsAsChapter: boolean;
   epubTitle?: string;
   serverTitle?: string;
   serverId?: number;
@@ -256,54 +261,73 @@ export type EpubDiffRow = {
   action: 'add' | 'replace' | 'keep' | 'skip';
 };
 
+/**
+ * So sánh EPUB với server theo STT (thứ tự mục lục từ trên xuống).
+ * Mỗi mục TOC = 1 dòng: STT, số chương (hoặc —), trạng thái, tiêu đề EPUB / server.
+ */
 export function diffEpubAgainstExisting(
   epubChapters: EpubParsedChapter[],
   existing: ChapterSummary[],
 ): EpubDiffRow[] {
-  const byNum = new Map(existing.map((e) => [e.chapterNumber, e]));
+  const existingSorted = [...existing].sort((a, b) => a.chapterNumber - b.chapterNumber);
+  const byStt = new Map(existingSorted.map((e) => [e.chapterNumber, e]));
   const rows: EpubDiffRow[] = [];
-  const seen = new Set<number>();
+  const seenStt = new Set<number>();
 
-  for (const c of epubChapters) {
-    const n = Number(c.chapterNumber);
-    if (!Number.isInteger(n) || n < 1) continue;
-    seen.add(n);
-    const server = byNum.get(n);
+  epubChapters.forEach((c, i) => {
+    const stt = i + 1;
+    const countsAsChapter = c.countsAsChapter !== false;
+    const chapterNumber =
+      countsAsChapter && Number.isInteger(c.chapterNumber) && c.chapterNumber >= 1
+        ? c.chapterNumber
+        : null;
+
+    seenStt.add(stt);
+    const server = byStt.get(stt);
+
     if (!server) {
       rows.push({
         kind: 'new',
-        chapterNumber: n,
+        stt,
+        chapterNumber,
+        countsAsChapter,
         epubTitle: c.title,
-        epub: c,
-        action: 'add',
+        epub: { ...c, chapterNumber: stt },
+        // Phần phụ mặc định bỏ qua; chương thật mặc định thêm
+        action: countsAsChapter ? 'add' : 'skip',
       });
-      continue;
+      return;
     }
+
     const sameTitle =
       (server.title || '').trim().toLowerCase() === (c.title || '').trim().toLowerCase();
     rows.push({
       kind: sameTitle ? 'same' : 'conflict',
-      chapterNumber: n,
+      stt,
+      chapterNumber,
+      countsAsChapter,
       epubTitle: c.title,
       serverTitle: server.title,
       serverId: server.id,
-      epub: c,
-      action: sameTitle ? 'keep' : 'keep', // conflict: mặc định giữ server, user chọn replace
+      epub: { ...c, chapterNumber: stt },
+      action: 'keep',
     });
-  }
+  });
 
-  for (const e of existing) {
-    if (seen.has(e.chapterNumber)) continue;
+  for (const e of existingSorted) {
+    if (seenStt.has(e.chapterNumber)) continue;
     rows.push({
       kind: 'serverOnly',
+      stt: e.chapterNumber,
       chapterNumber: e.chapterNumber,
+      countsAsChapter: true,
       serverTitle: e.title,
       serverId: e.id,
       action: 'skip',
     });
   }
 
-  rows.sort((a, b) => a.chapterNumber - b.chapterNumber);
+  rows.sort((a, b) => a.stt - b.stt);
   return rows;
 }
 
@@ -339,44 +363,54 @@ export async function applyEpubChapterDiff(
     const epub = row.epub;
     if (!epub) {
       failed.push({
-        chapterNumber: row.chapterNumber,
+        chapterNumber: row.stt,
         title: row.epubTitle || '',
         message: 'Thiếu dữ liệu EPUB',
       });
       continue;
     }
 
-    const pre = validateChapter(epub);
+    // Lưu theo STT (thứ tự mục lục); nội dung có thể ngắn với phần phụ
+    const payloadChapter: EpubParsedChapter = {
+      ...epub,
+      chapterNumber: row.stt,
+      content: epub.content?.trim() ? epub.content : `<p>${epub.title || 'Phần phụ'}</p>`,
+    };
+    const pre = validateChapter(payloadChapter);
     if (pre) {
-      failed.push({ chapterNumber: row.chapterNumber, title: epub.title, message: pre });
+      failed.push({ chapterNumber: row.stt, title: epub.title, message: pre });
       continue;
     }
 
     try {
       if (row.action === 'add') {
         await chapterAdminService.create(bookId, {
-          chapterNumber: epub.chapterNumber,
-          title: epub.title.trim(),
-          content: epub.content,
+          chapterNumber: row.stt,
+          title: row.countsAsChapter
+            ? unmarkSection(epub.title.trim())
+            : markAsSection(epub.title.trim()),
+          content: payloadChapter.content,
         });
         added += 1;
       } else if (row.action === 'replace' && row.serverId) {
         await chapterAdminService.update(row.serverId, {
-          chapterNumber: epub.chapterNumber,
-          title: epub.title.trim(),
-          content: epub.content,
+          chapterNumber: row.stt,
+          title: row.countsAsChapter
+            ? unmarkSection(epub.title.trim())
+            : markAsSection(epub.title.trim()),
+          content: payloadChapter.content,
         });
         replaced += 1;
       } else if (row.action === 'replace' && !row.serverId) {
         failed.push({
-          chapterNumber: row.chapterNumber,
+          chapterNumber: row.stt,
           title: epub.title,
           message: 'Không có id chương trên server để cập nhật',
         });
       }
     } catch (err) {
       failed.push({
-        chapterNumber: row.chapterNumber,
+        chapterNumber: row.stt,
         title: epub.title,
         message: toMessage(err),
       });

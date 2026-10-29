@@ -14,6 +14,7 @@ import { ApiError } from '../../services/api';
 import { bookAdminService } from '../../services/admin/bookadminservice';
 import { chapterAdminService } from '../../services/admin/chapteradminservice';
 import type { ChapterSummary } from '../../types';
+import { withTocDisplayOrder } from '../../utils/chapterMeta';
 import { toMessage } from '../../utils/errors';
 
 export default function AdminChaptersPage() {
@@ -114,16 +115,18 @@ export default function AdminChaptersPage() {
           <table className="table table--chapters">
             <thead>
               <tr>
+                <th scope="col" className="table__num">STT</th>
                 <th scope="col" className="table__num">Số chương</th>
                 <th scope="col" className="table__title-col">Tiêu đề</th>
                 <th scope="col" className="table__actions-col">Thao tác</th>
               </tr>
             </thead>
             <tbody>
-              {chapters.map((c) => (
+              {withTocDisplayOrder(chapters).map((c) => (
                 <tr key={c.id}>
                   <td className="table__num">{c.chapterNumber}</td>
-                  <td className="table__strong table__title-col">{c.title}</td>
+                  <td className="table__num">{c.displayChapter ?? '—'}</td>
+                  <td className="table__strong table__title-col">{c.titleDisplay}</td>
                   <td className="table__actions">
                     <Link to={ROUTES.ADMIN_CHAPTER_EDIT(bookId, c.id)} className="btn btn--ghost">Sửa</Link>
                     <button type="button" className="btn btn--ghost btn--danger" onClick={() => setRemoving(c)}>Xóa</button>

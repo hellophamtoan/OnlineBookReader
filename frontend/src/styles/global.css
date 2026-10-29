@@ -110,8 +110,31 @@ select.input { cursor: pointer; }
 .tag--low { background: var(--warn-tint); color: var(--warn); }
 .tag--out { background: var(--danger-tint); color: var(--danger); }
 
-.overlay { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(26, 27, 46, 0.55); }
-.dialog { width: 100%; max-width: 420px; padding: 26px; background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-pop); }
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px 16px;
+  background: rgba(26, 27, 46, 0.55);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.dialog {
+  width: 100%;
+  max-width: 420px;
+  max-height: min(90vh, 900px);
+  margin: auto 0;
+  padding: 26px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-pop);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
 .dialog__title { font-size: 20px; margin-bottom: 8px; }
 .dialog__actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
 

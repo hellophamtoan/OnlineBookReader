@@ -12,9 +12,23 @@ import { useAsync } from '../../hooks/useAsync';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { planAdminService, type AdminPlan, type AdminUserOption } from '../../services/admin/planadminservice';
 import { formatPrice } from '../../utils/format';
+import {
+  LIFETIME_DAYS,
+  PLAN_KIND_LABEL,
+  PLAN_MIN_DAYS,
+  progressivePlanPrice,
+  type PlanKind,
+} from '../../utils/planDates';
 import { toMessage } from '../../utils/errors';
 
-const emptyForm = { name: '', description: '', price: '49000', durationDays: '30' };
+const emptyForm = {
+  name: '',
+  description: '',
+  planKind: 'fixed' as PlanKind,
+  basePrice30: '60000',
+  price: '60000',
+  durationDays: String(PLAN_MIN_DAYS),
+};
 
 export default function AdminPlansPage() {
   useDocumentTitle('Quản lý gói đọc');
@@ -30,7 +44,6 @@ export default function AdminPlansPage() {
   const [editPlan, setEditPlan] = useState<AdminPlan | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [topup, setTopup] = useState({ userId: '', amount: '100000', note: 'Nạp test — môi trường học tập' });
-
   const crumbs = [
     { label: 'Tổng quan', to: ROUTES.ADMIN_HOME },
     { label: 'Gói đọc' },
@@ -68,7 +81,7 @@ export default function AdminPlansPage() {
   }, [showForm]);
 
   const openAdd = () => {
-    setForm(emptyForm);
+    setForm({ ...emptyForm });
     setEditPlan(null);
     setShowForm(true);
     setError('');
@@ -79,8 +92,10 @@ export default function AdminPlansPage() {
     setForm({
       name: p.name,
       description: p.description || '',
+      planKind: p.planKind ?? 'fixed',
+      basePrice30: String(p.basePrice30 ?? 60000),
       price: String(p.price),
-      durationDays: String(p.durationDays),
+      durationDays: String(p.durationDays || PLAN_MIN_DAYS),
     });
     setShowForm(true);
     setError('');
@@ -92,16 +107,91 @@ export default function AdminPlansPage() {
     setForm(emptyForm);
   };
 
+  const onKindChange = (planKind: PlanKind) => {
+    setForm((f) => {
+      const base = Number(f.basePrice30) || 60000;
+      if (planKind === 'custom') {
+        return { ...f, planKind, price: '0', durationDays: String(PLAN_MIN_DAYS) };
+      }
+      if (planKind === 'lifetime') {
+        return {
+          ...f,
+          planKind,
+          durationDays: String(LIFETIME_DAYS),
+          price: f.price === '0' ? String(base * 10) : f.price,
+        };
+      }
+      return {
+        ...f,
+        planKind,
+        durationDays: f.durationDays === String(LIFETIME_DAYS) ? String(PLAN_MIN_DAYS) : f.durationDays,
+        price: f.price === '0' ? String(base) : f.price,
+      };
+    });
+  };
+
+  /** Giá hiển thị cuối form theo loại */
+  const previewPrice = (() => {
+    const base = Number(form.basePrice30) || 0;
+    if (form.planKind === 'custom') {
+      return { label: 'Người dùng chọn ngày → giá lũy tiến từ đơn giá 30 ngày', amount: null as number | null, base };
+    }
+    if (form.planKind === 'lifetime') {
+      const n = Number(form.price);
+      return { label: 'Giá trọn đời', amount: Number.isFinite(n) ? n : 0, base };
+    }
+    const n = Number(form.price);
+    return { label: 'Giá gói cố định', amount: Number.isFinite(n) ? n : 0, base };
+  })();
+
   const savePlan = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+    const planKind = form.planKind;
+    if (!form.name.trim()) {
+      setError('Vui lòng nhập tên gói');
+      return;
+    }
+    let price = Number(form.price);
+    let durationDays = Number(form.durationDays);
+    let basePrice30 = Number(form.basePrice30);
+    if (planKind === 'custom') {
+      if (!Number.isFinite(basePrice30) || basePrice30 < 0) {
+        setError('Giá cơ sở 30 ngày không hợp lệ');
+        return;
+      }
+      price = 0;
+      durationDays = PLAN_MIN_DAYS;
+    } else if (planKind === 'lifetime') {
+      durationDays = LIFETIME_DAYS;
+      if (!Number.isFinite(price) || price < 0) {
+        setError('Giá không hợp lệ');
+        return;
+      }
+    } else {
+      if (!Number.isInteger(durationDays) || durationDays < 1) {
+        setError('Số ngày phải là số nguyên ≥ 1');
+        return;
+      }
+      if (!Number.isFinite(price) || price < 0) {
+        setError('Giá không hợp lệ');
+        return;
+      }
+      // Cố định / trọn đời: không dùng giá cơ sở — lưu theo giá gói
+      basePrice30 = price;
+    }
+    if (planKind === 'lifetime') {
+      basePrice30 = price;
+    }
     setBusy(true);
     try {
       const payload = {
         name: form.name.trim(),
         description: form.description.trim(),
-        price: Number(form.price),
-        durationDays: Number(form.durationDays),
+        planKind,
+        basePrice30,
+        price,
+        durationDays,
       };
       if (editPlan) {
         await planAdminService.update(editPlan.id, payload);
@@ -154,8 +244,13 @@ export default function AdminPlansPage() {
     setBusy(true);
     setError('');
     try {
+      const wasActive = removePlan.status === 'active';
       await planAdminService.remove(removePlan.id);
-      setNotice(`Đã xóa (ngừng cung cấp) «${removePlan.name}»`);
+      setNotice(
+        wasActive
+          ? `Đã ngừng bán «${removePlan.name}» (xóa mềm). User đã mua vẫn dùng đến hết hạn.`
+          : `Đã xóa hẳn «${removePlan.name}» khỏi danh mục. User đã mua vẫn dùng đến hết hạn.`,
+      );
       setRemovePlan(null);
       list.reload();
     } catch (err) {
@@ -213,22 +308,106 @@ export default function AdminPlansPage() {
                   value={form.description}
                   onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                 />
-                <div className="admin-form__row">
+
+                <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
+                  <legend className="field__label" style={{ marginBottom: 8 }}>Loại gói</legend>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {(
+                      [
+                        ['fixed', 'Gói cố định — admin chọn số ngày & giá; user chỉ đăng ký hoặc không'],
+                        ['lifetime', 'Gói trọn đời — user đăng ký xong không chọn thêm gói khác'],
+                        ['custom', 'Gói tùy chọn — admin chỉ định giá 30 ngày; user chọn ngày kết thúc'],
+                      ] as const
+                    ).map(([k, hint]) => (
+                      <label key={k} className="check" style={{ alignItems: 'flex-start' }}>
+                        <input
+                          type="radio"
+                          name="planKind"
+                          checked={form.planKind === k}
+                          onChange={() => onKindChange(k)}
+                        />
+                        <span>
+                          <strong>{PLAN_KIND_LABEL[k]}</strong>
+                          <span className="field__hint" style={{ display: 'block' }}>{hint}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+
+                {form.planKind === 'custom' && (
                   <Field
-                    label="Giá (₫)"
+                    label="Giá cơ sở 30 ngày (₫)"
+                    name="basePrice30"
+                    inputMode="numeric"
+                    value={form.basePrice30}
+                    onChange={(e) => setForm((f) => ({ ...f, basePrice30: e.target.value }))}
+                    hint="Đơn giá để tính giá lũy tiến khi user chọn số ngày."
+                  />
+                )}
+
+                {form.planKind === 'fixed' && (
+                  <div className="admin-form__row">
+                    <Field
+                      label="Số ngày"
+                      name="durationDays"
+                      inputMode="numeric"
+                      value={form.durationDays}
+                      onChange={(e) => setForm((f) => ({ ...f, durationDays: e.target.value }))}
+                    />
+                    <Field
+                      label="Giá gói (₫)"
+                      name="price"
+                      inputMode="numeric"
+                      value={form.price}
+                      onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+                    />
+                  </div>
+                )}
+
+                {form.planKind === 'lifetime' && (
+                  <Field
+                    label="Giá trọn đời (₫)"
                     name="price"
                     inputMode="numeric"
                     value={form.price}
                     onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+                    hint="User đăng ký một lần; không đăng ký thêm gói khác."
                   />
-                  <Field
-                    label="Số ngày"
-                    name="durationDays"
-                    inputMode="numeric"
-                    value={form.durationDays}
-                    onChange={(e) => setForm((f) => ({ ...f, durationDays: e.target.value }))}
-                  />
+                )}
+
+                {form.planKind === 'custom' && (
+                  <p className="field__hint">
+                    User sẽ chọn ngày kết thúc (≥ {PLAN_MIN_DAYS} ngày). Giá = công thức lũy tiến từ giá cơ sở 30 ngày.
+                  </p>
+                )}
+
+                <div
+                  className="alert"
+                  role="status"
+                  style={{ marginTop: 8, background: 'var(--bg, #f5f5f7)', borderRadius: 8, padding: '12px 14px' }}
+                >
+                  <strong>Giá hiển thị cuối gói</strong>
+                  <div style={{ marginTop: 6 }}>
+                    {previewPrice.amount == null ? (
+                      <>
+                        {previewPrice.label}
+                        <br />
+                        Ví dụ 30 ngày: <strong>{Number(form.basePrice30 || 0).toLocaleString('vi-VN')} ₫</strong>
+                        {' · '}
+                        90 ngày: <strong>{progressivePlanPrice(90, Number(form.basePrice30) || 0).toLocaleString('vi-VN')} ₫</strong>
+                      </>
+                    ) : (
+                      <>
+                        {previewPrice.label}:{' '}
+                        <strong style={{ fontSize: 18 }}>
+                          {previewPrice.amount.toLocaleString('vi-VN')} ₫
+                        </strong>
+                      </>
+                    )}
+                  </div>
                 </div>
+
                 <div className="dialog__actions">
                   <button type="button" className="btn btn--ghost" onClick={closeForm} disabled={busy}>
                     Hủy
@@ -279,6 +458,7 @@ export default function AdminPlansPage() {
               <tr>
                 <th>ID</th>
                 <th>Tên</th>
+                <th>Loại</th>
                 <th>Giá</th>
                 <th>Ngày</th>
                 <th>Trạng thái</th>
@@ -293,8 +473,13 @@ export default function AdminPlansPage() {
                     {p.name}
                     {p.isFree ? ' (free)' : ''}
                   </td>
-                  <td>{formatPrice(p.price)}</td>
-                  <td>{p.durationDays}</td>
+                  <td>{PLAN_KIND_LABEL[p.planKind ?? 'fixed']}</td>
+                  <td>
+                    {p.planKind === 'custom'
+                      ? `Cơ sở 30n: ${formatPrice(p.basePrice30 ?? 0)}`
+                      : formatPrice(p.price)}
+                  </td>
+                  <td>{p.planKind === 'lifetime' ? 'Trọn đời' : p.planKind === 'custom' ? 'User chọn' : p.durationDays}</td>
                   <td>
                     <span className={p.status === 'active' ? 'tag tag--ok' : 'tag'}>
                       {p.status === 'active' ? 'Đang bán' : 'Ngừng bán'}
@@ -419,13 +604,15 @@ export default function AdminPlansPage() {
 
       <ConfirmDialog
         open={!!removePlan}
-        title="Xóa gói?"
+        title={removePlan?.status === 'active' ? 'Ngừng bán gói (xóa mềm)?' : 'Xóa hẳn gói?'}
         message={
           removePlan
-            ? `«${removePlan.name}» sẽ chuyển sang ngừng cung cấp (xóa mềm). User đã mua vẫn đọc đến hết hạn.`
+            ? removePlan.status === 'active'
+              ? `«${removePlan.name}» sẽ ngừng bán (xóa mềm). Người dùng đã mua vẫn sử dụng đến hết hạn.`
+              : `«${removePlan.name}» sẽ bị xóa hẳn khỏi danh mục. Người dùng đã mua vẫn sử dụng đến hết hạn.`
             : ''
         }
-        confirmLabel="Xóa"
+        confirmLabel={removePlan?.status === 'active' ? 'Ngừng bán' : 'Xóa hẳn'}
         cancelLabel="Hủy"
         busy={busy}
         onConfirm={doRemove}

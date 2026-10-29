@@ -5,6 +5,7 @@ import { READER } from '../../config/reader';
 import { ROUTES } from '../../config/routes';
 import { readerService } from '../../services/readerservice';
 import type { ChapterSummary } from '../../types';
+import { isSectionTitle, withTocDisplayOrder } from '../../utils/chapterMeta';
 
 /** Chương thuộc phần cần gói (từ chương 11) — chỉ để hiện 🔒, không đổi màu xám */
 function needsPackage(c: ChapterSummary, freeLimit: number) {
@@ -56,7 +57,8 @@ export default function BookToc({ bookId, hasEbook }: { bookId: number; hasEbook
   }
 
   const lastRead = progress.data?.chapterNumber ?? 0;
-  const items = list.data.items;
+  // Giống «Chương từ EPUB»: sắp STT tăng dần; phần phụ chỉ tiêu đề; chương thật đánh số tuần tự
+  const items = withTocDisplayOrder(list.data.items);
   const freeLimit = list.data.freeChapterLimit ?? READER.FREE_CHAPTER_LIMIT;
 
   return (
@@ -72,18 +74,15 @@ export default function BookToc({ bookId, hasEbook }: { bookId: number; hasEbook
         )}
       </div>
       <ol className="book-toc-panel__list">
-        {items.map((c: ChapterSummary) => {
-          // Xám chỉ theo tiến trình đã đọc (vd. đọc đến C5 → C1–C5 xám)
-          const read = lastRead > 0 && c.chapterNumber <= lastRead;
-          const pack = needsPackage(c, freeLimit);
+        {items.map((c) => {
+          const front = c.displayChapter == null;
+          const read = !front && lastRead > 0 && c.chapterNumber <= lastRead;
+          const pack = !front && needsPackage(c, freeLimit);
           const cls = read ? 'is-read' : 'is-unread';
           return (
             <li key={c.id} className={`book-toc-panel__item ${cls}`}>
-              {/* Một dòng: tiêu đề + 🔒 / ✓ — khung giống mục lục admin sách & kho */}
               <Link to={`${ROUTES.READER(bookId)}?chapter=${c.chapterNumber}`} className="book-toc-panel__link">
-                <span className="book-toc-panel__text">
-                  Chương {c.chapterNumber}. {c.title}
-                </span>
+                <span className="book-toc-panel__text">{c.label}</span>
                 {pack ? <span className="toc-lock" aria-label="Cần gói đọc">🔒</span> : null}
                 {read ? <span aria-hidden="true">✓</span> : null}
               </Link>

@@ -1,6 +1,7 @@
 // UC008 admin plans + UC013 topup
 import { api } from '../api';
 import { ENDPOINTS } from '../endpoints';
+import type { PlanKind } from '../../utils/planDates';
 
 export interface AdminPlan {
   id: number;
@@ -10,6 +11,8 @@ export interface AdminPlan {
   durationDays: number;
   status: 'active' | 'inactive';
   isFree?: boolean;
+  planKind: PlanKind;
+  basePrice30: number;
 }
 
 export interface AdminUserOption {
@@ -21,28 +24,39 @@ export interface AdminUserOption {
   walletBalance?: number;
 }
 
+export type AdminPlanPayload = {
+  name: string;
+  description: string;
+  planKind: PlanKind;
+  basePrice30: number;
+  price: number;
+  durationDays: number;
+};
+
 export const planAdminService = {
   async list(): Promise<AdminPlan[]> {
     const data = (await api.get(ENDPOINTS.admin.plans.root)).data as { items?: AdminPlan[] };
-    return Array.isArray(data?.items) ? data.items : [];
+    return Array.isArray(data?.items)
+      ? data.items.map((p) => ({
+          ...p,
+          planKind: p.planKind ?? 'fixed',
+          basePrice30: p.basePrice30 ?? p.price,
+        }))
+      : [];
   },
 
   async get(id: number): Promise<AdminPlan> {
-    return (await api.get(ENDPOINTS.admin.plans.detail(id))).data as AdminPlan;
+    const p = (await api.get(ENDPOINTS.admin.plans.detail(id))).data as AdminPlan;
+    return { ...p, planKind: p.planKind ?? 'fixed', basePrice30: p.basePrice30 ?? p.price };
   },
 
-  async create(p: {
-    name: string;
-    description: string;
-    price: number;
-    durationDays: number;
-  }): Promise<AdminPlan> {
+  async create(p: AdminPlanPayload): Promise<AdminPlan> {
     return (await api.post(ENDPOINTS.admin.plans.root, p)).data as AdminPlan;
   },
 
   async update(
     id: number,
-    p: Partial<{ name: string; description: string; price: number; durationDays: number; status: string }>,
+    p: Partial<AdminPlanPayload & { status: string }>,
   ): Promise<AdminPlan> {
     return (await api.put(ENDPOINTS.admin.plans.detail(id), p)).data as AdminPlan;
   },
@@ -51,13 +65,11 @@ export const planAdminService = {
     return (await api.delete(ENDPOINTS.admin.plans.detail(id))).data as AdminPlan;
   },
 
-  /** Danh sách user để nạp ví (mock / học tập) */
   async listUsers(): Promise<AdminUserOption[]> {
     const data = (await api.get(ENDPOINTS.admin.users)).data as { items?: AdminUserOption[] };
     return Array.isArray(data?.items) ? data.items : [];
   },
 
-  /** UC013 — nạp ví (môi trường học tập) */
   async topupWallet(userId: number, amount: number, note?: string) {
     return (
       await api.post(ENDPOINTS.admin.walletTopup(userId), { amount, note: note || undefined })

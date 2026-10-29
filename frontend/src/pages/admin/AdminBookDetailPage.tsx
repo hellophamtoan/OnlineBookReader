@@ -13,6 +13,7 @@ import { bookAdminService } from '../../services/admin/bookadminservice';
 import { chapterAdminService } from '../../services/admin/chapteradminservice';
 import { formatDate, formatPrice } from '../../utils/format';
 import { toMessage } from '../../utils/errors';
+import { withTocDisplayOrder } from '../../utils/chapterMeta';
 import { sanitizeChapterHtml } from '../../utils/sanitize';
 
 export default function AdminBookDetailPage() {
@@ -182,11 +183,12 @@ export default function AdminBookDetailPage() {
             <p className="field__hint">Chưa có chương. Bấm «Thêm chương» hoặc «Quản lý / viết chương».</p>
           ) : (
             <ol className="book-toc-panel__list">
-              {chapters.data.items.map((c) => {
-                // Admin xem được hết; vẫn hiện 🔒 để biết chương thuộc phần cần gói (từ chương 11)
+              {withTocDisplayOrder(chapters.data.items).map((c) => {
+                // Chỉ mục tính chương mới có «Chương N»; phần phụ chỉ tiêu đề
                 const pack =
-                  c.isFree === false ||
-                  (c.isFree !== true && c.chapterNumber > (chapters.data?.freeChapterLimit ?? 10));
+                  c.displayChapter != null &&
+                  (c.isFree === false ||
+                    (c.isFree !== true && c.displayChapter > (chapters.data?.freeChapterLimit ?? 10)));
                 return (
                   <li key={c.id} className="book-toc-panel__item is-unread">
                     <div className="book-toc-panel__row">
@@ -194,9 +196,7 @@ export default function AdminBookDetailPage() {
                         to={`${ROUTES.READER(b.id)}?chapter=${c.chapterNumber}`}
                         className="book-toc-panel__link"
                       >
-                        <span className="book-toc-panel__text">
-                          Chương {c.chapterNumber}. {c.title}
-                        </span>
+                        <span className="book-toc-panel__text">{c.label}</span>
                         {pack ? <span className="toc-lock" aria-label="Chương cần gói đọc">🔒</span> : null}
                       </Link>
                       <button

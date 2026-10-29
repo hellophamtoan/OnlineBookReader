@@ -108,7 +108,13 @@
 .admin-form { display: flex; flex-direction: column; gap: 24px; max-width: 880px; }
 .admin-form .form-section { padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); }
 .admin-form__row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.admin-form__row--chapter { grid-template-columns: 160px 1fr; }
+.admin-form__row--chapter {
+  grid-template-columns: minmax(88px, 110px) minmax(100px, 140px) auto;
+  gap: 20px 24px;
+  align-items: end;
+}
+.admin-form__row--chapter .field { min-width: 0; }
+.admin-form__row--chapter .check { margin-bottom: 14px; padding-left: 4px; }
 .admin-form__actions { display: flex; flex-wrap: wrap; gap: 12px; }
 .input.textarea { min-height: 96px; padding: 10px 12px; line-height: 1.6; resize: vertical; }
 .textarea--code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; }
@@ -135,6 +141,25 @@
 .admin-card__title { font-size: 18px; font-weight: 800; color: var(--ink); }
 .admin-card__desc { font-size: 14px; color: var(--muted); }
 .dialog--wide { max-width: 560px; }
+/* Modal thêm/sửa gói đọc: cuộn khi form dài (ngày kết thúc, giá…) */
+.admin-plan-dialog {
+  max-width: 480px;
+  max-height: min(90vh, 880px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+.admin-plan-dialog .admin-form {
+  max-width: none;
+}
+.admin-plan-dialog .dialog__actions {
+  position: sticky;
+  bottom: 0;
+  padding-top: 12px;
+  margin-top: 16px;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
 .dialog-form { display: flex; flex-direction: column; gap: 16px; margin-top: 14px; }
 
 /* Nút 3 gạch + overlay (mặc định ẩn trên desktop) */

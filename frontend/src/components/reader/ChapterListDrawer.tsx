@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { READER } from '../../config/reader';
 import type { ChapterSummary } from '../../types';
+import { withTocDisplayOrder } from '../../utils/chapterMeta';
 
 interface ChapterListDrawerProps {
   open: boolean;
@@ -53,8 +54,9 @@ export default function ChapterListDrawer({
           <p className="drawer__empty">Chưa có chương nào.</p>
         ) : (
           <ol className="drawer__list">
-            {chapters.map((c) => {
-              const pack = needsPackage(c, freeChapterLimit);
+            {withTocDisplayOrder(chapters).map((c) => {
+              const front = c.displayChapter == null;
+              const pack = !front && needsPackage(c, freeChapterLimit);
               return (
                 <li key={c.id}>
                   <button
@@ -65,7 +67,7 @@ export default function ChapterListDrawer({
                     onClick={() => onSelect(c.chapterNumber)}
                     title={pack ? 'Chương thuộc phần cần gói đọc' : undefined}
                   >
-                    <span className="drawer__item-title">{c.title}</span>
+                    <span className="drawer__item-title">{c.label}</span>
                     {c.isFree === true && <span className="drawer__badge">Miễn phí</span>}
                     {pack && <span className="drawer__badge drawer__badge--lock">🔒 Gói</span>}
                   </button>

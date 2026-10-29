@@ -184,12 +184,17 @@
 .plan-card .btn {
   margin-top: auto;
 }
-.plan-card--disabled {
+/* Chỉ xám nút khi đã nhận gói 1 lần — khung gói vẫn bình thường */
+.plan-card__btn--used,
+.plan-card .btn:disabled {
   opacity: 0.55;
-  background: var(--bg, #f5f5f7);
-}
-.plan-card--disabled .btn:disabled {
   cursor: not-allowed;
+  filter: grayscale(0.35);
+}
+.plan-card--disabled {
+  /* giữ class cũ nếu còn, không làm xám cả khung */
+  opacity: 1;
+  background: var(--surface);
 }
 
 /* Header: icon giỏ luôn nằm trên thanh, không bị đẩy xuống hàng */

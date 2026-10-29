@@ -1,5 +1,5 @@
 // Import / đồng bộ chương từ EPUB trên trang quản lý chương.
-// So sánh với chương đã có → thêm mới, giữ, hoặc thay thế khi trùng số.
+// So sánh theo STT (thứ tự mục lục trên → dưới): STT, Chương, Trạng thái, EPUB, Server, Hành động.
 import { useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { bookAdminService } from '../../services/admin/bookadminservice';
@@ -11,6 +11,7 @@ import {
   type EpubDiffRow,
 } from '../../utils/importChapters';
 import { toMessage } from '../../utils/errors';
+import { displayTitle } from '../../utils/chapterMeta';
 
 interface Props {
   bookId: number;
@@ -18,6 +19,16 @@ interface Props {
   disabled?: boolean;
   onDone: () => void;
   onNotice: (message: string, tone?: 'success' | 'error') => void;
+}
+
+function statusLabel(r: EpubDiffRow): string {
+  if (!r.countsAsChapter && r.kind === 'new') return 'Phần phụ · mới';
+  if (!r.countsAsChapter && r.kind !== 'serverOnly') return 'Phần phụ';
+  if (r.kind === 'new') return 'Mới';
+  if (r.kind === 'same') return 'Trùng STT · cùng tiêu đề';
+  if (r.kind === 'conflict') return 'Trùng STT · khác tiêu đề';
+  if (r.kind === 'serverOnly') return 'Chỉ trên server';
+  return r.kind;
 }
 
 export default function EpubChapterImportPanel({
@@ -45,7 +56,7 @@ export default function EpubChapterImportPanel({
       setEpubTitle(result.title || file.name);
       const chapters: EpubParsedChapter[] = result.chapters;
       if (!chapters.length) {
-        setError('EPUB không còn chương nội dung sau khi lọc');
+        setError('EPUB không còn mục nào sau khi lọc');
         return;
       }
       setRows(diffEpubAgainstExisting(chapters, existing));
@@ -56,11 +67,9 @@ export default function EpubChapterImportPanel({
     }
   };
 
-  const setAction = (chapterNumber: number, action: EpubDiffRow['action']) => {
+  const setActionAt = (idx: number, action: EpubDiffRow['action']) => {
     setRows((prev) =>
-      prev
-        ? prev.map((r) => (r.chapterNumber === chapterNumber ? { ...r, action } : r))
-        : prev,
+      prev ? prev.map((r, i) => (i === idx ? { ...r, action } : r)) : prev,
     );
   };
 
@@ -76,7 +85,14 @@ export default function EpubChapterImportPanel({
 
   const setAllNew = (action: 'add' | 'skip') => {
     setRows((prev) =>
-      prev ? prev.map((r) => (r.kind === 'new' ? { ...r, action } : r)) : prev,
+      prev
+        ? prev.map((r) => {
+            if (r.kind !== 'new') return r;
+            // «Thêm tất cả chương mới»: chỉ các phần tính chương
+            if (action === 'add' && !r.countsAsChapter) return { ...r, action: 'skip' };
+            return { ...r, action };
+          })
+        : prev,
     );
   };
 
@@ -99,7 +115,8 @@ export default function EpubChapterImportPanel({
 
   const counts = rows
     ? {
-        new: rows.filter((r) => r.kind === 'new').length,
+        new: rows.filter((r) => r.kind === 'new' && r.countsAsChapter).length,
+        front: rows.filter((r) => r.kind === 'new' && !r.countsAsChapter).length,
         same: rows.filter((r) => r.kind === 'same').length,
         conflict: rows.filter((r) => r.kind === 'conflict').length,
         serverOnly: rows.filter((r) => r.kind === 'serverOnly').length,
@@ -112,8 +129,9 @@ export default function EpubChapterImportPanel({
         Đồng bộ từ EPUB
       </h2>
       <p className="field__hint" style={{ marginBottom: 12 }}>
-        Tải file .epub để quét chương, so với danh sách hiện có: thêm chương mới, giữ hoặc thay chương
-        trùng số. Chương chỉ có trên server không bị xóa trừ khi bạn thao tác riêng.
+        Chọn file .epub để so sánh theo <strong>STT</strong> (thứ tự mục lục từ trên xuống): STT, số
+        chương, trạng thái, tiêu đề EPUB / server. Phần phụ (lời nói đầu…) mặc định bỏ qua; chương thật
+        mặc định thêm mới khi chưa có trên server.
       </p>
 
       <input
@@ -143,13 +161,15 @@ export default function EpubChapterImportPanel({
           <p className="field__hint" style={{ marginBottom: 8 }}>
             File: <strong>{epubTitle || 'EPUB'}</strong>
             {' · '}
-            mới {counts.new}
+            chương mới {counts.new}
             {' · '}
-            trùng (cùng tiêu đề) {counts.same}
+            phần phụ {counts.front}
             {' · '}
-            xung đột (khác tiêu đề) {counts.conflict}
+            trùng {counts.same}
             {' · '}
-            chỉ trên server {counts.serverOnly}
+            xung đột {counts.conflict}
+            {' · '}
+            chỉ server {counts.serverOnly}
           </p>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
@@ -167,7 +187,7 @@ export default function EpubChapterImportPanel({
               disabled={busy}
               onClick={() => setAllConflicts('replace')}
             >
-              Thay tất cả trùng số bằng EPUB
+              Thay tất cả trùng STT bằng EPUB
             </button>
             <button
               type="button"
@@ -179,11 +199,12 @@ export default function EpubChapterImportPanel({
             </button>
           </div>
 
-          <div className="table-wrap" style={{ maxHeight: 360, overflow: 'auto' }}>
+          <div className="table-wrap" style={{ maxHeight: 420, overflow: 'auto' }}>
             <table className="table table--chapters">
               <thead>
                 <tr>
-                  <th scope="col">Số</th>
+                  <th scope="col">STT</th>
+                  <th scope="col">Chương</th>
                   <th scope="col">Trạng thái</th>
                   <th scope="col">EPUB</th>
                   <th scope="col">Server</th>
@@ -191,24 +212,32 @@ export default function EpubChapterImportPanel({
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
-                  <tr key={`${r.kind}-${r.chapterNumber}`}>
-                    <td className="table__num">{r.chapterNumber}</td>
-                    <td>
-                      {r.kind === 'new' && 'Mới'}
-                      {r.kind === 'same' && 'Trùng số · cùng tiêu đề'}
-                      {r.kind === 'conflict' && 'Trùng số · khác tiêu đề'}
-                      {r.kind === 'serverOnly' && 'Chỉ trên server'}
+                {rows.map((r, rowIdx) => (
+                  <tr key={`${r.kind}-${r.stt}-${rowIdx}`} style={{ whiteSpace: 'nowrap' }}>
+                    <td className="table__num">{r.stt}</td>
+                    <td className="table__num">
+                      {r.countsAsChapter && r.chapterNumber != null ? r.chapterNumber : '—'}
                     </td>
-                    <td>{r.epubTitle ?? '—'}</td>
-                    <td>{r.serverTitle ?? '—'}</td>
+                    <td>{statusLabel(r)}</td>
+                    <td
+                      style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}
+                      title={r.epubTitle ?? undefined}
+                    >
+                      {r.epubTitle ?? '—'}
+                    </td>
+                    <td
+                      style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}
+                      title={r.serverTitle ?? undefined}
+                    >
+                      {r.serverTitle ?? '—'}
+                    </td>
                     <td>
                       {r.kind === 'new' && (
                         <select
                           value={r.action}
                           disabled={busy}
                           onChange={(e) =>
-                            setAction(r.chapterNumber, e.target.value as EpubDiffRow['action'])
+                            setActionAt(rowIdx, e.target.value as EpubDiffRow['action'])
                           }
                         >
                           <option value="add">Thêm</option>
@@ -220,7 +249,7 @@ export default function EpubChapterImportPanel({
                           value={r.action}
                           disabled={busy}
                           onChange={(e) =>
-                            setAction(r.chapterNumber, e.target.value as EpubDiffRow['action'])
+                            setActionAt(rowIdx, e.target.value as EpubDiffRow['action'])
                           }
                         >
                           <option value="keep">Giữ server</option>

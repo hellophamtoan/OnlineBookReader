@@ -57,13 +57,26 @@ export const validateBookForm = (v: BookFormState): BookFormErrors => {
 };
 
 // ---------- Chương ----------
-export type ChapterFormValues = Record<'chapterNumber' | 'title' | 'content', string>;
+/** stt = thứ tự trong mục lục (bắt buộc); chapterNumber có thể trống (phần phụ) */
+export type ChapterFormValues = Record<'stt' | 'chapterNumber' | 'title' | 'content', string>;
 
 export const validateChapterForm = (v: ChapterFormValues): Record<keyof ChapterFormValues, string> => {
-  const n = Number(v.chapterNumber);
+  const stt = Number(v.stt);
+  const chRaw = v.chapterNumber.trim();
+  const ch = Number(chRaw);
   const title = v.title.trim();
   return {
-    chapterNumber: v.chapterNumber.trim() !== '' && Number.isInteger(n) && n >= 1 ? '' : ADMIN_MESSAGES.chapterNumberInvalid,
+    stt:
+      v.stt.trim() !== '' && Number.isInteger(stt) && stt >= 1
+        ? ''
+        : 'STT phải là số nguyên từ 1 trở lên',
+    // Số chương: để trống = phần phụ (lời nói đầu…); nếu ghi thì phải là số nguyên ≥ 1
+    chapterNumber:
+      chRaw === ''
+        ? ''
+        : Number.isInteger(ch) && ch >= 1
+          ? ''
+          : ADMIN_MESSAGES.chapterNumberInvalid,
     title: !title ? ADMIN_MESSAGES.titleRequired : title.length > ADMIN.TITLE_MAX ? ADMIN_MESSAGES.titleTooLong : '',
     content: !v.content.trim() ? ADMIN_MESSAGES.contentRequired : v.content.length > ADMIN.CONTENT_MAX ? ADMIN_MESSAGES.contentTooLong : '',
   };

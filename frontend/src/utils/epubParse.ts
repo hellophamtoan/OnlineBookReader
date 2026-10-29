@@ -7,9 +7,22 @@ import type { EpubParseResult, EpubParsedChapter } from '../types';
 
 const SKIP_WORD = /\b(cover|contents|toc|nav|licen[sc]e|endnotes|loi|bìa|mục lục|bản quyền)\b/i;
 const SKIP_ANY = /(titlepage|title page|halftitle|copyright|colophon|imprint|pg-header|pg-footer|wrap-0\.html)/i;
-/** Tiêu đề mục lục / Gutenberg front matter — không phải chương đọc */
+/** Tiêu đề trang mục lục / bìa / Gutenberg — bỏ hẳn, không lấy làm nội dung chương */
 const SKIP_TITLE =
-  /^(contents|table of contents|mục lục|project gutenberg|there are two editions|colored illustrations|grimm'?s fairy stories)\b/i;
+  /^(contents|table of contents|mục lục|danh mục|project gutenberg|there are two editions|colored illustrations|grimm'?s fairy stories)\b/i;
+/**
+ * Lời nói đầu / giới thiệu / ghi chú ebook… — vẫn hiện trong list, mặc định không tích.
+ * Nhận cả lỗi chính tả phổ biến: «Nhời nói đầu».
+ */
+const FRONT_MATTER_TITLE =
+  /^(nh?ời\s*nói\s*đầu|lời\s*nói\s*đầu|lời\s*tựa|lời\s*mở\s*đầu|lời\s*nhà\s*xuất\s*bản|lời\s*người\s*dịch|lời\s*kết|phần\s*kết|kết\s*luận|giới\s*thiệu|phần\s*mở\s*đầu|ghi\s*chú(\s+của\s+nhóm)?|cảm\s*nhận(\s+của\s+độc\s*giả)?|ý\s*kiến\s*bạn\s*đọc|sách\s*của\s*(soạn\s*giả|tác\s*giả)|tác\s*phẩm\s*cùng\s*tác\s*giả|về\s*tác\s*giả|tiểu\s*sử|phụ\s*lục|chú\s*thích|mục\s*lục|danh\s*mục|preface|foreword|introduction|intro|prologue|epilogue|afterword|acknowledg(?:e)?ments?|dedication|note to the reader|about the author|author'?s note|editor'?s note|publisher'?s note|to the reader|bibliography|index)\b/i;
+
+/** Trang meta sản xuất ebook (không phải lời nói đầu cũng không phải chương đọc) */
+const META_PAGE =
+  /\b(nguyên\s*thảo|biên\s*tập\s*ebook|kiểm\s*tra\s*chính\s*tả|ngày\s*hoàn\s*thành\s*ebook|số\s*hóa\s*\d*\s*quyển|dự\s*án\s*phi\s*lợi\s*nhuận)\b/i;
+/** Tiêu đề chương dạng «1. – TÊN» / «10.—TÊN» */
+const NUMBERED_TITLE = /^\s*(\d+)\s*[.．。:：)）]?[\s—–\-−]*\s*(.+)$/u;
+
 /** Chuẩn BE scripts/import-epub --min-chars; trang chỉ ảnh vẫn bỏ dù có <img> */
 export const EPUB_MIN_CHARS = 200;
 const MIN_CHARS = EPUB_MIN_CHARS;
@@ -28,6 +41,27 @@ const normalize = (s: string) =>
     .toLowerCase()
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .trim();
+
+/** Phần “có chương” — mặc định tích (số thứ tự hoặc chữ Chương) */
+const STORY_CHAPTER_TITLE =
+  /^(chương\s*\d+|(?:phần|hồi|mục)\s*\d+|\d+\s*[.．。:：)）\-—–])\b/iu;
+
+const isFrontMatterTitle = (title: string) => {
+  const t = title.replace(/\s+/g, ' ').trim();
+  if (!t) return false;
+  if (FRONT_MATTER_TITLE.test(t) || FRONT_MATTER_TITLE.test(normalize(t))) return true;
+  if (META_PAGE.test(t)) return true;
+  return false;
+};
+
+/** true = tích (tính số chương); false = phần phụ trong mục lục */
+const countsAsStoryChapter = (title: string) => {
+  if (isFrontMatterTitle(title)) return false;
+  const t = title.replace(/\s+/g, ' ').trim();
+  if (STORY_CHAPTER_TITLE.test(t) || NUMBERED_TITLE.test(t)) return true;
+  // Tên chương không số trong mục lục vẫn tính chương
+  return true;
+};
 
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -429,6 +463,83 @@ const splitByHeadings = (body: string) => {
   }));
 };
 
+/**
+ * Suy tiêu đề chuẩn từ HTML chương:
+ * 1) h1–h3  2) dòng mở đầu dạng «1. – TÊN»  3) khớp mục lục  4) dòng đầu ngắn
+ * Bỏ tiền tố trùng tên sách (thường Calibre nhúng vào mọi trang).
+ */
+const inferChapterTitle = (
+  html: string,
+  opts: { bookTitle?: string; tocTitles?: string[]; tocHint?: string },
+): string => {
+  const { bookTitle = '', tocTitles = [], tocHint = '' } = opts;
+  const h = /<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/i.exec(html);
+  if (h) {
+    const t = stripTags(h[1]).replace(/\s+/g, ' ').trim();
+    if (t && t.length <= 160 && !SKIP_TITLE.test(t)) return t;
+  }
+
+  let text = stripTags(html).replace(/\s+/g, ' ').trim();
+  if (bookTitle) {
+    const bt = bookTitle.replace(/\s+/g, ' ').trim();
+    if (bt && text.toLowerCase().startsWith(bt.toLowerCase())) {
+      text = text.slice(bt.length).replace(/^[\s\-–—:：|]+/, '').trim();
+    }
+  }
+
+  // «1. – TÊN CHƯƠNG» ở đầu trang (sau khi bỏ tên sách)
+  const numSimple = /^(\d+)\s*[.．。:：)）]?\s*[—–\-−]*\s*(.+)$/u.exec(text);
+  if (numSimple) {
+    let rest = numSimple[2].trim();
+    const n = numSimple[1];
+    // Ưu tiên tiêu đề đúng trong mục lục cùng số thứ tự
+    const byNum = tocTitles.find((tt) => {
+      const m = NUMBERED_TITLE.exec(tt.trim());
+      return m && m[1] === n;
+    });
+    if (byNum) return byNum.replace(/\s+/g, ' ').trim();
+
+    const cut = rest.match(
+      /^(.{2,100}?)(?:\s+(?:Khi|Ông|Bào|Thầy|Quân|Nước|Một|Trương|Vua|Bà|Người|Ngày)\b|$)/u,
+    );
+    if (cut) rest = cut[1].trim();
+    rest = rest.replace(/[\s.,;:]+$/u, '').trim();
+    if (rest.length >= 2 && rest.length <= 120) {
+      return `${n}. – ${rest}`.replace(/\s+/g, ' ').trim();
+    }
+  }
+
+  // Khớp mục lục chỉ ở **đầu** nội dung (tránh dính danh sách TOC nhúng cuối trang)
+  const normText = normalize(text);
+  let best = '';
+  for (const tt of tocTitles) {
+    const nt = normalize(tt);
+    if (!nt || nt.length < 3) continue;
+    if (normText.startsWith(nt) || normText.startsWith(nt.slice(0, Math.min(nt.length, 48)))) {
+      if (nt.length > normalize(best).length) best = tt.replace(/\s+/g, ' ').trim();
+    }
+  }
+  if (best) return best;
+
+  if (tocHint && tocHint.length <= 160 && !SKIP_TITLE.test(tocHint)) {
+    const nh = normalize(tocHint);
+    if (nh && (normText.startsWith(nh) || normText.startsWith(nh.slice(0, Math.min(30, nh.length))))) {
+      return tocHint.replace(/\s+/g, ' ').trim();
+    }
+  }
+
+  const firstChunk = text.slice(0, 90).trim();
+  if (
+    firstChunk.length >= 3 &&
+    firstChunk.length <= 80 &&
+    !META_PAGE.test(firstChunk) &&
+    !/^ghi\s*chú/i.test(firstChunk)
+  ) {
+    return firstChunk;
+  }
+  return '';
+};
+
 function findCoverPath(
   opfXml: string,
   manifest: Record<string, ManifestItem>,
@@ -591,30 +702,161 @@ export async function parseEpubBuffer(buf: ArrayBuffer): Promise<EpubParseResult
 
   const toc = readToc(manifest, read);
   const tocTitles = toc.map((e) => e.title).filter(Boolean);
-  const sections: { title: string; html: string; source: string }[] = [];
 
   const sameFile = (a: string, b: string) =>
     a.replace(/\\/g, '/').toLowerCase() === b.replace(/\\/g, '/').toLowerCase() ||
     a.replace(/\\/g, '/').toLowerCase().endsWith('/' + b.replace(/\\/g, '/').toLowerCase()) ||
     b.replace(/\\/g, '/').toLowerCase().endsWith('/' + a.replace(/\\/g, '/').toLowerCase());
 
+  /** Spine pages usable as nội dung (bỏ bìa/meta ngắn) */
+  type SpinePage = { href: string; html: string; text: string; used: boolean };
+  const spinePages: SpinePage[] = [];
   for (const item of spine) {
     try {
-      const body = extractBody(read(item.href));
-      const entries = toc.filter((e) => sameFile(e.file, item.href));
-      let parts =
-        entries.filter((e) => e.frag).length >= 2 ? splitByAnchors(body, entries) : null;
-      // File dài (Gutenberg gộp nhiều truyện) mà TOC không tách được → tách theo heading
-      if (!parts && stripTags(body).length > 8000) {
-        parts = splitByHeadings(body);
-      }
-      if (parts && parts.length >= 2) {
-        parts.forEach((p) => sections.push({ ...p, source: item.href }));
-      } else {
-        sections.push({ title: entries[0]?.title ?? '', html: body, source: item.href });
-      }
+      const base = item.href.split('/').pop()?.replace(/\.[^.]+$/, '') ?? '';
+      if (SKIP_ANY.test(base) || SKIP_WORD.test(base)) continue;
+      const html = extractBody(read(item.href));
+      const text = stripTags(html).replace(/\s+/g, ' ').trim();
+      if (!text) continue;
+      if (text.length < 40 && !/<img\b/i.test(html)) continue;
+      spinePages.push({ href: item.href, html, text, used: false });
     } catch {
-      /* bỏ trang lỗi */
+      /* bỏ */
+    }
+  }
+
+  const tocTargetCounts = new Map<string, number>();
+  for (const e of toc) {
+    const k = `${e.file.toLowerCase()}#${(e.frag || '').toLowerCase()}`;
+    tocTargetCounts.set(k, (tocTargetCounts.get(k) || 0) + 1);
+  }
+  const brokenToc =
+    toc.length >= 5 &&
+    [...tocTargetCounts.values()].some((n) => n >= Math.max(3, Math.floor(toc.length * 0.25)));
+
+  /**
+   * Lấy HTML cho 1 mục TOC: ưu tiên file#frag; nếu TOC lệch thì khớp nội dung spine theo tiêu đề.
+   */
+  const contentForTocEntry = (
+    entry: TocEntry,
+    next: TocEntry | undefined,
+  ): { html: string; source: string } => {
+    // 1) Tách theo anchor trong cùng file khi frag hợp lệ và không bị dồn
+    const key = `${entry.file.toLowerCase()}#${(entry.frag || '').toLowerCase()}`;
+    const crowded = (tocTargetCounts.get(key) || 0) >= 3;
+
+    if (!brokenToc && !crowded) {
+      try {
+        const body = extractBody(read(entry.file));
+        if (entry.frag) {
+          const frag = escapeRe(entry.frag);
+          const re = new RegExp(`<[^>]*\\bid=["']${frag}["'][^>]*>`, 'i');
+          const re2 = new RegExp(`<[^>]*\\bname=["']${frag}["'][^>]*>`, 'i');
+          const m = re.exec(body) || re2.exec(body);
+          if (m) {
+            let end = body.length;
+            if (next && sameFile(next.file, entry.file) && next.frag) {
+              const nf = escapeRe(next.frag);
+              const nm =
+                new RegExp(`<[^>]*\\bid=["']${nf}["'][^>]*>`, 'i').exec(body) ||
+                new RegExp(`<[^>]*\\bname=["']${nf}["'][^>]*>`, 'i').exec(body);
+              if (nm && nm.index > m.index) end = nm.index;
+            }
+            return { html: body.slice(m.index, end), source: entry.file };
+          }
+        }
+        // Cả file chỉ thuộc 1 mục TOC
+        const onlyThis = toc.filter((e) => sameFile(e.file, entry.file)).length === 1;
+        if (onlyThis) return { html: body, source: entry.file };
+      } catch {
+        /* fallback */
+      }
+    }
+
+    // 2) Khớp spine theo tiêu đề (TOC lệch file — Calibre)
+    const nt = normalize(entry.title);
+    const numM = NUMBERED_TITLE.exec(entry.title.trim());
+    let bestIdx = -1;
+    let bestScore = 0;
+    for (let i = 0; i < spinePages.length; i++) {
+      const p = spinePages[i];
+      if (p.used) continue;
+      let head = p.text;
+      if (bookTitle) {
+        const bt = bookTitle.replace(/\s+/g, ' ').trim();
+        if (bt && head.toLowerCase().startsWith(bt.toLowerCase())) {
+          head = head.slice(bt.length).replace(/^[\s\-–—:：|]+/, '').trim();
+        }
+      }
+      const nh = normalize(head);
+      let score = 0;
+      if (nt && (nh.startsWith(nt) || nh.startsWith(nt.slice(0, Math.min(nt.length, 40))))) {
+        score = 100 + Math.min(nt.length, 50);
+      } else if (numM) {
+        const bodyNum = NUMBERED_TITLE.exec(head);
+        if (bodyNum && bodyNum[1] === numM[1]) score = 80;
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        bestIdx = i;
+      }
+    }
+    if (bestIdx >= 0 && bestScore >= 80) {
+      spinePages[bestIdx].used = true;
+      return { html: spinePages[bestIdx].html, source: spinePages[bestIdx].href };
+    }
+
+    // 3) Thử đọc đúng file TOC ghi (dù crowded) — lấy cả trang nếu còn
+    try {
+      const body = extractBody(read(entry.file));
+      if (stripTags(body).length >= 40) return { html: body, source: entry.file };
+    } catch {
+      /* */
+    }
+
+    return { html: '', source: entry.file || '' };
+  };
+
+  // ——— Nguồn chính: từng mục trong mục lục (đầy đủ danh mục) ———
+  type Section = { title: string; html: string; source: string; fromToc: boolean };
+  const sections: Section[] = [];
+
+  if (toc.length > 0) {
+    for (let i = 0; i < toc.length; i++) {
+      const entry = toc[i];
+      const title = (entry.title || '').replace(/\s+/g, ' ').trim();
+      if (!title) continue;
+      // Chỉ bỏ hẳn trang mang tên «Mục lục / Contents» (không phải các mục con)
+      if (SKIP_TITLE.test(title) && !NUMBERED_TITLE.test(title)) continue;
+
+      const { html, source } = contentForTocEntry(entry, toc[i + 1]);
+      sections.push({ title, html, source, fromToc: true });
+    }
+  }
+
+  // Fallback khi không có TOC: mỗi spine 1 phần (như trước)
+  if (!sections.length) {
+    for (const p of spinePages) {
+      const title = inferChapterTitle(p.html, { bookTitle, tocTitles: [] });
+      sections.push({ title, html: p.html, source: p.href, fromToc: false });
+    }
+  }
+
+  // Bổ sung spine còn thừa chưa khớp TOC (tránh sót nội dung)
+  if (toc.length > 0) {
+    for (const p of spinePages) {
+      if (p.used) continue;
+      const plain = p.text;
+      if (plain.length < MIN_CHARS) continue;
+      if (META_PAGE.test(plain.slice(0, 280)) && plain.length < 800) continue;
+      const numberedHits = (plain.match(/(?:^|\s)\d{1,3}\s*[.．—–\-]\s*\S/g) || []).length;
+      if (numberedHits >= 8 && plain.length < 12000) continue; // mục lục nhúng
+      const title = inferChapterTitle(p.html, { bookTitle, tocTitles });
+      // Chỉ thêm nếu suy được tiêu đề “chương” — tránh nhét trang meta
+      if (!title) continue;
+      if (SKIP_TITLE.test(title)) continue;
+      sections.push({ title, html: p.html, source: p.href, fromToc: false });
+      p.used = true;
     }
   }
 
@@ -628,42 +870,57 @@ export async function parseEpubBuffer(buf: ArrayBuffer): Promise<EpubParseResult
     skipped: boolean;
     reason: string | null;
     source: string;
+    fromToc: boolean;
   };
 
   const raw: Raw[] = sections.map((s, i) => {
     const base = s.source.split('/').pop()?.replace(/\.[^.]+$/, '') ?? '';
-    let title = s.title;
-    if (!title) {
-      const h = /<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/i.exec(s.html);
-      title = h ? stripTags(h[1]) : '';
-    }
-    const html = cleanChapterHtml(s.html, title, s.source, zip.binary);
-    const textLength = stripTags(html).length;
-    const hasInlineImg = /<img\b/i.test(html);
-    let reason: string | null = null;
-    if (
-      SKIP_ANY.test(base) ||
-      SKIP_ANY.test(title) ||
-      SKIP_WORD.test(base) ||
-      SKIP_WORD.test(title) ||
-      SKIP_TITLE.test(title.trim())
-    ) {
-      reason = 'không phải chương (bìa/mục lục/bản quyền/front matter)';
-    } else if (hasInlineImg && textLength <= IMAGE_ONLY_MAX_TEXT) {
-      // Spine Gutenberg: mỗi ảnh một trang wrap — không phải chương đọc
-      reason = 'trang chỉ có ảnh minh họa';
-    } else if (textLength < MIN_CHARS) {
-      reason = `quá ngắn (< ${MIN_CHARS} ký tự)`;
-    }
-    return { index: i + 1, title, html, textLength, skipped: !!reason, reason, source: s.source };
-  });
+    let title = (s.title || '').replace(/\s+/g, ' ').trim();
+    if (/^nhời\s*nói\s*đầu/i.test(title)) title = title.replace(/^nhời/i, 'Lời');
 
-  let n = 0;
-  for (const c of raw) {
-    if (c.skipped) continue;
-    n += 1;
-    if (!c.title) c.title = `Chương ${n}`;
-  }
+    // TOC đã có title chuẩn — chỉ suy lại khi thiếu
+    if (!title) {
+      title = inferChapterTitle(s.html, { bookTitle, tocTitles, tocHint: s.title });
+    }
+
+    const html = s.html ? cleanChapterHtml(s.html, title, s.source, zip.binary) : '';
+    const textLength = stripTags(html).length;
+    const plain = stripTags(html);
+    const hasInlineImg = /<img\b/i.test(html);
+    const numberedHits = (plain.match(/(?:^|\s)\d{1,3}\s*[.．—–\-]\s*\S/g) || []).length;
+
+    let reason: string | null = null;
+    // Mục từ TOC: giữ lại kể cả hơi ngắn (trừ trang rỗng / bìa thuần)
+    const minKeep = s.fromToc ? 30 : MIN_CHARS;
+
+    if (SKIP_ANY.test(base) && !s.fromToc) {
+      reason = 'không phải chương (bìa/mục lục/bản quyền)';
+    } else if (SKIP_TITLE.test(title) && !NUMBERED_TITLE.test(title)) {
+      reason = 'trang mục lục / contents';
+    } else if (hasInlineImg && textLength <= IMAGE_ONLY_MAX_TEXT && !s.fromToc) {
+      reason = 'trang chỉ có ảnh minh họa';
+    } else if (textLength < minKeep && !s.fromToc) {
+      reason = `quá ngắn (< ${minKeep} ký tự)`;
+    } else if (!s.fromToc && META_PAGE.test(plain.slice(0, 280)) && textLength < 800) {
+      reason = 'trang meta sản xuất ebook';
+    } else if (!s.fromToc && numberedHits >= 8 && textLength < 12000) {
+      reason = 'trang mục lục nhúng trong nội dung';
+    } else if (s.fromToc && textLength === 0) {
+      // Vẫn giữ mục TOC (đủ danh mục); nội dung trống — user có thể sửa sau
+      reason = null;
+    }
+
+    return {
+      index: i + 1,
+      title,
+      html,
+      textLength,
+      skipped: !!reason,
+      reason,
+      source: s.source,
+      fromToc: s.fromToc,
+    };
+  });
 
   const kept = raw.filter((c) => !c.skipped);
   if (!kept.length) {
@@ -672,13 +929,56 @@ export async function parseEpubBuffer(buf: ArrayBuffer): Promise<EpubParseResult
     );
   }
 
-  const chapters: EpubParsedChapter[] = kept.map((c, i) => ({
-    chapterNumber: i + 1,
-    title: c.title || `Chương ${i + 1}`,
-    content: c.html,
-    textLength: c.textLength,
-  }));
+  // Đánh số chương 1..n chỉ phần tích; phần phụ mục lục vẫn hiện nhưng không tích
+  let storyN = 0;
+  const chapters: EpubParsedChapter[] = kept.map((c) => {
+    let title = (c.title || '').replace(/\s+/g, ' ').trim();
+    if (/^nhời\s*nói\s*đầu/i.test(title)) title = title.replace(/^nhời/i, 'Lời');
 
+    const plainHead = (() => {
+      let t = stripTags(c.html).replace(/\s+/g, ' ').trim();
+      const bt = bookTitle.replace(/\s+/g, ' ').trim();
+      if (bt && t.toLowerCase().startsWith(bt.toLowerCase())) {
+        t = t.slice(bt.length).replace(/^[\s\-–—:：|]+/, '').trim();
+      }
+      return t.slice(0, 120);
+    })();
+
+    const front =
+      isFrontMatterTitle(title) ||
+      isFrontMatterTitle(plainHead) ||
+      /^ghi\s*chú\b/i.test(plainHead);
+
+    const story = !front && countsAsStoryChapter(title);
+
+    if (!story) {
+      if (!title || /^chương\s+\d+$/i.test(title)) {
+        if (/^ghi\s*chú/i.test(plainHead)) title = 'Ghi chú';
+        else if (isFrontMatterTitle(plainHead)) {
+          const m = plainHead.match(/^[^.]{3,60}/);
+          title = (m ? m[0] : title || 'Phần phụ').replace(/\s+/g, ' ').trim();
+        } else title = title || 'Phần phụ';
+      }
+      return {
+        chapterNumber: 0,
+        title: title || 'Phần phụ',
+        content: c.html,
+        textLength: c.textLength,
+        countsAsChapter: false,
+      };
+    }
+
+    storyN += 1;
+    return {
+      chapterNumber: storyN,
+      title: title || `Chương ${storyN}`,
+      content: c.html,
+      textLength: c.textLength,
+      countsAsChapter: true,
+    };
+  });
+
+  const storyCount = chapters.filter((c) => c.countsAsChapter !== false).length;
   return {
     title: bookTitle,
     description: bookDescription,
@@ -688,7 +988,7 @@ export async function parseEpubBuffer(buf: ArrayBuffer): Promise<EpubParseResult
     coverUrl,
     illustrationCount,
     tocTitles,
-    chapterCount: chapters.length,
+    chapterCount: storyCount,
     chapters,
     skipped: raw.filter((c) => c.skipped).map((c) => ({ title: c.title || c.source, reason: c.reason })),
   };

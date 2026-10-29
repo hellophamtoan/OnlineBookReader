@@ -106,10 +106,13 @@ export interface AdminChapterSaved {
 
 /** Kết quả phân tích EPUB trước khi tạo sách */
 export interface EpubParsedChapter {
+  /** Số chương hiển thị (1..n); 0 = không tính chương (hiện —) */
   chapterNumber: number;
   title: string;
   content: string;
   textLength?: number;
+  /** false = phần phụ, không đánh số chương; mặc định true */
+  countsAsChapter?: boolean;
 }
 
 export interface EpubParseResult {
