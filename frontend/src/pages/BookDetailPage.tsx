@@ -1,4 +1,5 @@
 // UC003 bước 5-6 - Chi tiết sách (API-06)
+// Layout căn theo admin chi tiết: bìa | thông tin+giới thiệu+hành động; mục lục chương full-width bên dưới.
 import { Link, useParams } from 'react-router-dom';
 import BookActions from '../components/book/BookActions';
 import BookCover from '../components/book/BookCover';
@@ -65,9 +66,10 @@ export default function BookDetailPage() {
         <span aria-current="page">{book.title}</span>
       </nav>
 
+      {/* Cùng nhịp admin: article grid bìa + info */}
       <article className="detail">
         <div className="detail__cover-col">
-          <BookCover book={book} className="detail__cover" />
+          <BookCover book={book} className="detail__cover" enableZoom />
           <BookDetailActions book={book} />
         </div>
 
@@ -91,6 +93,7 @@ export default function BookDetailPage() {
             {stock && <span className={`tag tag--${stock.tone}`}>{stock.text}</span>}
           </div>
 
+          <h2 className="detail__heading">Thông tin</h2>
           <dl className="detail__meta">
             {book.publisher && (
               <>
@@ -125,11 +128,6 @@ export default function BookDetailPage() {
             )}
           </dl>
 
-          {/* Đọc trực tuyến nằm trên mục giới thiệu */}
-          <div className="detail__read-block">
-            <ReadBookButton book={book} />
-          </div>
-
           <section aria-labelledby="desc-title">
             <h2 id="desc-title" className="detail__heading">
               Giới thiệu
@@ -137,11 +135,20 @@ export default function BookDetailPage() {
             <p className="detail__desc">{book.description || 'Chưa có mô tả cho cuốn sách này.'}</p>
           </section>
 
-          {/* Chỉ phần mua sách giấy */}
+          <div className="detail__read-block">
+            <ReadBookButton book={book} />
+          </div>
+
           <BookActions book={book} hideRead />
-          <BookToc bookId={book.id} hasEbook={!!book.hasEbook} />
         </div>
       </article>
+
+      {/* Mục lục full-width dưới khối chi tiết — cùng vị trí admin */}
+      {book.hasEbook && (
+        <div style={{ marginTop: 28 }}>
+          <BookToc bookId={book.id} hasEbook />
+        </div>
+      )}
     </div>
   );
 }

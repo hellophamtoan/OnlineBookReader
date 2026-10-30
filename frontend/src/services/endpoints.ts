@@ -49,6 +49,13 @@ export const ENDPOINTS = {
     progress: (bookId: number) => `/reading/progress/${bookId}`, // API-12 GET | API-13 PUT
   },
 
+  // ----- UC005 Gói đọc -----
+  plans: {
+    root: '/plans', // API-50
+    subscribe: '/subscriptions', // API-51
+    me: '/subscriptions/me', // API-52
+  },
+
   // ----- UC007 (ADMIN) -----
   admin: {
     taxonomy: {
@@ -63,6 +70,12 @@ export const ENDPOINTS = {
       chapters: (bookId: number) => `/admin/books/${bookId}/chapters`, // API-31 GET | API-32 POST
     },
     chapter: (id: number) => `/admin/chapters/${id}`, // API-33 GET | API-34 PUT | API-35 DELETE
+    plans: {
+      root: '/admin/plans', // API-53 GET | API-55 POST
+      detail: (id: number) => `/admin/plans/${id}`, // API-54 GET | API-56 PUT | API-57 DELETE
+    },
+    users: '/admin/users', // danh sách user (nạp ví / học tập)
+    walletTopup: (userId: number) => `/admin/users/${userId}/wallet/topup`, // API-58 UC013
   },
 
   // ----- Ngoài hợp đồng (chỉ mock / BE chưa có thì 404 êm) -----

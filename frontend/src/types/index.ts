@@ -96,13 +96,16 @@ export interface CartItem {
   unitPrice: number;
   quantity: number;
   stockQuantity: number;
-  available: boolean; // false: sách ngừng bán / hết hàng (D8) -> FE chặn thanh toán
+  available: boolean;
+  /** OUT_OF_STOCK | INACTIVE | NOT_PHYSICAL | OK */
+  statusReason?: string;
   subtotal: number;
 }
 
 export interface Cart {
   items: CartItem[];
   totalAmount: number;
+  canCheckout?: boolean;
 }
 
 export interface OrderItem {
@@ -145,6 +148,8 @@ export interface CheckoutPayload {
   shippingAddress: string;
   paymentMethod: PaymentMethod;
   note: string;
+  /** Chỉ đặt các dòng này (chọn từ giỏ hoặc Mua ngay). Không gửi = cả giỏ. */
+  items?: { bookId: number; quantity: number }[];
 }
 
 // API-08 GET /users/me (UC004 dùng điền sẵn + số dư ví; UC012 xem/sửa hồ sơ)

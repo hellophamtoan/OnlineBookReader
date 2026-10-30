@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
 import { ROUTES, profileFor } from '../../config/routes';
 import { RULES } from '../../config/rules';
 import type { Role } from '../../types';
@@ -10,20 +11,28 @@ import Avatar from '../common/Avatar';
 import Logo from '../common/Logo';
 import LogoutButton from '../common/LogoutButton';
 
-const NAV_ITEMS: { to: string; label: string; end: boolean; roles?: Role[] }[] = [
+const NAV_ITEMS: { to: string; label: string; end: boolean; roles?: Role[]; authOnly?: boolean }[] = [
   { to: ROUTES.HOME, label: 'Trang chủ', end: true },
   { to: ROUTES.BOOKS, label: 'Sách', end: false },
+  // Chỉ USER thấy Gói đọc trên header; Admin vào qua trang Quản trị
+  { to: ROUTES.PLANS, label: 'Gói đọc', end: false, roles: ['USER'] },
+  { to: ROUTES.ORDERS, label: 'Đơn hàng', end: false, roles: ['USER'] },
   { to: ROUTES.LIBRARY, label: 'Thư viện', end: false, roles: ['USER'] },
   { to: ROUTES.ADMIN_HOME, label: 'Quản trị', end: false, roles: ['ADMIN'] },
 ];
 
 export default function Header() {
   const { user } = useAuth();
+  const { count } = useCart();
   const navigate = useNavigate();
   const [keyword, setKeyword] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const visibleNav = NAV_ITEMS.filter((item) => !item.roles || (user && item.roles.includes(user.role)));
+  const visibleNav = NAV_ITEMS.filter((item) => {
+    if (item.authOnly && !user) return false;
+    if (item.roles && (!user || !item.roles.includes(user.role))) return false;
+    return true;
+  });
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -45,6 +54,19 @@ export default function Header() {
     navigate(q ? `${ROUTES.BOOKS}?search=${encodeURIComponent(q)}` : ROUTES.BOOKS);
     setMenuOpen(false);
   };
+
+  const cartLink =
+    user?.role === 'USER' ? (
+      <NavLink
+        to={ROUTES.CART}
+        className={({ isActive }) => `header__cart${isActive ? ' active' : ''}`}
+        aria-label={count > 0 ? `Giỏ hàng, ${count} sản phẩm` : 'Giỏ hàng'}
+        title="Giỏ hàng"
+      >
+        <span aria-hidden="true">🛒</span>
+        {count > 0 && <span className="header__cart-badge">{count > 99 ? '99+' : count}</span>}
+      </NavLink>
+    ) : null;
 
   const sideMenu =
     typeof document !== 'undefined'
@@ -77,6 +99,15 @@ export default function Header() {
                     {item.label}
                   </NavLink>
                 ))}
+                {user?.role === 'USER' && (
+                  <NavLink
+                    to={ROUTES.CART}
+                    className={({ isActive }) => `side-nav__link${isActive ? ' is-active' : ''}`}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Giỏ hàng{count > 0 ? ` (${count})` : ''}
+                  </NavLink>
+                )}
                 {user ? (
                   <NavLink to={profileFor(user.role)} className="side-nav__link" onClick={() => setMenuOpen(false)}>
                     Thông tin cá nhân
@@ -146,7 +177,9 @@ export default function Header() {
           </button>
         </form>
 
-        {/* Tên tài khoản + Đăng xuất luôn ở góc trên bên phải */}
+        {/* Icon giỏ hàng: giữa ô tìm và tài khoản, luôn hiện trên thanh tiêu đề */}
+        {cartLink}
+
         <div className="header__account">
           {user ? (
             <>

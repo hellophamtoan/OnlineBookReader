@@ -38,7 +38,8 @@ export default function AuthLayout({
         </form>
 
         <p className="auth__footer">
-          {footerText} <Link to={footerLinkTo}>{footerLinkText}</Link>
+          {footerText}{' '}
+          <Link to={footerLinkTo}>{footerLinkText}</Link>
         </p>
       </div>
     </div>

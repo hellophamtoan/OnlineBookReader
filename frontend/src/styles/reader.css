@@ -52,10 +52,37 @@
 .prose ol { list-style: decimal; }
 .prose li + li { margin-top: 0.4em; }
 .prose hr { margin: 2em 0; border: 0; border-top: 1px solid var(--line); }
+.prose img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1.2em auto;
+  border-radius: 4px;
+}
 
 /* ---------- 5) Mục lục + thông báo ---------- */
-.drawer-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(26, 27, 46, 0.55); }
-.drawer { display: flex; flex-direction: column; width: min(360px, 90vw); height: 100%; background: var(--surface); box-shadow: var(--shadow-pop); }
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(26, 27, 46, 0.55);
+  display: flex;
+  justify-content: flex-start; /* kéo từ trái */
+  align-items: stretch;
+}
+/* Mục lục lúc đọc: hẹp, tối đa bằng vùng lề trái → mép khung nội dung chương (~reader-article) */
+.drawer {
+  display: flex;
+  flex-direction: column;
+  width: min(320px, 88vw);
+  max-width: min(360px, 42vw);
+  height: 100%;
+  margin: 0;
+  background: var(--surface);
+  box-shadow: var(--shadow-pop);
+  box-sizing: border-box;
+  border-right: 1px solid var(--line);
+}
 .drawer__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 20px; border-bottom: 1px solid var(--line); }
 .drawer__title { font-size: 20px; }
 .drawer__list { flex: 1; padding: 8px 12px 24px; overflow-y: auto; list-style: none; }
@@ -207,7 +234,8 @@
   width: 100%;
   text-align: left;
 }
-.drawer__item.is-locked { opacity: 0.55; cursor: not-allowed; }
+/* Chương cần gói: vẫn chọn được; không làm xám cả dòng (xám chỉ dùng cho đã đọc ở book-toc) */
+.drawer__item.is-needs-pack { cursor: pointer; }
 .drawer__item-title { flex: 1; min-width: 0; }
 .drawer__badge {
   flex-shrink: 0;

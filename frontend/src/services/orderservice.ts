@@ -16,6 +16,7 @@ export const orderService = {
       shippingAddress: p.shippingAddress.trim(),
       paymentMethod: p.paymentMethod,
       ...(note ? { note } : {}),
+      ...(p.items && p.items.length ? { items: p.items } : {}),
     });
     return mapOrderDetail(res.data);
   },

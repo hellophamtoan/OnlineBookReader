@@ -10,6 +10,7 @@ export interface UpdateProfilePayload {
   fullName: string;
   email: string;
   phone: string;
+  address?: string;
   avatarUrl: string;
   currentPassword?: string;
   newPassword?: string;
@@ -32,6 +33,7 @@ export const userService = {
       fullName: p.fullName.trim(),
       email: p.email.trim().toLowerCase(),
       phone: p.phone.trim() || null,
+      address: (p.address ?? '').trim() || null,
       avatarUrl: normalizeAvatar(p.avatarUrl),
     };
     if (p.newPassword) {

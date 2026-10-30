@@ -14,6 +14,7 @@
 //
 // Khi BE chốt một dạng, có thể xóa nhánh còn lại ở đây mà không đụng tới trang/component.
 import { env } from '../config/env';
+import { mergeClientCover } from '../utils/clientCoverStore';
 import type {
   AuthUser, Book, BookListResult, Cart, CartItem, NamedRef, Option, Order, OrderItem, OrderListResult, OrderStatus,
   Pagination, PaymentMethod, Role, StoreInfo, UserProfile,
@@ -69,10 +70,11 @@ export const mapUser = (raw: unknown): AuthUser => {
 export const mapBook = (raw: unknown): Book => {
   const r: Raw = isObj(raw) ? raw : {};
   const publisher = toRef(r.publisher ?? (r.publisherName ? r.publisherName : null));
+  const id = Number(r.id);
   return {
-    id: Number(r.id),
+    id,
     title: String(r.title ?? ''),
-    coverUrl: resolveAssetUrl(r.coverUrl ?? r.coverImage),
+    coverUrl: mergeClientCover(id, resolveAssetUrl(r.coverUrl ?? r.coverImage)),
     description: typeof r.description === 'string' ? r.description : null,
     price: num(r.price),
     stockQuantity: num(r.stockQuantity ?? r.stock),
@@ -148,6 +150,7 @@ export const mapCartItem = (raw: unknown): CartItem => {
     quantity,
     stockQuantity,
     available: bool(r.available) ?? stockQuantity > 0,
+    statusReason: r.statusReason != null ? String(r.statusReason) : undefined,
     subtotal: num(r.subtotal) ?? unitPrice * quantity,
   };
 };
@@ -155,7 +158,10 @@ export const mapCartItem = (raw: unknown): CartItem => {
 export const mapCart = (data: unknown): Cart => {
   const d: Raw = isObj(data) ? data : {};
   const items = Array.isArray(d.items) ? d.items.map(mapCartItem) : [];
-  return { items, totalAmount: num(d.totalAmount) ?? items.reduce((sum, i) => sum + i.subtotal, 0) };
+  const totalAmount = num(d.totalAmount) ?? items.reduce((sum, i) => sum + i.subtotal, 0);
+  const canCheckout =
+    bool(d.canCheckout) ?? (items.length > 0 && items.every((i) => i.available));
+  return { items, totalAmount, canCheckout };
 };
 
 const mapOrderItem = (raw: unknown): OrderItem => {

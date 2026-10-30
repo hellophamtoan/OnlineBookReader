@@ -25,7 +25,12 @@ export interface BookFormState {
 
 export type BookFormErrors = Partial<Record<'title' | 'coverUrl' | 'publisherId' | 'formats' | 'price' | 'stock' | 'authorIds' | 'categoryIds', string>>;
 
-const COVER_REGEX = /^(https?:\/\/\S+|\/uploads\/\S+|data:image\/(jpeg|jpg|png|gif|webp);base64,)/i;
+/** URL http(s), /uploads/..., hoặc data:image (EPUB / máy; cho phép charset= trong header) */
+const isValidCoverUrl = (cover: string) => {
+  if (/^https?:\/\/\S+/i.test(cover) || /^\/uploads\/\S+/i.test(cover)) return true;
+  if (/^data:image\//i.test(cover)) return cover.length <= ADMIN.COVER_MAX;
+  return false;
+};
 
 export const validateBookForm = (v: BookFormState): BookFormErrors => {
   const errors: BookFormErrors = {};
@@ -34,7 +39,7 @@ export const validateBookForm = (v: BookFormState): BookFormErrors => {
   else if (title.length > ADMIN.TITLE_MAX) errors.title = ADMIN_MESSAGES.titleTooLong;
 
   const cover = v.coverUrl.trim();
-  if (cover && (cover.length > ADMIN.COVER_MAX || !COVER_REGEX.test(cover))) errors.coverUrl = ADMIN_MESSAGES.coverInvalid;
+  if (cover && !isValidCoverUrl(cover)) errors.coverUrl = ADMIN_MESSAGES.coverInvalid;
 
   if (!v.hasPhysical && !v.hasEbook) errors.formats = ADMIN_MESSAGES.formatRequired;
 
@@ -45,19 +50,33 @@ export const validateBookForm = (v: BookFormState): BookFormErrors => {
     if (v.stock.trim() === '' || !Number.isInteger(stock) || stock < 0) errors.stock = ADMIN_MESSAGES.stockInvalid;
   }
 
+  if (!v.publisherId.trim()) errors.publisherId = ADMIN_MESSAGES.publisherRequired;
   if (v.authorIds.length === 0) errors.authorIds = ADMIN_MESSAGES.authorRequired;
   if (v.categoryIds.length === 0) errors.categoryIds = ADMIN_MESSAGES.categoryRequired;
   return errors;
 };
 
 // ---------- Chương ----------
-export type ChapterFormValues = Record<'chapterNumber' | 'title' | 'content', string>;
+/** stt = thứ tự trong mục lục (bắt buộc); chapterNumber có thể trống (phần phụ) */
+export type ChapterFormValues = Record<'stt' | 'chapterNumber' | 'title' | 'content', string>;
 
 export const validateChapterForm = (v: ChapterFormValues): Record<keyof ChapterFormValues, string> => {
-  const n = Number(v.chapterNumber);
+  const stt = Number(v.stt);
+  const chRaw = v.chapterNumber.trim();
+  const ch = Number(chRaw);
   const title = v.title.trim();
   return {
-    chapterNumber: v.chapterNumber.trim() !== '' && Number.isInteger(n) && n >= 1 ? '' : ADMIN_MESSAGES.chapterNumberInvalid,
+    stt:
+      v.stt.trim() !== '' && Number.isInteger(stt) && stt >= 1
+        ? ''
+        : 'STT phải là số nguyên từ 1 trở lên',
+    // Số chương: để trống = phần phụ (lời nói đầu…); nếu ghi thì phải là số nguyên ≥ 1
+    chapterNumber:
+      chRaw === ''
+        ? ''
+        : Number.isInteger(ch) && ch >= 1
+          ? ''
+          : ADMIN_MESSAGES.chapterNumberInvalid,
     title: !title ? ADMIN_MESSAGES.titleRequired : title.length > ADMIN.TITLE_MAX ? ADMIN_MESSAGES.titleTooLong : '',
     content: !v.content.trim() ? ADMIN_MESSAGES.contentRequired : v.content.length > ADMIN.CONTENT_MAX ? ADMIN_MESSAGES.contentTooLong : '',
   };

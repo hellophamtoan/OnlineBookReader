@@ -37,6 +37,7 @@ export const ROUTES = {
   ADMIN_CATEGORIES: '/admin/categories',
   ADMIN_AUTHORS: '/admin/authors',
   ADMIN_PUBLISHERS: '/admin/publishers',
+  ADMIN_PLANS: '/admin/plans',
 } as const;
 
 export const ROUTE_PATTERNS = {
@@ -50,6 +51,7 @@ export const ROUTE_PATTERNS = {
   ADMIN_CHAPTER_EDIT: '/admin/books/:bookId/chapters/:chapterId/edit',
 } as const;
 
-export const homeFor = (role: Role) => (role === 'ADMIN' ? ROUTES.ADMIN_HOME : ROUTES.HOME);
+/** Sau đăng nhập: vào trang chủ bán sách (cả USER và ADMIN). Admin vào quản trị qua menu. */
+export const homeFor = (_role: Role) => ROUTES.HOME;
 
 export const profileFor = (role: Role) => (role === 'ADMIN' ? ROUTES.ADMIN_PROFILE : ROUTES.PROFILE);

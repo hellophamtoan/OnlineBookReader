@@ -21,7 +21,7 @@ interface BookCoverProps {
   enableZoom?: boolean;
 }
 
-export default function BookCover({ book, className = '', enableZoom = true }: BookCoverProps) {
+export default function BookCover({ book, className = '', enableZoom = false }: BookCoverProps) {
   const [failed, setFailed] = useState(false);
   const [open, setOpen] = useState(false);
 

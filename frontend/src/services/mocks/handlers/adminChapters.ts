@@ -58,9 +58,14 @@ export const adminChapterRoutes: Route[] = [
       const book = bookOr404(idParam(params.bookId, 'id sách'));
       const p = parseChapter(body);
       if (!book.hasEbook) throw badRequest('Sách chưa bật hình thức e-book nên không thể thêm chương');
-      if (chaptersOf(book.id).some((c) => c.chapterNumber === p.chapterNumber)) throw conflict('Số chương đã tồn tại trong sách này', 'chapterNumber');
+      // Chèn tại STT: dồn các chương >= STT lên +1
+      const shifted = allChapters().map((c) =>
+        c.bookId === book.id && c.chapterNumber >= p.chapterNumber
+          ? { ...c, chapterNumber: c.chapterNumber + 1 }
+          : c,
+      );
       const created = { id: nextChapterId(), bookId: book.id, ...p };
-      saveChapters([...allChapters(), created]);
+      saveChapters([...shifted, created]);
       return { status: 201, message: 'Thêm chương thành công', data: summary(created) };
     },
   },
@@ -87,9 +92,16 @@ export const adminChapterRoutes: Route[] = [
       const current = findChapterById(id);
       if (!current) throw notFound('Không tìm thấy chương');
       const p = parseChapter(body);
-      if (chaptersOf(current.bookId).some((c) => c.id !== id && c.chapterNumber === p.chapterNumber)) throw conflict('Số chương đã tồn tại trong sách này', 'chapterNumber');
-      const next = { ...current, ...p };
-      saveChapters(allChapters().map((c) => (c.id === id ? next : c)));
+      const others = chaptersOf(current.bookId)
+        .filter((c) => c.id !== id)
+        .sort((a, b) => a.chapterNumber - b.chapterNumber);
+      const insertAt = Math.max(0, Math.min(others.length, p.chapterNumber - 1));
+      const ordered = [...others];
+      ordered.splice(insertAt, 0, { ...current, ...p });
+      const renumbered = ordered.map((c, i) => ({ ...c, chapterNumber: i + 1 }));
+      const next = renumbered.find((c) => c.id === id)!;
+      const byId = new Map(renumbered.map((c) => [c.id, c]));
+      saveChapters(allChapters().map((c) => byId.get(c.id) ?? c));
       return { message: 'Cập nhật chương thành công', data: summary(next) };
     },
   },

@@ -40,8 +40,15 @@ const parseBook = (body: unknown, isUpdate: boolean) => {
   else if (title.length > ADMIN.TITLE_MAX) errors.push({ field: 'title', message: `Tên sách tối đa ${ADMIN.TITLE_MAX} ký tự` });
 
   const coverUrl = str(b.coverUrl).trim();
-  if (coverUrl && (coverUrl.length > ADMIN.COVER_MAX || !/^(https?:\/\/\S+|\/uploads\/\S+|data:image\/(jpeg|jpg|png|gif|webp);base64,)/i.test(coverUrl))) {
-    errors.push({ field: 'coverUrl', message: 'Ảnh bìa phải là http(s)://, /uploads/... hoặc file ảnh hợp lệ' });
+  if (coverUrl) {
+    const okPath = /^(https?:\/\/\S+|\/uploads\/\S+)/i.test(coverUrl);
+    const okData = /^data:image\//i.test(coverUrl) && coverUrl.length <= ADMIN.COVER_MAX;
+    if (!okPath && !okData) {
+      errors.push({
+        field: 'coverUrl',
+        message: 'Ảnh bìa phải là http(s)://, /uploads/... hoặc ảnh từ EPUB/máy (data:image)',
+      });
+    }
   }
 
   let publisherId: number | null = null;
@@ -177,4 +184,5 @@ export const adminBookRoutes: Route[] = [
       return { message: 'Đã chuyển sách sang ngừng hoạt động', data: null };
     },
   },
+
 ];

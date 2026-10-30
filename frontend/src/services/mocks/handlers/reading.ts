@@ -7,7 +7,7 @@ import { getProgress, saveProgress } from '../readingdb';
 import type { Route } from '../router';
 import { failValidation, idParam, notFound, str, toNumber } from './common';
 import type { FieldErr } from './common';
-import { FREE_CHAPTER_LIMIT, requireCustomer, requireReaderOrFreePreview } from './guards';
+import { FREE_CHAPTER_LIMIT, requireCustomerOrAdmin, requireReaderOrFreePreview } from './guards';
 import { hasActiveSubscription } from '../subscriptiondb';
 
 const ebookOf = (bookId: number) => {
@@ -19,19 +19,21 @@ const ebookOf = (bookId: number) => {
 const DEFAULTS = { fontFamily: 'Arial', fontSize: 16 };
 
 export const readingRoutes: Route[] = [
-  // ===== API-10 GET /books/:id/chapters ===== mục lục (USER đăng nhập; không cần gói)
+  // ===== API-10 GET /books/:id/chapters ===== mục lục (USER/ADMIN đăng nhập; không cần gói)
   {
     method: 'GET',
     path: '/books/:id/chapters',
     handler: ({ token, params }) => {
-      const user = requireCustomer(token);
+      const user = requireCustomerOrAdmin(token);
       const book = ebookOf(idParam(params.id, 'id sách'));
-      const hasSub = hasActiveSubscription(user.id);
+      const isAdmin = user.role === 'ADMIN';
+      const hasSub = isAdmin || hasActiveSubscription(user.id);
       const items = chaptersOf(book.id).map((c) => ({
         id: c.id,
         chapterNumber: c.chapterNumber,
         title: c.title,
         isFree: c.chapterNumber <= FREE_CHAPTER_LIMIT,
+        // Admin không khóa chương; user không gói thì khóa từ chương 11
         locked: !hasSub && c.chapterNumber > FREE_CHAPTER_LIMIT,
       }));
       return {
@@ -80,7 +82,7 @@ export const readingRoutes: Route[] = [
     method: 'GET',
     path: '/reading/progress/:bookId',
     handler: ({ token, params }) => {
-      const user = requireCustomer(token);
+      const user = requireCustomerOrAdmin(token);
       const book = ebookOf(idParam(params.bookId, 'id sách'));
       const row = getProgress(user.id, book.id);
       const chapter = row ? chaptersOf(book.id).find((c) => c.id === row.chapterId) : undefined;
@@ -105,7 +107,7 @@ export const readingRoutes: Route[] = [
     method: 'PUT',
     path: '/reading/progress/:bookId',
     handler: ({ token, params, body }) => {
-      const user = requireCustomer(token);
+      const user = requireCustomerOrAdmin(token);
       const bookId = idParam(params.bookId, 'id sách');
       const b = (body ?? {}) as Record<string, unknown>;
 

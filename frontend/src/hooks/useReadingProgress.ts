@@ -16,9 +16,18 @@ interface Options {
   settings: ReadingSettings;
   initialPercent: number; // vị trí đã lưu của chương đang mở (0 nếu chương khác)
   active: boolean; // false khi chương đang tải: không lưu để khỏi ghi đè bằng số liệu của trang trống
+  /** false = không lưu tiến trình (vd. admin xem sách) */
+  persist?: boolean;
 }
 
-export function useReadingProgress({ bookId, chapterNumber, settings, initialPercent, active }: Options) {
+export function useReadingProgress({
+  bookId,
+  chapterNumber,
+  settings,
+  initialPercent,
+  active,
+  persist = true,
+}: Options) {
   const [status, setStatus] = useState<SaveStatus>('idle');
   const percent = useRef(initialPercent);
   const dirty = useRef(false);
@@ -30,9 +39,15 @@ export function useReadingProgress({ bookId, chapterNumber, settings, initialPer
   latest.current = { bookId, chapterNumber, settings };
   const activeRef = useRef(active);
   activeRef.current = active;
+  const persistRef = useRef(persist);
+  persistRef.current = persist;
 
   const flush = useCallback((): Promise<void> => {
     window.clearTimeout(timer.current);
+    if (!persistRef.current) {
+      dirty.current = false;
+      return Promise.resolve();
+    }
     if (!dirty.current || !activeRef.current) return queue.current;
     dirty.current = false;
     const snap = { ...latest.current, scrollPercent: percent.current };
@@ -59,6 +74,7 @@ export function useReadingProgress({ bookId, chapterNumber, settings, initialPer
   }, []);
 
   const schedule = useCallback(() => {
+    if (!persistRef.current) return;
     dirty.current = true;
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => {
@@ -67,7 +83,9 @@ export function useReadingProgress({ bookId, chapterNumber, settings, initialPer
   }, [flush]);
 
   // Lưu NGAY (nút Thoát). Ném lỗi nếu thất bại để nơi gọi báo cho người đọc.
+  // Admin (persist=false): resolve ngay, không gọi API.
   const saveNow = useCallback(() => {
+    if (!persistRef.current) return Promise.resolve();
     dirty.current = true;
     return flush();
   }, [flush]);
