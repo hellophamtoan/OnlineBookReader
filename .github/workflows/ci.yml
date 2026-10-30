@@ -48,8 +48,9 @@ jobs:
             tests/category.controller.test.js \
             tests/epub.import.test.js \
             tests/week2.controller.test.js \
-            tests/week2.routes.test.js
+            tests/week2.routes.test.js \
+            tests/week3.contract.test.js
 
       # node:test uses its own runner and must not be executed by Jest.
       - name: Run new API contract tests
-        run: node --test tests/new-contract.node.test.js
+        run: node --test tests/new-contract.node.test.js tests/week3.integrated.node.test.js

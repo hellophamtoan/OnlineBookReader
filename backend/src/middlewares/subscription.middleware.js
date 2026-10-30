@@ -7,7 +7,7 @@ const FREE_CHAPTER_LIMIT = 10;
 
 const hasActiveSubscription = async (userId) => {
   const [rows] = await pool.execute(
-    'SELECT id FROM subscriptions WHERE user_id = ? AND start_date <= NOW() AND end_date >= NOW() LIMIT 1',
+    'SELECT id FROM subscriptions WHERE user_id = ? AND start_date <= NOW() AND end_date > NOW() LIMIT 1',
     [userId]
   );
   return rows.length > 0;

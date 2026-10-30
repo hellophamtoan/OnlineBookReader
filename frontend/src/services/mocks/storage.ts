@@ -18,6 +18,21 @@ export const writeJson = (key: string, value: unknown) => {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch {
-    /* bỏ qua, đã có bản trong bộ nhớ */
+    // QuotaExceeded: vẫn giữ bản memory trong phiên; thử ghi bản rút gọn không data URL khổng lồ
+    try {
+      const raw = JSON.stringify(value);
+      if (raw.length > 4_000_000 && key === 'mock_catalog') {
+        const slim = JSON.parse(raw) as { books?: { coverUrl?: string | null }[] };
+        if (Array.isArray(slim.books)) {
+          for (const b of slim.books) {
+            if (typeof b.coverUrl === 'string' && b.coverUrl.startsWith('data:') && b.coverUrl.length > 200_000) {
+              // Giữ preview ngắn sẽ vỡ ảnh — tốt hơn là giữ memory; không ghi localStorage
+            }
+          }
+        }
+      }
+    } catch {
+      /* ignore */
+    }
   }
 };

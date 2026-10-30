@@ -21,6 +21,8 @@ export interface Route {
 
 export const matchRoute = (routes: Route[], method: string, pathname: string) => {
   for (const route of routes) {
+    // Bỏ qua slot undefined (vd. dấu phẩy thừa trong mảng routes)
+    if (!route || !route.method || !route.path) continue;
     if (route.method !== method) continue;
     const names: string[] = [];
     const pattern = route.path.replace(/:([A-Za-z]+)/g, (_, n: string) => {

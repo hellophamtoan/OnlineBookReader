@@ -9,7 +9,7 @@ export const ADMIN = {
   NAME_MAX: 150, // thể loại / tác giả / NXB (API-15, 19, 23)
   TITLE_MAX: 255, // tên sách, tên chương
   CONTENT_MAX: 2_000_000, // nội dung chương (API-32)
-  COVER_MAX: 2_000_000, // cho phép data URL khi upload ảnh từ máy
+  COVER_MAX: 2_500_000, // data URL từ EPUB / máy
   COVER_ACCEPT: 'image/jpeg,image/png,image/gif,image/webp',
   COVER_MAX_BYTES: 2 * 1024 * 1024,
 } as const;
@@ -36,7 +36,14 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
       { to: ROUTES.ADMIN_PUBLISHERS, label: 'Nhà xuất bản', desc: 'Danh sách nhà xuất bản' },
     ],
   },
-  // TODO UC008: { title: 'Gói đọc', items: [...] }  |  UC009: Đơn hàng  |  UC010: Người dùng  |  UC011: Báo cáo
+  {
+    title: 'Gói & ví test',
+    items: [
+      { to: ROUTES.ADMIN_PLANS, label: 'Gói đọc', desc: 'UC008 — tạo / ngừng bán gói' },
+      { to: ROUTES.ADMIN_PLANS, label: 'Nạp ví (test)', desc: 'UC013 — nạp ví môi trường học tập' },
+    ],
+  },
+  // TODO UC009: Đơn hàng  |  UC010: Người dùng  |  UC011: Báo cáo
 ];
 
 export const STATUS_LABELS: Record<EntityStatus, string> = { active: 'Đang hoạt động', inactive: 'Ngừng hoạt động' };
@@ -61,12 +68,13 @@ export const ADMIN_MESSAGES = {
   nameTooLong: `Tên tối đa ${ADMIN.NAME_MAX} ký tự`,
   titleRequired: 'Vui lòng nhập tiêu đề',
   titleTooLong: `Tối đa ${ADMIN.TITLE_MAX} ký tự`,
-  coverInvalid: 'Ảnh bìa phải là URL http(s), /uploads/... hoặc file ảnh (JPEG/PNG/GIF/WebP ≤ 2MB)',
+  coverInvalid: 'Ảnh bìa phải là URL http(s), /uploads/... hoặc ảnh lấy từ EPUB/máy (JPEG/PNG/GIF/WebP)',
   coverType: 'Chỉ chấp nhận ảnh JPEG, PNG, GIF hoặc WebP',
   coverSize: 'Dung lượng ảnh bìa tối đa 2MB',
   formatRequired: 'Chọn ít nhất một hình thức: sách giấy hoặc e-book',
   priceInvalid: 'Giá phải là số không âm',
   stockInvalid: 'Tồn kho phải là số nguyên không âm',
+  publisherRequired: 'Chọn nhà xuất bản',
   authorRequired: 'Chọn ít nhất một tác giả',
   categoryRequired: 'Chọn ít nhất một thể loại',
   chapterNumberInvalid: 'Số chương phải là số nguyên dương',

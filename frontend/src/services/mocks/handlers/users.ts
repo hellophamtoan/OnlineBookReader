@@ -40,6 +40,7 @@ export const userRoutes: Route[] = [
       const fullName = str(b.fullName).trim();
       const email = str(b.email).trim().toLowerCase();
       const phone = str(b.phone).trim();
+      const address = str(b.address).trim();
       const avatarUrl = str(b.avatarUrl).trim();
       const currentPassword = str(b.currentPassword);
       const newPassword = str(b.newPassword);
@@ -93,6 +94,7 @@ export const userRoutes: Route[] = [
         fullName,
         email,
         phone: phone || null,
+        address: address || null,
         avatarUrl: avatarUrl || null,
       };
       if (newPassword) patch.password = newPassword;

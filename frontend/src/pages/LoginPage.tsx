@@ -40,7 +40,7 @@ export default function LoginPage() {
       setLoading(true);
       const { token, user } = await authService.login(values.email, values.password);
       login(token, user);
-      // Bước A5: Người dùng -> trang chủ, Admin -> trang quản trị; nếu bị chặn từ trang khác thì quay lại trang đó
+      // Bước A5: vào trang chủ bán sách; nếu bị chặn từ trang khác thì quay lại trang đó
       const target = state.from ? `${state.from.pathname}${state.from.search ?? ''}` : homeFor(user.role);
       navigate(target, { replace: true });
     } catch (err) {

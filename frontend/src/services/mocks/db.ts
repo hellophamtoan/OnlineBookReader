@@ -43,6 +43,7 @@ export interface ProfilePatch {
   fullName?: string;
   email?: string;
   phone?: string | null;
+  address?: string | null;
   avatarUrl?: string | null;
   password?: string;
 }
@@ -57,6 +58,7 @@ const applyOverride = (u: MockUser): MockUser => {
     fullName: p.fullName ?? u.fullName,
     email: p.email ?? u.email,
     phone: p.phone === undefined ? u.phone : p.phone ?? undefined,
+    address: p.address === undefined ? u.address : p.address ?? undefined,
     avatarUrl: p.avatarUrl === undefined ? u.avatarUrl : p.avatarUrl ?? undefined,
     password: p.password ?? u.password,
   };

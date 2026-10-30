@@ -4,6 +4,7 @@ import { ADMIN_NAV_GROUPS } from '../../config/admin';
 import { ROUTES } from '../../config/routes';
 import { useAuth } from '../../context/AuthContext';
 import Avatar from '../common/Avatar';
+import BackButton from '../common/BackButton';
 import Logo from '../common/Logo';
 import LogoutButton from '../common/LogoutButton';
 
@@ -85,8 +86,10 @@ export default function AdminLayout() {
                 <span />
               </span>
             </button>
+            {/* Trở về + xem trang bán sách cùng hàng */}
+            <BackButton fallback={ROUTES.ADMIN_HOME} className="admin__back" />
             <Link to={ROUTES.HOME} className="admin__site-link">
-              ← Xem trang bán sách
+              Xem trang bán sách
             </Link>
           </div>
           <div className="admin__user">

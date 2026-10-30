@@ -58,7 +58,32 @@ export const buildQuery = (params?: Query) => {
   return s ? `?${s}` : '';
 };
 
-async function transport(method: Method, path: string, body: unknown, token: string | null): Promise<RawResponse> {
+// A retry after a network timeout must use the same UUID; a completed transaction
+// removes the key, so an intentional second purchase gets a new UUID.
+const transactionPaths = [
+  /^\/orders$/, /^\/subscriptions$/, /^\/admin\/users\/\d+\/wallet\/topup$/,
+];
+const keyFor = (method: Method, path: string, body: unknown): { key: string; storageKey: string } | null => {
+  if (method !== 'POST' || !transactionPaths.some((p) => p.test(path))) return null;
+  const payload = JSON.stringify([path, body]);
+  let hash = 2166136261;
+  for (let i = 0; i < payload.length; i++) hash = Math.imul(hash ^ payload.charCodeAt(i), 16777619);
+  const storageKey = `obr:tx:${path}:${hash >>> 0}`;
+  try {
+    const existing = sessionStorage.getItem(storageKey);
+    if (existing) {
+      const stored = JSON.parse(existing) as { payload: string; key: string };
+      if (stored.payload === payload) return { storageKey, key: stored.key };
+    }
+    const key = crypto.randomUUID();
+    sessionStorage.setItem(storageKey, JSON.stringify({ payload, key }));
+    return { storageKey, key };
+  } catch {
+    return { storageKey, key: crypto.randomUUID() };
+  }
+};
+
+async function transport(method: Method, path: string, body: unknown, token: string | null, transactionKey?: string): Promise<RawResponse> {
   if (env.USE_MOCK) {
     const { handleMockRequest } = await import('./mocks/mockserver');
     return handleMockRequest({ method, path, body, token });
@@ -71,6 +96,7 @@ async function transport(method: Method, path: string, body: unknown, token: str
       headers: {
         ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(transactionKey ? { 'Idempotency-Key': transactionKey } : {}),
       },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
@@ -103,7 +129,15 @@ const toFieldErrors = (raw: unknown): FieldError[] => {
 
 async function request<T>(method: Method, path: string, body?: unknown): Promise<ApiResponse<T>> {
   const token = localStorage.getItem(TOKEN_KEY);
-  const { status, body: parsed } = await transport(method, path, body, token);
+  const tx = env.USE_MOCK ? null : keyFor(method, path, body);
+  let response: RawResponse;
+  try {
+    response = await transport(method, path, body, token, tx?.key);
+  } catch (err) {
+    // Keep UUID in sessionStorage: retry may already have been committed on server.
+    throw err;
+  }
+  const { status, body: parsed } = response;
   const json = (parsed && typeof parsed === 'object' ? parsed : null) as
     | (Partial<ApiResponse<T>> & { code?: string; errors?: unknown })
     | null;
@@ -114,6 +148,10 @@ async function request<T>(method: Method, path: string, body?: unknown): Promise
     const locked = status === 403 && (json?.code === 'ACCOUNT_LOCKED' || /bị khóa/i.test(json?.message ?? ''));
     // Chỉ tự đăng xuất khi ĐÃ gửi token; đăng nhập sai mật khẩu (401) thì không
     if (token && (status === 401 || locked)) window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
+    // Transaction definitely rejected on 4xx: allow a corrected request to get a new UUID.
+    if (tx && (businessFail || (status >= 400 && status < 500))) {
+      try { sessionStorage.removeItem(tx.storageKey); } catch { /* browser privacy mode */ }
+    }
     throw new ApiError(
       json?.message || MESSAGES.generic,
       status >= 200 && status < 300 && businessFail ? 400 : status,
@@ -122,6 +160,9 @@ async function request<T>(method: Method, path: string, body?: unknown): Promise
     );
   }
 
+  if (tx) {
+    try { sessionStorage.removeItem(tx.storageKey); } catch { /* browser privacy mode */ }
+  }
   return (json ?? { success: true, message: '', data: null }) as ApiResponse<T>;
 }
 

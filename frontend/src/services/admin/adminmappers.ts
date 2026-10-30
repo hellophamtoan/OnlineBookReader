@@ -47,8 +47,8 @@ export const mapAdminBookDetail = (data: unknown): AdminBookDetail => {
     id: Number(r.id),
     title: String(r.title ?? ''),
     description: str(r.description),
-    // Giữ nguyên đường dẫn BE gửi (không ghép origin) để gửi lại đúng như cũ khi sửa sách
-    coverUrl: str(r.coverUrl),
+    // Giữ data: / http(s) /uploads; ghép origin cho path tương đối
+    coverUrl: resolveAssetUrl(r.coverUrl) ?? str(r.coverUrl),
     publisherId: num(r.publisherId),
     hasPhysical: bool(r.hasPhysical) ?? false,
     hasEbook: bool(r.hasEbook) ?? false,

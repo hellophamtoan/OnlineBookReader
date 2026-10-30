@@ -33,6 +33,7 @@ export default function ProfileForm({ profile, onSaved, onCancel }: ProfileFormP
     fullName: profile.fullName,
     email: profile.email,
     phone: profile.phone ?? '',
+    address: profile.address ?? '',
     avatarUrl: profile.avatarUrl ?? '',
     currentPassword: '',
     newPassword: '',
@@ -81,6 +82,7 @@ export default function ProfileForm({ profile, onSaved, onCancel }: ProfileFormP
           fullName: values.fullName,
           email: values.email,
           phone: values.phone,
+          address: values.address,
           avatarUrl: values.avatarUrl,
           currentPassword: values.currentPassword || undefined,
           newPassword: values.newPassword || undefined,
@@ -198,8 +200,20 @@ export default function ProfileForm({ profile, onSaved, onCancel }: ProfileFormP
         onChange={onChange}
       />
 
+      <Field
+        label="Địa chỉ"
+        name="address"
+        autoComplete="street-address"
+        maxLength={RULES.ADDRESS_MAX}
+        placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành"
+        hint="Không bắt buộc — dùng điền sẵn khi đặt hàng"
+        value={values.address}
+        error={errors.address}
+        onChange={onChange}
+      />
+
       <fieldset style={{ border: 'none', padding: 0, margin: '16px 0 0' }}>
-        <legend style={{ fontWeight: 600, marginBottom: 8 }}>Đổi mật khẩu (để trống nếu không đổi)</legend>
+        <legend style={{ fontWeight: 600, marginBottom: 8 }}>Đổi mật khẩu (bỏ trống cả ba ô nếu chỉ sửa thông tin)</legend>
         <Field
           label="Mật khẩu hiện tại"
           name="currentPassword"

@@ -8,6 +8,7 @@ export default function ProfileInfo({ profile, onEdit }: { profile: UserProfile;
   const rows: { label: string; value: string }[] = [
     { label: 'Email', value: profile.email },
     { label: 'Số điện thoại', value: profile.phone ?? 'Chưa cập nhật' },
+    { label: 'Địa chỉ', value: profile.address ?? 'Chưa cập nhật' },
     { label: 'Vai trò', value: ROLE_LABELS[profile.role] },
     { label: 'Ngày tham gia', value: formatDate(profile.createdAt) || '—' },
     ...(profile.role === 'USER' ? [{ label: 'Số dư ví', value: formatPrice(profile.walletBalance) }] : []),
