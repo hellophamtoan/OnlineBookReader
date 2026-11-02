@@ -13,6 +13,7 @@ import { sanitizeChapterHtml } from '../../utils/sanitize';
 import { hasErrors } from '../../utils/validators';
 import Field from '../common/Field';
 import TextAreaField from '../common/TextAreaField';
+import { scheduleFocusFirstFieldError } from '../../utils/focusFieldError';
 
 interface ChapterFormProps {
   initial?: { chapterNumber: number; title: string; content: string };
@@ -123,7 +124,10 @@ export default function ChapterForm({
     };
     const errs = validateChapterForm(toValidate);
     setErrors(errs);
-    if (hasErrors(errs)) return;
+    if (hasErrors(errs)) {
+      scheduleFocusFirstFieldError(errs);
+      return;
+    }
 
     const stt = Number(values.stt);
     // STT = thứ tự mục lục. Bỏ tích → lưu marker phần phụ (mục lục chỉ hiện tiêu đề, không «Chương N»).
@@ -140,13 +144,19 @@ export default function ChapterForm({
       setLoading(false);
       if (err instanceof ApiError) {
         if (err.status === 409 && err.errors.some((x) => x.field === 'chapterNumber')) {
-          return setFieldError('stt', err.message);
+          setFieldError('stt', err.message);
+          scheduleFocusFirstFieldError({ stt: err.message });
+          return;
         }
         const fieldErrors = err.errors.filter((fe) => fe.field in values);
         if (fieldErrors.length) {
-          return fieldErrors.forEach((fe) =>
-            setFieldError(fe.field as keyof ChapterFormValues, fe.message),
-          );
+          const mapped: Record<string, string> = {};
+          fieldErrors.forEach((fe) => {
+            setFieldError(fe.field as keyof ChapterFormValues, fe.message);
+            mapped[fe.field] = fe.message;
+          });
+          scheduleFocusFirstFieldError(mapped);
+          return;
         }
       }
       setGeneralError(toMessage(err));

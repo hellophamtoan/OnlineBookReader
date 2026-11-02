@@ -2,11 +2,13 @@
 import { MESSAGES } from '../../config/rules';
 import { adminBookRoutes } from './handlers/adminBooks';
 import { adminChapterRoutes } from './handlers/adminChapters';
+import { adminOrderRoutes } from './handlers/adminOrders';
+import { adminUserRoutes } from './handlers/adminUsers';
+import { adminReportRoutes } from './handlers/adminReports';
 import { adminTaxonomyRoutes } from './handlers/adminTaxonomy';
 import { authRoutes } from './handlers/auth';
 import { bookRoutes } from './handlers/books';
 import { cartRoutes } from './handlers/cart';
-import { favoriteRoutes } from './handlers/favorites';
 import { libraryRoutes } from './handlers/library';
 import { orderRoutes } from './handlers/orders';
 import { planRoutes } from './handlers/plans';
@@ -27,10 +29,12 @@ const ROUTES: Route[] = [
   ...planRoutes,
   ...readingRoutes,
   ...libraryRoutes,
-  ...favoriteRoutes,
   ...adminTaxonomyRoutes,
   ...adminBookRoutes,
   ...adminChapterRoutes,
+  ...adminOrderRoutes,
+  ...adminUserRoutes,
+  ...adminReportRoutes,
 ];
 
 interface MockRequest {

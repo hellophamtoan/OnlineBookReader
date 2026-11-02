@@ -91,7 +91,33 @@ export const updateUser = (id: number, patch: ProfilePatch) => {
   }
 };
 
-export const allUsers = () => [...SEED_USERS, ...loadRegistered()].map(applyOverride);
+
+const ACTIVE_KEY = 'mock_user_active_overrides';
+const activeOverrides = () => readJson<Record<string, boolean>>(ACTIVE_KEY, {});
+
+/** UC010: khóa / mở khóa tài khoản (ghi đè isActive) */
+export const setUserActive = (id: number, isActive: boolean) => {
+  writeJson(ACTIVE_KEY, { ...activeOverrides(), [String(id)]: isActive });
+  try {
+    const list = loadRegistered();
+    const idx = list.findIndex((u) => u.id === id);
+    if (idx >= 0) {
+      const updated = [...list];
+      updated[idx] = { ...updated[idx], isActive };
+      memory = updated;
+      localStorage.setItem(KEY, JSON.stringify(updated));
+    }
+  } catch {
+    /* ignore */
+  }
+};
+
+export const allUsers = () =>
+  [...SEED_USERS, ...loadRegistered()].map((u) => {
+    const base = applyOverride(u);
+    const ov = activeOverrides()[String(base.id)];
+    return ov === undefined ? base : { ...base, isActive: ov };
+  });
 
 export const findUserByEmail = (email: string) => {
   const e = email.trim().toLowerCase();

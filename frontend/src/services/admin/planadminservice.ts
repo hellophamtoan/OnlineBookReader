@@ -61,13 +61,16 @@ export const planAdminService = {
     return (await api.put(ENDPOINTS.admin.plans.detail(id), p)).data as AdminPlan;
   },
 
-  async remove(id: number): Promise<void> {
-    await api.delete(ENDPOINTS.admin.plans.detail(id));
+  async remove(id: number): Promise<AdminPlan> {
+    return (await api.delete(ENDPOINTS.admin.plans.detail(id))).data as AdminPlan;
   },
 
   async listUsers(): Promise<AdminUserOption[]> {
-    const data = (await api.get(ENDPOINTS.admin.users)).data as { items?: AdminUserOption[] };
-    return Array.isArray(data?.items) ? data.items : [];
+    const data = (await api.get(ENDPOINTS.admin.users, { role: 'USER', limit: 500 })).data as {
+      items?: AdminUserOption[];
+    } | AdminUserOption[];
+    const items = Array.isArray(data) ? data : data?.items ?? [];
+    return items.filter((u) => (u as { role?: string }).role !== 'ADMIN');
   },
 
   async topupWallet(userId: number, amount: number, note?: string) {

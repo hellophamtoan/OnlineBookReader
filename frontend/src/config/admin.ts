@@ -39,11 +39,22 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
   {
     title: 'Gói & ví test',
     items: [
-      { to: ROUTES.ADMIN_PLANS, label: 'Gói đọc', desc: 'UC008 — tạo / ngừng bán gói' },
-      { to: ROUTES.ADMIN_PLANS, label: 'Nạp ví (test)', desc: 'UC013 — nạp ví môi trường học tập' },
+      { to: ROUTES.ADMIN_PLANS, label: 'Gói đọc & nạp ví', desc: 'UC008 / UC013 — gói đọc và nạp ví test' },
     ],
   },
-  // TODO UC009: Đơn hàng  |  UC010: Người dùng  |  UC011: Báo cáo
+  {
+    title: 'Đơn hàng & khách hàng',
+    items: [
+      { to: ROUTES.ADMIN_ORDERS, label: 'Đơn hàng', desc: 'UC009 — xác nhận, giao hàng, hủy đơn' },
+      { to: ROUTES.ADMIN_USERS, label: 'Người dùng', desc: 'UC010 — danh sách, khóa / mở khóa' },
+    ],
+  },
+  {
+    title: 'Báo cáo',
+    items: [
+      { to: ROUTES.ADMIN_REPORTS, label: 'Thống kê & báo cáo', desc: 'UC011 — doanh thu, sách bán chạy, gói đọc' },
+    ],
+  },
 ];
 
 export const STATUS_LABELS: Record<EntityStatus, string> = { active: 'Đang hoạt động', inactive: 'Ngừng hoạt động' };

@@ -346,24 +346,6 @@ export const planRoutes: Route[] = [
   },
 
   {
-    method: 'GET',
-    path: '/admin/users',
-    handler: ({ token }) => {
-      requireAdmin(token);
-      const items = allUsers()
-        .filter((u) => u.isActive)
-        .map((u) => ({
-          id: u.id,
-          fullName: u.fullName,
-          email: u.email,
-          phone: u.phone ?? null,
-          role: u.role,
-          walletBalance: getWallet(u),
-        }));
-      return { message: 'Danh sách user', data: { items } };
-    },
-  },
-  {
     method: 'POST',
     path: '/admin/users/:userId/wallet/topup',
     handler: ({ token, params, body }) => {

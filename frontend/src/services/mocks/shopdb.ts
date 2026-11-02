@@ -57,11 +57,15 @@ export interface MockOrderItem {
   subtotal: number;
 }
 
+export type PaymentStatus = 'UNPAID' | 'PAID' | 'REFUNDED';
+
 export interface MockOrder {
   id: number;
   userId: number;
   status: OrderStatus;
   paymentMethod: PaymentMethod;
+  /** Khớp BE: WALLET lúc tạo = PAID; COD = UNPAID; hủy đã trừ ví = REFUNDED */
+  paymentStatus: PaymentStatus;
   totalAmount: number;
   receiverName: string;
   receiverPhone: string;
@@ -80,13 +84,33 @@ export const toOrderItems = (lines: CartLine[]): MockOrderItem[] =>
   });
 
 // Đơn mẫu của user1 (id 2) để thấy đủ trạng thái, bộ lọc và nút "Hủy đơn" (chỉ đơn PENDING)
-const seed = (id: number, status: OrderStatus, pm: PaymentMethod, day: string, lines: CartLine[], note: string | null = null): MockOrder => {
+const seed = (
+  id: number,
+  status: OrderStatus,
+  pm: PaymentMethod,
+  day: string,
+  lines: CartLine[],
+  note: string | null = null,
+  paymentStatus?: PaymentStatus,
+): MockOrder => {
   const items = toOrderItems(lines);
+  const ps: PaymentStatus =
+    paymentStatus ??
+    (pm === 'WALLET' ? (status === 'CANCELLED' || status === 'FAILED' ? 'REFUNDED' : 'PAID') : 'UNPAID');
   return {
-    id, userId: 2, status, paymentMethod: pm, note,
+    id,
+    userId: 2,
+    status,
+    paymentMethod: pm,
+    paymentStatus: ps,
+    note,
     totalAmount: items.reduce((s, i) => s + i.subtotal, 0),
-    receiverName: 'Nguyễn Văn An', receiverPhone: '0912345678', shippingAddress: '12 Phố Huế, Hai Bà Trưng, Hà Nội',
-    createdAt: `${day}T10:00:00.000Z`, updatedAt: `${day}T10:00:00.000Z`, items,
+    receiverName: 'Nguyễn Văn An',
+    receiverPhone: '0912345678',
+    shippingAddress: '12 Phố Huế, Hai Bà Trưng, Hà Nội',
+    createdAt: `${day}T10:00:00.000Z`,
+    updatedAt: `${day}T10:00:00.000Z`,
+    items,
   };
 };
 
@@ -96,9 +120,11 @@ const SEED_ORDERS: MockOrder[] = [
   seed(3, 'CANCELLED', 'COD', '2026-10-09', [{ bookId: 9, quantity: 1 }]),
   seed(4, 'FAILED', 'COD', '2026-10-10', [{ bookId: 4, quantity: 2 }]),
   seed(5, 'PENDING', 'COD', '2026-10-12', [{ bookId: 1, quantity: 1 }, { bookId: 2, quantity: 2 }], 'Giao giờ hành chính'),
+  seed(6, 'PREPARING', 'WALLET', '2026-10-15', [{ bookId: 2, quantity: 1 }]),
+  seed(7, 'PENDING', 'WALLET', '2026-10-20', [{ bookId: 3, quantity: 1 }], 'Giao buổi tối'),
 ];
 
-const ORDERS_KEY = 'mock_orders';
+const ORDERS_KEY = 'mock_orders_v2';
 export const allOrders = () => readJson<MockOrder[]>(ORDERS_KEY, SEED_ORDERS);
 export const saveOrders = (orders: MockOrder[]) => writeJson(ORDERS_KEY, orders);
 export const nextOrderId = () => Math.max(0, ...allOrders().map((o) => o.id)) + 1;

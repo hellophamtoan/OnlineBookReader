@@ -1,12 +1,11 @@
 // UC008 — Quản lý gói đọc + UC013 nạp ví test
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import { createPortal } from 'react-dom';
 import AdminPageHeader from '../../components/admin/AdminPageHeader';
+import AdminPlanFormDialog, { type PlanFormState } from '../../components/admin/AdminPlanFormDialog';
+import AdminWalletTopup from '../../components/admin/AdminWalletTopup';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
-import Field from '../../components/common/Field';
 import { EmptyState, ErrorState, LoadingBlock } from '../../components/common/States';
-import TextAreaField from '../../components/common/TextAreaField';
 import { ROUTES } from '../../config/routes';
 import { useAsync } from '../../hooks/useAsync';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -16,15 +15,14 @@ import {
   LIFETIME_DAYS,
   PLAN_KIND_LABEL,
   PLAN_MIN_DAYS,
-  progressivePlanPrice,
   type PlanKind,
 } from '../../utils/planDates';
 import { toMessage } from '../../utils/errors';
 
-const emptyForm = {
+const emptyForm: PlanFormState = {
   name: '',
   description: '',
-  planKind: 'fixed' as PlanKind,
+  planKind: 'fixed',
   basePrice30: '60000',
   price: '60000',
   durationDays: String(PLAN_MIN_DAYS),
@@ -249,7 +247,7 @@ export default function AdminPlansPage() {
       setNotice(
         wasActive
           ? `Đã ngừng bán «${removePlan.name}» (xóa mềm). User đã mua vẫn dùng đến hết hạn.`
-          : `Đã ngừng bán «${removePlan.name}» (xóa mềm). User đã mua vẫn dùng đến hết hạn.`,
+          : `Đã xóa hẳn «${removePlan.name}» khỏi danh mục. User đã mua vẫn dùng đến hết hạn.`,
       );
       setRemovePlan(null);
       list.reload();
@@ -280,148 +278,6 @@ export default function AdminPlansPage() {
       setBusy(false);
     }
   };
-
-  const formModal =
-    showForm && typeof document !== 'undefined'
-      ? createPortal(
-          <div
-            className="overlay"
-            onMouseDown={(e) => {
-              if (e.target === e.currentTarget && !busy) closeForm();
-            }}
-          >
-            <div className="dialog admin-plan-dialog" role="dialog" aria-modal="true" aria-labelledby="plan-form-title">
-              <h2 id="plan-form-title" className="dialog__title">
-                {editPlan ? `Sửa gói #${editPlan.id}` : 'Thêm gói đọc'}
-              </h2>
-              <form className="admin-form admin-form--aligned" onSubmit={savePlan}>
-                <Field
-                  label="Tên gói"
-                  name="name"
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                />
-                <TextAreaField
-                  label="Mô tả"
-                  name="description"
-                  rows={2}
-                  value={form.description}
-                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                />
-
-                <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
-                  <legend className="field__label" style={{ marginBottom: 8 }}>Loại gói</legend>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {(
-                      [
-                        ['fixed', 'Gói cố định — admin chọn số ngày & giá; user chỉ đăng ký hoặc không'],
-                        ['lifetime', 'Gói trọn đời — user đăng ký xong không chọn thêm gói khác'],
-                        ['custom', 'Gói tùy chọn — admin chỉ định giá 30 ngày; user chọn ngày kết thúc'],
-                      ] as const
-                    ).map(([k, hint]) => (
-                      <label key={k} className="check" style={{ alignItems: 'flex-start' }}>
-                        <input
-                          type="radio"
-                          name="planKind"
-                          checked={form.planKind === k}
-                          onChange={() => onKindChange(k)}
-                        />
-                        <span>
-                          <strong>{PLAN_KIND_LABEL[k]}</strong>
-                          <span className="field__hint" style={{ display: 'block' }}>{hint}</span>
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-
-                {form.planKind === 'custom' && (
-                  <Field
-                    label="Giá cơ sở 30 ngày (₫)"
-                    name="basePrice30"
-                    inputMode="numeric"
-                    value={form.basePrice30}
-                    onChange={(e) => setForm((f) => ({ ...f, basePrice30: e.target.value }))}
-                    hint="Đơn giá để tính giá lũy tiến khi user chọn số ngày."
-                  />
-                )}
-
-                {form.planKind === 'fixed' && (
-                  <div className="admin-form__row">
-                    <Field
-                      label="Số ngày"
-                      name="durationDays"
-                      inputMode="numeric"
-                      value={form.durationDays}
-                      onChange={(e) => setForm((f) => ({ ...f, durationDays: e.target.value }))}
-                    />
-                    <Field
-                      label="Giá gói (₫)"
-                      name="price"
-                      inputMode="numeric"
-                      value={form.price}
-                      onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
-                    />
-                  </div>
-                )}
-
-                {form.planKind === 'lifetime' && (
-                  <Field
-                    label="Giá trọn đời (₫)"
-                    name="price"
-                    inputMode="numeric"
-                    value={form.price}
-                    onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
-                    hint="User đăng ký một lần; không đăng ký thêm gói khác."
-                  />
-                )}
-
-                {form.planKind === 'custom' && (
-                  <p className="field__hint">
-                    User sẽ chọn ngày kết thúc (≥ {PLAN_MIN_DAYS} ngày). Giá = công thức lũy tiến từ giá cơ sở 30 ngày.
-                  </p>
-                )}
-
-                <div
-                  className="alert"
-                  role="status"
-                  style={{ marginTop: 8, background: 'var(--bg, #f5f5f7)', borderRadius: 8, padding: '12px 14px' }}
-                >
-                  <strong>Giá hiển thị cuối gói</strong>
-                  <div style={{ marginTop: 6 }}>
-                    {previewPrice.amount == null ? (
-                      <>
-                        {previewPrice.label}
-                        <br />
-                        Ví dụ 30 ngày: <strong>{Number(form.basePrice30 || 0).toLocaleString('vi-VN')} ₫</strong>
-                        {' · '}
-                        90 ngày: <strong>{progressivePlanPrice(90, Number(form.basePrice30) || 0).toLocaleString('vi-VN')} ₫</strong>
-                      </>
-                    ) : (
-                      <>
-                        {previewPrice.label}:{' '}
-                        <strong style={{ fontSize: 18 }}>
-                          {previewPrice.amount.toLocaleString('vi-VN')} ₫
-                        </strong>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <div className="dialog__actions">
-                  <button type="button" className="btn btn--ghost" onClick={closeForm} disabled={busy}>
-                    Hủy
-                  </button>
-                  <button type="submit" className="btn btn--primary" disabled={busy}>
-                    {editPlan ? 'Lưu thay đổi' : 'Tạo gói'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>,
-          document.body,
-        )
-      : null;
 
   return (
     <>
@@ -512,82 +368,26 @@ export default function AdminPlansPage() {
         </div>
       )}
 
-      <form className="admin-form form-section admin-form--aligned" onSubmit={doTopup}>
-        <legend className="form-section__title">Nạp ví user (UC013 — học tập)</legend>
-        <p className="field__hint">Chỉ dùng để test thanh toán ví / mua gói. Không phải cổng thanh toán thật.</p>
+      <AdminPlanFormDialog
+        open={showForm}
+        editId={editPlan?.id ?? null}
+        form={form}
+        busy={busy}
+        previewPrice={previewPrice}
+        onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
+        onKindChange={onKindChange}
+        onSubmit={savePlan}
+        onClose={closeForm}
+      />
 
-        <label className="field">
-          <span className="field__label">User (ID — Họ và tên)</span>
-          <select
-            className="input"
-            name="userId"
-            value={topup.userId}
-            onChange={(e) => setTopup((t) => ({ ...t, userId: e.target.value }))}
-          >
-            <option value="">— Chọn user —</option>
-            {userOptions.map((u) => (
-              <option key={u.id} value={u.id}>
-                #{u.id} — {u.fullName}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        {selectedUser && (
-          <section className="admin-user-card" aria-label="Thông tin cá nhân (chỉ xem)">
-            <h3 className="admin-user-card__title">{selectedUser.fullName}</h3>
-            <p className="admin-user-card__sub">{selectedUser.email || '—'}</p>
-            <dl className="admin-user-card__list">
-              <div className="admin-user-card__row">
-                <dt>ID</dt>
-                <dd>#{selectedUser.id}</dd>
-              </div>
-              <div className="admin-user-card__row">
-                <dt>Họ và tên</dt>
-                <dd>{selectedUser.fullName}</dd>
-              </div>
-              <div className="admin-user-card__row">
-                <dt>Email</dt>
-                <dd>{selectedUser.email || '—'}</dd>
-              </div>
-              <div className="admin-user-card__row">
-                <dt>Số điện thoại</dt>
-                <dd>{selectedUser.phone || 'Chưa cập nhật'}</dd>
-              </div>
-              <div className="admin-user-card__row">
-                <dt>Vai trò</dt>
-                <dd>USER</dd>
-              </div>
-              <div className="admin-user-card__row">
-                <dt>Số dư ví</dt>
-                <dd>
-                  <strong>{formatPrice(selectedUser.walletBalance ?? 0)}</strong>
-                </dd>
-              </div>
-            </dl>
-          </section>
-        )}
-
-        <div className="admin-form__row">
-          <Field
-            label="Số tiền nạp (₫)"
-            name="amount"
-            value={topup.amount}
-            onChange={(e) => setTopup((t) => ({ ...t, amount: e.target.value }))}
-          />
-          <Field
-            label="Ghi chú"
-            name="note"
-            value={topup.note}
-            onChange={(e) => setTopup((t) => ({ ...t, note: e.target.value }))}
-          />
-        </div>
-        <button type="submit" className="btn btn--primary" disabled={busy || !topup.userId}>
-          Nạp ví
-        </button>
-      </form>
-
-      {formModal}
+      <AdminWalletTopup
+        userOptions={userOptions}
+        selectedUser={selectedUser}
+        topup={topup}
+        busy={busy}
+        onChange={(patch) => setTopup((t) => ({ ...t, ...patch }))}
+        onSubmit={doTopup}
+      />
 
       <ConfirmDialog
         open={!!deactivate}

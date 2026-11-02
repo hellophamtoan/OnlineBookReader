@@ -52,10 +52,16 @@ export default function OrderDetailPage() {
   return (
     <div className="container page">
       <nav className="breadcrumb" aria-label="Vị trí trang">
-        <Link to={ROUTES.MY_ORDERS}>Đơn hàng của tôi</Link>
+        <Link to={ROUTES.MY_ORDERS}>Đơn hàng</Link>
         <span aria-hidden="true">/</span>
-        <span aria-current="page">Đơn #{order.id}</span>
+        <span aria-current="page">Chi tiết đơn hàng</span>
       </nav>
+
+      <div className="page-back-row">
+        <Link to={ROUTES.MY_ORDERS} className="btn btn--ghost btn--sm page-back-row__btn">
+          ← Danh sách đơn
+        </Link>
+      </div>
 
       {justOrdered && (
         <div className="alert alert--success order-detail__done" role="status">

@@ -1,18 +1,9 @@
 // services/mappers.ts
 // Chuẩn hóa dữ liệu thô của BE về kiểu nội bộ của FE (types/index.ts).
 //
-// Hai hợp đồng API của nhóm còn lệch nhau (chưa chốt), nên mapper chấp nhận cả hai dạng:
-//
-//   Nội dung            | UC001–UC003 (nguồn chính)          | MNM (bản mở rộng)
-//   --------------------|------------------------------------|----------------------------------
-//   Đăng ký: data       | { id, fullName, email, role }      | { user: {...} }
-//   Ảnh bìa             | coverUrl                           | coverImage
-//   Tác giả / thể loại  | authorNames[] / categoryNames[]    | author {id,name} / category {...}
-//   (chi tiết)          | authors[] / categories[]           | author {...} / category {...}
-//   Phân trang          | data.page, data.limit, data.total  | data.pagination {page,limit,total,totalPages}
-//   Chi tiết sách       | data = {...}                       | data.book = {...}
-//
-// Khi BE chốt một dạng, có thể xóa nhánh còn lại ở đây mà không đụng tới trang/component.
+// BE UC001–UC003 đã chốt: coverUrl, authorNames/authors, page/limit/total phẳng, register/me data phẳng, login có user.
+// Mapper vẫn đọc thêm vài alias (coverImage, data.book, pagination object…) để tương thích mock / response lệch cũ
+// — UI không phụ thuộc alias; có thể gỡ dần khi mock khớp BE 100%.
 import { env } from '../config/env';
 import { mergeClientCover } from '../utils/clientCoverStore';
 import type {

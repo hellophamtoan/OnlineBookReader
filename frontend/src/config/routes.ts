@@ -38,6 +38,11 @@ export const ROUTES = {
   ADMIN_AUTHORS: '/admin/authors',
   ADMIN_PUBLISHERS: '/admin/publishers',
   ADMIN_PLANS: '/admin/plans',
+  ADMIN_ORDERS: '/admin/orders',
+  ADMIN_ORDER_DETAIL: (id: number | string) => `/admin/orders/${id}`,
+  ADMIN_USERS: '/admin/users',
+  ADMIN_USER_DETAIL: (id: number | string) => `/admin/users/${id}`,
+  ADMIN_REPORTS: '/admin/reports',
 } as const;
 
 export const ROUTE_PATTERNS = {
@@ -49,6 +54,8 @@ export const ROUTE_PATTERNS = {
   ADMIN_BOOK_CHAPTERS: '/admin/books/:id/chapters',
   ADMIN_CHAPTER_NEW: '/admin/books/:bookId/chapters/new',
   ADMIN_CHAPTER_EDIT: '/admin/books/:bookId/chapters/:chapterId/edit',
+  ADMIN_ORDER_DETAIL: '/admin/orders/:id',
+  ADMIN_USER_DETAIL: '/admin/users/:id',
 } as const;
 
 /** Sau đăng nhập: vào trang chủ bán sách (cả USER và ADMIN). Admin vào quản trị qua menu. */

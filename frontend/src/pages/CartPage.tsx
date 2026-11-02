@@ -101,7 +101,7 @@ export default function CartPage() {
       <div className="container page">
         <EmptyState
           title="Giỏ hàng của bạn đang trống"
-          hint="Chọn vài cuốn sách yêu thích rồi quay lại đây để đặt hàng."
+          hint="Thêm sách từ trang chi tiết rồi quay lại đây để đặt hàng."
           action={
             <Link className="btn btn--primary" to={ROUTES.BOOKS}>
               Xem tất cả sách

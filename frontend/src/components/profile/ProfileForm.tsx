@@ -12,6 +12,7 @@ import type { ProfileFormValues } from '../../utils/profileValidators';
 import { hasErrors } from '../../utils/validators';
 import Avatar from '../common/Avatar';
 import Field from '../common/Field';
+import { scheduleFocusFirstFieldError } from '../../utils/focusFieldError';
 
 interface ProfileFormProps {
   profile: UserProfile;
@@ -73,7 +74,10 @@ export default function ProfileForm({ profile, onSaved, onCancel }: ProfileFormP
     setGeneralError('');
     const errs = validateProfile(values);
     setErrors(errs);
-    if (hasErrors(errs)) return;
+    if (hasErrors(errs)) {
+      scheduleFocusFirstFieldError(errs);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -92,10 +96,19 @@ export default function ProfileForm({ profile, onSaved, onCancel }: ProfileFormP
     } catch (err) {
       setLoading(false);
       if (err instanceof ApiError) {
-        if (err.status === 409 || err.code === 'EMAIL_EXISTS') return setFieldError('email', err.message);
+        if (err.status === 409 || err.code === 'EMAIL_EXISTS') {
+          setFieldError('email', err.message);
+          scheduleFocusFirstFieldError({ email: err.message });
+          return;
+        }
         const fieldErrors = err.errors.filter((fe) => fe.field in values);
         if (fieldErrors.length) {
-          fieldErrors.forEach((fe) => setFieldError(fe.field as keyof ProfileFormValues, fe.message));
+          const mapped: Record<string, string> = {};
+          fieldErrors.forEach((fe) => {
+            setFieldError(fe.field as keyof ProfileFormValues, fe.message);
+            mapped[fe.field] = fe.message;
+          });
+          scheduleFocusFirstFieldError(mapped);
           return;
         }
       }

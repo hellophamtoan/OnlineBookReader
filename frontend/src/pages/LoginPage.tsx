@@ -11,6 +11,7 @@ import { authService } from '../services/authservice';
 import { ROUTES, homeFor } from '../config/routes';
 import { toMessage } from '../utils/errors';
 import { hasErrors, validateLogin } from '../utils/validators';
+import { scheduleFocusFirstFieldError } from '../utils/focusFieldError';
 
 interface LocationState {
   from?: { pathname: string; search?: string }; // ProtectedRoute gửi tới để quay lại sau khi đăng nhập
@@ -34,7 +35,10 @@ export default function LoginPage() {
 
     const errs = validateLogin(values);
     setErrors(errs);
-    if (hasErrors(errs)) return;
+    if (hasErrors(errs)) {
+      scheduleFocusFirstFieldError(errs);
+      return;
+    }
 
     try {
       setLoading(true);

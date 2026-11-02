@@ -16,11 +16,16 @@ export const validatePhoneOptional = (v: string) => {
   return !s || RULES.PHONE_REGEX.test(s) ? '' : MESSAGES.phoneInvalid;
 };
 
-/** Địa chỉ không bắt buộc; nếu nhập thì giới hạn độ dài */
+/** Địa chỉ không bắt buộc; nếu nhập thì phải đủ độ dài rõ ràng */
 export const validateAddressOptional = (v: string) => {
   const s = v.trim();
   if (!s) return '';
-  if (s.length > RULES.ADDRESS_MAX) return MESSAGES.addressInvalid;
+  if (s.length < RULES.ADDRESS_MIN) {
+    return `${MESSAGES.addressProfileTooShort} (đang có ${s.length} ký tự)`;
+  }
+  if (s.length > RULES.ADDRESS_MAX) {
+    return `${MESSAGES.addressProfileTooLong} (đang có ${s.length} ký tự)`;
+  }
   return '';
 };
 
