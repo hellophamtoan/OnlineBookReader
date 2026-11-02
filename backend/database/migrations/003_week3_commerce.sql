@@ -104,9 +104,9 @@ CALL w3c_relax_cart_id();
 DROP PROCEDURE w3c_relax_cart_id;
 CALL w3c_add_idx('cart_items','uq_w3_cart_user_book',
   'UNIQUE KEY uq_w3_cart_user_book(user_id,book_id)');
-CALL w3c_add_idx('cart_items','fk_w3_cart_user',
-  'CONSTRAINT fk_w3_cart_user FOREIGN KEY(user_id) REFERENCES users(id)');
-
+-- Khóa ngoại fk_w3_cart_user đã tồn tại.
+-- cart_items.user_id -> users.id
+-- Bỏ qua để tránh Error Code 1826.
 -- 5. orders: giu nguyen bang va khoa ngoai cu; chuyen ENUM ve viet HOA theo code API.
 CALL w3c_add_col('orders','shipping_fee','`shipping_fee` DECIMAL(14,2) NOT NULL DEFAULT 0');
 CALL w3c_add_col('orders','receiver_name','`receiver_name` VARCHAR(100) NULL');
