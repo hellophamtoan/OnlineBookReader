@@ -150,6 +150,8 @@ export interface CheckoutPayload {
   note: string;
   /** Chỉ đặt các dòng này (chọn từ giỏ hoặc Mua ngay). Không gửi = cả giỏ. */
   items?: { bookId: number; quantity: number }[];
+  /** cart: chỉ các mục chọn từ giỏ; buy_now: mua trực tiếp không thay đổi giỏ */
+  source?: 'cart' | 'buy_now';
 }
 
 // API-08 GET /users/me (UC004 dùng điền sẵn + số dư ví; UC012 xem/sửa hồ sơ)

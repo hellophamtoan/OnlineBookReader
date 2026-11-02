@@ -6,6 +6,8 @@ const { ROLES } = require('../utils/constants');
 const { categoryController, authorController, publisherController } = require('../controllers/admin.catalog.controller');
 const book = require('../controllers/admin.book.controller');
 const chapter = require('../controllers/admin.chapter.controller');
+const plan = require('../controllers/plan.controller');
+const wallet = require('../controllers/wallet.admin.controller');
 
 router.use(verifyToken, requireRole(ROLES.ADMIN));
 
@@ -32,5 +34,13 @@ router.post('/books/:bookId/chapters', chapter.createChapter);
 router.get('/chapters/:id', chapter.getChapter);
 router.put('/chapters/:id', chapter.updateChapter);
 router.delete('/chapters/:id', chapter.deleteChapter);
+
+router.get('/plans',plan.listAdmin);
+router.post('/plans',plan.createAdmin);
+router.get('/plans/:id',plan.getAdmin);
+router.put('/plans/:id',plan.updateAdmin);
+router.delete('/plans/:id',plan.deleteAdmin);
+router.get('/users',wallet.listUsers);
+router.post('/users/:id/wallet/topup',wallet.topup);
 
 module.exports = router;

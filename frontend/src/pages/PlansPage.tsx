@@ -55,7 +55,9 @@ export default function PlansPage() {
     me.reload();
   };
 
-  const startYmd = todayYmd();
+  // Custom plan extends from existing rights, not from today when a plan is still active.
+  const activeUntil = me.data?.hasActiveSubscription ? me.data.currentEndDate?.slice(0, 10) : null;
+  const startYmd = activeUntil && activeUntil > todayYmd() ? activeUntil : todayYmd();
   const minEnd = minEndDate(startYmd);
 
   const confirmBuy = async () => {

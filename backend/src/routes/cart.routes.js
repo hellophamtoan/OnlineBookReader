@@ -1,0 +1,11 @@
+const router=require('express').Router();
+const {verifyToken,requireRole}=require('../middlewares/auth.middleware');
+const {ROLES}=require('../utils/constants');
+const cart=require('../controllers/cart.controller');
+router.use(verifyToken,requireRole(ROLES.USER));
+router.get('/',cart.read);
+router.post('/',cart.add);
+router.put('/:bookId',cart.update);
+router.delete('/:bookId',cart.remove);
+router.delete('/',cart.clear);
+module.exports=router;

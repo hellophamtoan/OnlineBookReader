@@ -112,6 +112,7 @@ export default function CheckoutPage() {
       const order = await orderService.createOrder({
         ...values,
         paymentMethod: values.paymentMethod as PaymentMethod,
+        source: state.buyNow ? 'buy_now' : 'cart',
         items: orderItems.map((i) => ({ bookId: i.bookId, quantity: i.quantity })),
       });
       // Làm mới giỏ (mock chỉ xóa các dòng đã đặt)

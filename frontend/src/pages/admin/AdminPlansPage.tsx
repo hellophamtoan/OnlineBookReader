@@ -249,7 +249,7 @@ export default function AdminPlansPage() {
       setNotice(
         wasActive
           ? `Đã ngừng bán «${removePlan.name}» (xóa mềm). User đã mua vẫn dùng đến hết hạn.`
-          : `Đã xóa hẳn «${removePlan.name}» khỏi danh mục. User đã mua vẫn dùng đến hết hạn.`,
+          : `Đã ngừng bán «${removePlan.name}» (xóa mềm). User đã mua vẫn dùng đến hết hạn.`,
       );
       setRemovePlan(null);
       list.reload();
