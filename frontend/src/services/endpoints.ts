@@ -74,8 +74,27 @@ export const ENDPOINTS = {
       root: '/admin/plans', // API-53 GET | API-55 POST
       detail: (id: number) => `/admin/plans/${id}`, // API-54 GET | API-56 PUT | API-57 DELETE
     },
-    users: '/admin/users', // danh sách user (nạp ví / học tập)
-    walletTopup: (userId: number) => `/admin/users/${userId}/wallet/topup`, // API-58 UC013
+    // UC009
+    orders: {
+      root: '/admin/orders',
+      detail: (id: number) => `/admin/orders/${id}`,
+      status: (id: number) => `/admin/orders/${id}/status`,
+      confirm: (id: number) => `/admin/orders/${id}/confirm`,
+      cancel: (id: number) => `/admin/orders/${id}/cancel`,
+    },
+    // UC010 + UC013
+    users: '/admin/users',
+    userDetail: (id: number) => `/admin/users/${id}`,
+    userLock: (id: number) => `/admin/users/${id}/lock`,
+    userUnlock: (id: number) => `/admin/users/${id}/unlock`,
+    walletTopup: (userId: number) => `/admin/users/${userId}/wallet/topup`, // API-58
+    // UC011
+    reports: {
+      overview: '/admin/reports/overview',
+      revenue: '/admin/reports/revenue',
+      bestSellers: '/admin/reports/best-sellers',
+      subscriptions: '/admin/reports/subscriptions',
+    },
   },
 
   // ----- Ngoài hợp đồng (chỉ mock / BE chưa có thì 404 êm) -----
@@ -86,9 +105,4 @@ export const ENDPOINTS = {
     status: (bookId: number) => `/library/${bookId}/status`,
   },
 
-  favorites: {
-    root: '/favorites',
-    toggle: (bookId: number) => `/favorites/${bookId}/toggle`,
-    status: (bookId: number) => `/favorites/${bookId}/status`,
-  },
 } as const;

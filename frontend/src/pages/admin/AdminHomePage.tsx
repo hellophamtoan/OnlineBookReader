@@ -7,7 +7,9 @@ import { useAuth } from '../../context/AuthContext';
 import { useAsync } from '../../hooks/useAsync';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { bookAdminService } from '../../services/admin/bookadminservice';
+import { reportAdminService } from '../../services/admin/reportadminservice';
 import { taxonomyService } from '../../services/admin/taxonomyservice';
+import { formatPrice } from '../../utils/format';
 import { toMessage } from '../../utils/errors';
 
 export default function AdminHomePage() {
@@ -19,6 +21,7 @@ export default function AdminHomePage() {
   const authors = useAsync(() => taxonomyService.list('authors'), []);
   const categories = useAsync(() => taxonomyService.list('categories'), []);
   const publishers = useAsync(() => taxonomyService.list('publishers'), []);
+  const overview = useAsync(() => reportAdminService.overview(), []);
 
   const loading = books.loading || authors.loading || categories.loading || publishers.loading;
   const error = books.error || authors.error || categories.error || publishers.error;
@@ -90,6 +93,18 @@ export default function AdminHomePage() {
             <span className="admin-stat__value">{totalPublishers}</span>
             <span className="admin-stat__label">Nhà xuất bản</span>
           </div>
+          {overview.data && (
+            <>
+              <div className="admin-stat">
+                <span className="admin-stat__value">{formatPrice(overview.data.revenue.total)}</span>
+                <span className="admin-stat__label">DT 30 ngày</span>
+              </div>
+              <div className="admin-stat">
+                <span className="admin-stat__value">{overview.data.orders.pending}</span>
+                <span className="admin-stat__label">Đơn chờ xác nhận</span>
+              </div>
+            </>
+          )}
         </div>
       )}
 

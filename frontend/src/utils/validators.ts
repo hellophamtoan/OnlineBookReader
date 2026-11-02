@@ -69,8 +69,15 @@ export const validatePhone = (v: string) => {
 };
 
 export const validateAddress = (v: string) => {
-  const n = v.trim().length;
-  return n >= RULES.ADDRESS_MIN && n <= RULES.ADDRESS_MAX ? '' : MESSAGES.addressInvalid;
+  const s = v.trim();
+  if (!s) return MESSAGES.addressRequired;
+  if (s.length < RULES.ADDRESS_MIN) {
+    return `${MESSAGES.addressTooShort} (đang có ${s.length} ký tự)`;
+  }
+  if (s.length > RULES.ADDRESS_MAX) {
+    return `${MESSAGES.addressTooLong} (đang có ${s.length} ký tự)`;
+  }
+  return '';
 };
 
 export const validateNote = (v: string) => (v.trim().length <= RULES.NOTE_MAX ? '' : MESSAGES.noteTooLong);

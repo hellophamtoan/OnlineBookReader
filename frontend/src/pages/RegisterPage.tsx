@@ -12,6 +12,7 @@ import { AUTH, RULES } from '../config/rules';
 import { ROUTES } from '../config/routes';
 import { toMessage } from '../utils/errors';
 import { hasErrors, validateRegister } from '../utils/validators';
+import { scheduleFocusFirstFieldError } from '../utils/focusFieldError';
 
 export default function RegisterPage() {
   useDocumentTitle('Đăng ký');
@@ -31,7 +32,10 @@ export default function RegisterPage() {
     // Bước 4: kiểm tra phía client (server vẫn kiểm tra lại)
     const errs = validateRegister(values);
     setErrors(errs);
-    if (hasErrors(errs)) return;
+    if (hasErrors(errs)) {
+      scheduleFocusFirstFieldError(errs);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -46,9 +50,21 @@ export default function RegisterPage() {
       setLoading(false);
       // Luồng 4a: báo lỗi ngay trên form, người dùng nhập lại
       if (err instanceof ApiError) {
-        if (err.status === 409 || err.code === 'EMAIL_EXISTS') return setFieldError('email', err.message);
+        if (err.status === 409 || err.code === 'EMAIL_EXISTS') {
+          setFieldError('email', err.message);
+          scheduleFocusFirstFieldError({ email: err.message });
+          return;
+        }
         const fieldErrors = err.errors.filter((fe) => fe.field in values);
-        if (fieldErrors.length) return fieldErrors.forEach((fe) => setFieldError(fe.field as keyof typeof values, fe.message));
+        if (fieldErrors.length) {
+          const mapped: Record<string, string> = {};
+          fieldErrors.forEach((fe) => {
+            setFieldError(fe.field as keyof typeof values, fe.message);
+            mapped[fe.field] = fe.message;
+          });
+          scheduleFocusFirstFieldError(mapped);
+          return;
+        }
       }
       setGeneralError(toMessage(err));
     }

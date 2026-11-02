@@ -13,12 +13,20 @@ import type {
 import { validateBookForm } from '../../utils/adminValidators';
 import type { BookFormErrors, BookFormState } from '../../utils/adminValidators';
 import { toMessage } from '../../utils/errors';
-import { markAsSection, unmarkSection } from '../../utils/chapterMeta';
+import {
+  assignChapterNumbers,
+  buildChapterChangeLog,
+  moveToStt,
+  prepareChaptersForSave,
+} from '../../utils/epubChapterList';
+import { matchTaxonomyIds, unmatchedNames } from '../../utils/taxonomyMatch';
 import Field from '../common/Field';
 import SelectField from '../common/SelectField';
 import TextAreaField from '../common/TextAreaField';
+import BookFormEpubImport from './BookFormEpubImport';
 import TaxonomyChipSelect from './TaxonomyChipSelect';
 import { taxonomyService } from '../../services/admin/taxonomyservice';
+import { scheduleFocusFirstFieldError } from '../../utils/focusFieldError';
 
 interface BookFormProps {
   initial?: AdminBookDetail; // có = sửa, không = thêm mới
@@ -84,7 +92,6 @@ export default function BookForm({ initial, authors, categories, publishers, onS
   const [importedChapters, setImportedChapters] = useState<EpubParsedChapter[]>([]);
   /** Bản gốc ngay sau khi parse EPUB — dùng để ghi lại thay đổi */
   const [epubChapterSnapshot, setEpubChapterSnapshot] = useState<EpubParsedChapter[]>([]);
-  const [openChapter, setOpenChapter] = useState<number | null>(null);
   /** Tên từ EPUB chưa khớp danh mục */
   const [pendingAuthors, setPendingAuthors] = useState<string[]>([]);
   const [pendingCategories, setPendingCategories] = useState<string[]>([]);
@@ -99,205 +106,6 @@ export default function BookForm({ initial, authors, categories, publishers, onS
   const [sttDraft, setSttDraft] = useState<Record<number, string>>({});
 
   const clear = (key: keyof BookFormErrors) => setErrors((e) => ({ ...e, [key]: undefined }));
-
-  /** Đánh số chương 1..n chỉ phần countsAsChapter; phần phụ chapterNumber = 0 */
-  const assignChapterNumbers = (list: EpubParsedChapter[]): EpubParsedChapter[] => {
-    let n = 0;
-    return list.map((c) => {
-      if (c.countsAsChapter === false) return { ...c, chapterNumber: 0 };
-      n += 1;
-      return { ...c, chapterNumber: n, countsAsChapter: true };
-    });
-  };
-
-  /** Đổi STT (1-based): chuyển phần fromIdx tới vị trí toStt */
-  const moveToStt = (list: EpubParsedChapter[], fromIdx: number, toStt: number) => {
-    const to = Math.max(0, Math.min(list.length - 1, Math.floor(toStt) - 1));
-    if (fromIdx === to) return assignChapterNumbers(list);
-    const next = [...list];
-    const [row] = next.splice(fromIdx, 1);
-    next.splice(to, 0, row);
-    return assignChapterNumbers(next);
-  };
-
-  /** API cần chapterNumber unique > 0: phần phụ lấy số sau các chương thật */
-
-  /** So sánh danh sách hiện tại với EPUB gốc (dạng xem sách ban đầu) */
-  const buildChapterChangeLog = (
-    original: EpubParsedChapter[],
-    current: EpubParsedChapter[],
-  ): string[] => {
-    const lines: string[] = [];
-    if (!original.length && !current.length) return ['Chưa có dữ liệu chương.'];
-
-    const norm = (s: string) => s.trim().toLowerCase();
-    const textLen = (c: EpubParsedChapter) =>
-      c.textLength ??
-      c.content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().length;
-    const label = (c: EpubParsedChapter, i: number) => {
-      const title = (c.title || '(không tiêu đề)').trim();
-      const ch = c.countsAsChapter === false ? '—' : c.chapterNumber > 0 ? `c${c.chapterNumber}` : '?';
-      return `STT ${i + 1} [${ch}] «${title}»`;
-    };
-    const fp = (c: EpubParsedChapter) => `${norm(c.title)}||${c.content.length}:${c.content.slice(0, 120)}`;
-
-    const storyCount = current.filter((c) => c.countsAsChapter !== false).length;
-    const nonCount = current.filter((c) => c.countsAsChapter === false).length;
-
-    lines.push('── Tóm tắt ──');
-    lines.push(
-      `• Gốc EPUB (khi nạp): ${original.length} phần · tính chương c1…c${original.length || 0}.`,
-    );
-    lines.push(
-      `• Hiện tại: ${current.length} phần · ${storyCount} tính chương (c1…c${storyCount || 0}) · ${nonCount} không tính chương (—).`,
-    );
-
-    const pairList: { oi: number; ci: number }[] = [];
-    const matchedCur = new Set<number>();
-    original.forEach((o, oi) => {
-      let j = current.findIndex((c, ci) => !matchedCur.has(ci) && fp(c) === fp(o));
-      if (j < 0) j = current.findIndex((c, ci) => !matchedCur.has(ci) && norm(c.title) === norm(o.title) && !!norm(c.title));
-      if (j >= 0) {
-        matchedCur.add(j);
-        pairList.push({ oi, ci: j });
-      }
-    });
-    const matchedOrig = new Set(pairList.map((p) => p.oi));
-
-    const removed = original
-      .map((o, oi) => ({ o, oi }))
-      .filter(({ oi }) => !matchedOrig.has(oi));
-    const added = current
-      .map((c, ci) => ({ c, ci }))
-      .filter(({ ci }) => !matchedCur.has(ci));
-
-    lines.push('── Chi tiết thay đổi ──');
-
-    if (removed.length) {
-      lines.push(`• Đã xóa ${removed.length} phần (có trong EPUB, không còn trong danh sách):`);
-      removed.forEach(({ o, oi }) => {
-        lines.push(`    − STT gốc ${oi + 1} (c${o.chapterNumber || oi + 1}): «${o.title || '(không tiêu đề)'}»`);
-      });
-    } else {
-      lines.push('• Không xóa phần nào so với EPUB.');
-    }
-
-    if (added.length) {
-      lines.push(`• Đã thêm ${added.length} phần (không có trong EPUB gốc):`);
-      added.forEach(({ c, ci }) => {
-        const ch = c.countsAsChapter === false ? '—' : `c${c.chapterNumber}`;
-        lines.push(`    + STT ${ci + 1} [${ch}]: «${c.title || '(không tiêu đề)'}»`);
-      });
-    } else {
-      lines.push('• Không thêm phần mới.');
-    }
-
-    const titleChanges: string[] = [];
-    const contentChanges: string[] = [];
-    const flagChanges: string[] = [];
-    const orderChanges: string[] = [];
-
-    pairList.forEach(({ oi, ci }) => {
-      const o = original[oi];
-      const c = current[ci];
-      if (o.title.trim() !== c.title.trim()) {
-        titleChanges.push(`«${o.title}» → «${c.title}» (STT gốc ${oi + 1} → STT ${ci + 1})`);
-      }
-      if (o.content !== c.content) {
-        contentChanges.push(
-          `«${c.title || o.title}»: nội dung đổi (${textLen(o)} → ${textLen(c)} ký tự), STT hiện ${ci + 1}`,
-        );
-      }
-      const oStory = o.countsAsChapter !== false;
-      const cStory = c.countsAsChapter !== false;
-      if (oStory !== cStory) {
-        flagChanges.push(
-          cStory
-            ? `«${c.title}»: bật tính chương → c${c.chapterNumber}`
-            : `«${c.title}»: tắt tính chương (trước c${o.chapterNumber || oi + 1} → —)`,
-        );
-      }
-      if (oi !== ci) {
-        orderChanges.push(
-          `«${c.title || o.title}»: STT gốc ${oi + 1} → STT ${ci + 1}` +
-            (cStory ? ` (hiện c${c.chapterNumber})` : ' (không tính chương)'),
-        );
-      }
-    });
-
-    if (titleChanges.length) {
-      lines.push(`• Đã đổi tiêu đề (${titleChanges.length}):`);
-      titleChanges.forEach((x) => lines.push(`    · ${x}`));
-    } else {
-      lines.push('• Không đổi tiêu đề phần nào (so khớp với EPUB).');
-    }
-    if (contentChanges.length) {
-      lines.push(`• Đã sửa nội dung trong phần (${contentChanges.length}):`);
-      contentChanges.forEach((x) => lines.push(`    · ${x}`));
-    } else {
-      lines.push('• Không sửa nội dung phần nào (so khớp với EPUB).');
-    }
-    if (flagChanges.length) {
-      lines.push(`• Đổi trạng thái «Tính chương» (${flagChanges.length}):`);
-      flagChanges.forEach((x) => lines.push(`    · ${x}`));
-    }
-    if (orderChanges.length) {
-      lines.push(`• Đổi thứ tự / STT (${orderChanges.length}):`);
-      orderChanges.forEach((x) => lines.push(`    · ${x}`));
-    }
-
-    lines.push('── Mục lục hiện tại (sau chỉnh) ──');
-    current.forEach((c, i) => lines.push(`    ${label(c, i)}`));
-    lines.push('── Mục lục EPUB gốc (khi nạp) ──');
-    original.forEach((c, i) => {
-      const title = (c.title || '(không tiêu đề)').trim();
-      lines.push(`    STT ${i + 1} [c${c.chapterNumber || i + 1}] «${title}»`);
-    });
-
-    const noDetail =
-      !removed.length &&
-      !added.length &&
-      !titleChanges.length &&
-      !contentChanges.length &&
-      !flagChanges.length &&
-      !orderChanges.length;
-    if (noDetail) {
-      return [
-        'Chưa có thay đổi so với nội dung EPUB ban đầu (dạng xem sách khi nạp).',
-        `Gốc và hiện tại đều ${current.length} phần, cùng thứ tự và nội dung.`,
-      ];
-    }
-    return lines;
-  };
-
-  /** STT = thứ tự list (1..n). Phần không tích → đánh dấu section (mục lục chỉ hiện tiêu đề). */
-  const prepareChaptersForSave = (list: EpubParsedChapter[]) =>
-    list.map((c, i) => {
-      const title =
-        c.countsAsChapter === false ? markAsSection(c.title) : unmarkSection(c.title);
-      return {
-        ...c,
-        chapterNumber: i + 1,
-        title,
-      };
-    });
-
-  const unmatchedNames = (names: string[], items: TaxonomyItem[]) =>
-    names
-      .map((n) => n.trim())
-      .filter(Boolean)
-      .filter((n) => !items.some((it) => it.name.trim().toLowerCase() === n.toLowerCase()));
-
-  const matchTaxonomyIds = (names: string[], items: TaxonomyItem[]): number[] => {
-    const ids: number[] = [];
-    for (const name of names) {
-      const n = name.trim().toLowerCase();
-      if (!n) continue;
-      const found = items.find((it) => it.name.trim().toLowerCase() === n);
-      if (found && !ids.includes(found.id)) ids.push(found.id);
-    }
-    return ids;
-  };
 
   const applyEpubResult = (result: {
     title: string;
@@ -340,7 +148,6 @@ export default function BookForm({ initial, authors, categories, publishers, onS
     );
     setImportedChapters(seeded);
     setEpubChapterSnapshot(seeded.map((c) => ({ ...c })));
-    setOpenChapter(null);
     setViewIdx(null);
     setEditIdx(null);
     clear('title');
@@ -496,28 +303,34 @@ export default function BookForm({ initial, authors, categories, publishers, onS
     const pendingAny =
       pendingAuthors.length > 0 || pendingCategories.length > 0 || pendingPublishers.length > 0;
 
+    const errs = validateBookForm({ ...s, authorIds, categoryIds, publisherId });
+
+    // EPUB: tên danh mục chưa có + chưa bật «Tạo danh mục...» → lỗi đỏ từng ô + cuộn tới
     if (pendingAny && !createMissingTaxonomy) {
-      const needAuthor = authorIds.length === 0 && pendingAuthors.length > 0;
-      const needCat = categoryIds.length === 0 && pendingCategories.length > 0;
-      const needPub = !publisherId.trim() && pendingPublishers.length > 0;
-      if (needAuthor || needCat || needPub || pendingAny) {
-        if (needAuthor || needCat || needPub) {
-          setGeneralError(
-            'Có tên từ EPUB chưa có trong danh mục. Chọn từ danh sách có sẵn hoặc bật «Tạo danh mục còn thiếu khi lưu».',
-          );
-          return;
-        }
+      const hint =
+        'Chọn trong danh sách có sẵn hoặc bật «Tạo danh mục còn thiếu khi lưu».';
+      if (authorIds.length === 0 && pendingAuthors.length > 0) {
+        errs.authorIds = `EPUB có tác giả chưa có trong hệ thống. ${hint}`;
+      }
+      if (categoryIds.length === 0 && pendingCategories.length > 0) {
+        errs.categoryIds = `EPUB có thể loại chưa có trong hệ thống. ${hint}`;
+      }
+      if (!publisherId.trim() && pendingPublishers.length > 0) {
+        errs.publisherId = `EPUB có NXB chưa có trong hệ thống. ${hint}`;
       }
     }
 
-    const errs = validateBookForm({ ...s, authorIds, categoryIds, publisherId });
     if (createMissingTaxonomy) {
       if (authorIds.length === 0 && pendingAuthors.length > 0) delete errs.authorIds;
       if (categoryIds.length === 0 && pendingCategories.length > 0) delete errs.categoryIds;
       if (!publisherId.trim() && pendingPublishers.length > 0) delete errs.publisherId;
     }
+
     setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
+    if (Object.keys(errs).length > 0) {
+      scheduleFocusFirstFieldError(errs as Record<string, unknown>);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -554,6 +367,7 @@ export default function BookForm({ initial, authors, categories, publishers, onS
         });
         if (Object.keys(next).length) {
           setErrors(next);
+          scheduleFocusFirstFieldError(next as Record<string, unknown>);
           return;
         }
       }
@@ -570,47 +384,17 @@ export default function BookForm({ initial, authors, categories, publishers, onS
       {generalError && <div className="alert alert--error" role="alert">{generalError}</div>}
 
       {!isEdit && (
-        <fieldset className="form-section">
-          <legend className="form-section__title">Nhập từ EPUB (tuỳ chọn)</legend>
-          <p className="field__hint">
-            Chọn file .epub từ máy hoặc dán URL. Hệ thống tận dụng tối đa metadata trong file: tên, giới thiệu,
-            ảnh bìa, tác giả, NXB, thể loại (dc:subject), mục lục và nội dung chương.
-          </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-            <input ref={epubFileRef} type="file" accept=".epub,application/epub+zip" hidden onChange={handleEpubFile} />
-            <button
-              type="button"
-              className="btn btn--ghost"
-              disabled={loading || epubBusy}
-              onClick={() => epubFileRef.current?.click()}
-            >
-              {epubBusy ? 'Đang đọc EPUB...' : 'Chọn file EPUB từ máy'}
-            </button>
-          </div>
-          <div className="admin-form__row" style={{ alignItems: 'flex-end' }}>
-            <Field
-              label="Hoặc URL file EPUB"
-              name="epubUrl"
-              type="url"
-              placeholder="https://.../sach.epub"
-              value={epubUrl}
-              onChange={(e) => setEpubUrl(e.target.value)}
-            />
-            <button type="button" className="btn btn--ghost" disabled={loading || epubBusy} onClick={handleEpubUrl}>
-              Tải từ URL
-            </button>
-          </div>
-          {epubError && (
-            <div className="alert alert--error" role="alert" style={{ marginTop: 12 }}>
-              {epubError}
-            </div>
-          )}
-          {epubNotice && (
-            <div className="alert alert--success" role="status" style={{ marginTop: 12 }}>
-              {epubNotice}
-            </div>
-          )}
-        </fieldset>
+        <BookFormEpubImport
+          epubFileRef={epubFileRef}
+          epubUrl={epubUrl}
+          epubBusy={epubBusy}
+          epubError={epubError}
+          epubNotice={epubNotice}
+          disabled={loading}
+          onUrlChange={setEpubUrl}
+          onFileChange={handleEpubFile}
+          onLoadUrl={handleEpubUrl}
+        />
       )}
 
       <fieldset className="form-section">
@@ -703,6 +487,7 @@ export default function BookForm({ initial, authors, categories, publishers, onS
         )}
         <TaxonomyChipSelect
           legend="Tác giả"
+          name="authorIds"
           options={authors}
           selectedIds={s.authorIds}
           error={errors.authorIds}
@@ -715,6 +500,7 @@ export default function BookForm({ initial, authors, categories, publishers, onS
         />
         <TaxonomyChipSelect
           legend="Thể loại"
+          name="categoryIds"
           options={categories}
           selectedIds={s.categoryIds}
           error={errors.categoryIds}
@@ -976,8 +762,7 @@ export default function BookForm({ initial, authors, categories, publishers, onS
               title="Khôi phục đúng danh sách chương như lúc nạp EPUB"
               onClick={() => {
                 setImportedChapters(epubChapterSnapshot.map((c) => ({ ...c })));
-                setOpenChapter(null);
-                setViewIdx(null);
+                            setViewIdx(null);
                 setEditIdx(null);
                 setSttDraft({});
               }}
@@ -991,8 +776,7 @@ export default function BookForm({ initial, authors, categories, publishers, onS
               onClick={() => {
                 setImportedChapters([]);
                 setEpubChapterSnapshot([]);
-                setOpenChapter(null);
-                setViewIdx(null);
+                            setViewIdx(null);
                 setEditIdx(null);
                 setSttDraft({});
                 setEpubNotice('');

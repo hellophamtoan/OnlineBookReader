@@ -1,4 +1,4 @@
-// Chọn nhiều mục danh mục kiểu NXB: một <select> + chip đã chọn.
+// Chọn nhiều mục danh mục kiểu NXB: một <select name={name} data-field={name}> + chip đã chọn.
 import type { TaxonomyItem } from '../../types';
 
 interface Props {
@@ -7,6 +7,8 @@ interface Props {
   selectedIds: number[];
   onChange: (ids: number[]) => void;
   error?: string;
+  /** name/data-field để focus khi lỗi */
+  name?: string;
   /** Tên lấy từ EPUB chưa có trong danh mục */
   pendingNames?: string[];
   onRemovePending?: (name: string) => void;
@@ -18,6 +20,7 @@ export default function TaxonomyChipSelect({
   selectedIds,
   onChange,
   error,
+  name,
   pendingNames = [],
   onRemovePending,
 }: Props) {
@@ -26,7 +29,7 @@ export default function TaxonomyChipSelect({
   const toAdd = available.filter((o) => !selectedIds.includes(o.id));
 
   return (
-    <div className="field" style={{ marginBottom: 16 }}>
+    <div className="field" style={{ marginBottom: 16 }} data-field={name || undefined}>
       <span className="field__label">{legend}</span>
 
       {selected.length > 0 && (

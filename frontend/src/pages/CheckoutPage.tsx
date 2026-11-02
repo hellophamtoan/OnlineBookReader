@@ -19,6 +19,7 @@ import type { PaymentMethod } from '../types';
 import { toMessage } from '../utils/errors';
 import { hasErrors, validateCheckout } from '../utils/validators';
 import type { CheckoutFormValues } from '../utils/validators';
+import { scheduleFocusFirstFieldError } from '../utils/focusFieldError';
 
 export type CheckoutOrderItem = {
   bookId: number;
@@ -105,14 +106,16 @@ export default function CheckoutPage() {
 
     const errs = validateCheckout(values);
     setErrors(errs);
-    if (hasErrors(errs)) return;
+    if (hasErrors(errs)) {
+      scheduleFocusFirstFieldError(errs);
+      return;
+    }
 
     try {
       setLoading(true);
       const order = await orderService.createOrder({
         ...values,
         paymentMethod: values.paymentMethod as PaymentMethod,
-        source: state.buyNow ? 'buy_now' : 'cart',
         items: orderItems.map((i) => ({ bookId: i.bookId, quantity: i.quantity })),
       });
       // Làm mới giỏ (mock chỉ xóa các dòng đã đặt)
@@ -123,7 +126,13 @@ export default function CheckoutPage() {
       if (err instanceof ApiError) {
         const fieldErrors = err.errors.filter((fe) => fe.field in values);
         if (fieldErrors.length) {
-          return fieldErrors.forEach((fe) => setFieldError(fe.field as keyof CheckoutFormValues, fe.message));
+          const mapped: Record<string, string> = {};
+          fieldErrors.forEach((fe) => {
+            setFieldError(fe.field as keyof CheckoutFormValues, fe.message);
+            mapped[fe.field] = fe.message;
+          });
+          scheduleFocusFirstFieldError(mapped);
+          return;
         }
         if (err.code === 'OUT_OF_STOCK' || err.code === 'EMPTY_CART') {
           setGeneralError(err.message);

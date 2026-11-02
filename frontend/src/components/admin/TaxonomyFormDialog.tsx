@@ -11,6 +11,7 @@ import { toMessage } from '../../utils/errors';
 import Field from '../common/Field';
 import Modal from '../common/Modal';
 import TextAreaField from '../common/TextAreaField';
+import { scheduleFocusFirstFieldError } from '../../utils/focusFieldError';
 
 interface TaxonomyFormDialogProps {
   config: TaxonomyConfig;
@@ -31,7 +32,10 @@ function TaxonomyForm({ config, item, onClose, onSaved }: Omit<TaxonomyFormDialo
     setGeneralError('');
     const nameError = validateTaxonomyName(values.name);
     setErrors({ name: nameError, bio: '' });
-    if (nameError) return;
+    if (nameError) {
+      scheduleFocusFirstFieldError({ name: nameError });
+      return;
+    }
 
     const name = values.name.trim();
     try {
@@ -42,9 +46,17 @@ function TaxonomyForm({ config, item, onClose, onSaved }: Omit<TaxonomyFormDialo
     } catch (err) {
       setLoading(false);
       if (err instanceof ApiError) {
-        if (err.status === 409) return setFieldError('name', err.message);
+        if (err.status === 409) {
+          setFieldError('name', err.message);
+          scheduleFocusFirstFieldError({ name: err.message });
+          return;
+        }
         const fe = err.errors.find((x) => x.field === 'name');
-        if (fe) return setFieldError('name', fe.message);
+        if (fe) {
+          setFieldError('name', fe.message);
+          scheduleFocusFirstFieldError({ name: fe.message });
+          return;
+        }
       }
       setGeneralError(toMessage(err));
     }

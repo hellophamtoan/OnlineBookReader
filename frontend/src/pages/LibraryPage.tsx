@@ -1,3 +1,4 @@
+// Thư viện: Đang đọc + Đã lưu (không có yêu thích)
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import BookCover from '../components/book/BookCover';
@@ -5,8 +6,7 @@ import { EmptyState, ErrorState, LoadingBlock } from '../components/common/State
 import { ROUTES } from '../config/routes';
 import { useAsync } from '../hooks/useAsync';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
-import { libraryService } from '../services/libraryservice';
-import type { LibraryBook } from '../services/libraryservice';
+import { libraryService, type LibraryBook } from '../services/libraryservice';
 import { toMessage } from '../utils/errors';
 
 type Tab = 'reading' | 'saved';
@@ -16,7 +16,6 @@ type LibraryCardModel = {
   title: string;
   coverUrl: string | null;
   authors: { id?: number; name: string }[];
-  hasEbook: boolean;
   meta: string;
   primaryLabel: string;
   primaryTo: string;
@@ -30,12 +29,7 @@ function LibraryCard({ item }: { item: LibraryCardModel }) {
     <article className="book-card library-item">
       <Link to={ROUTES.BOOK_DETAIL(item.id)} className="book-card__cover-wrap" aria-label={item.title}>
         <BookCover
-          book={{
-            id: item.id,
-            title: item.title,
-            coverUrl: item.coverUrl,
-            authors: item.authors,
-          }}
+          book={{ id: item.id, title: item.title, coverUrl: item.coverUrl, authors: item.authors }}
           enableZoom={false}
         />
       </Link>
@@ -58,11 +52,7 @@ function LibraryCard({ item }: { item: LibraryCardModel }) {
               {item.secondaryLabel}
             </Link>
           ) : (
-            <button
-              type="button"
-              className="btn btn--ghost btn--sm library-item__btn"
-              onClick={item.onSecondary}
-            >
+            <button type="button" className="btn btn--ghost btn--sm library-item__btn" onClick={item.onSecondary}>
               {item.secondaryLabel}
             </button>
           )}
@@ -81,7 +71,6 @@ function toReadingCard(book: LibraryBook): LibraryCardModel {
     title: book.title,
     coverUrl: book.coverUrl ?? null,
     authors: book.authors ?? [],
-    hasEbook: book.hasEbook,
     meta,
     primaryLabel: 'Tiếp tục đọc',
     primaryTo: ROUTES.READER(book.id),
@@ -99,7 +88,6 @@ function toSavedCard(book: LibraryBook, onRemove: () => void): LibraryCardModel 
     title: book.title,
     coverUrl: book.coverUrl ?? null,
     authors: book.authors ?? [],
-    hasEbook: book.hasEbook,
     meta,
     primaryLabel: book.hasEbook
       ? book.lastChapterNumber
@@ -119,24 +107,23 @@ export default function LibraryPage() {
   const saved = useAsync(() => libraryService.list(), []);
 
   const active = tab === 'reading' ? reading : saved;
-  const loading = active.loading && !active.data;
-  const error = active.error;
-  const reload = () => {
-    reading.reload();
-    saved.reload();
-  };
-
-  if (loading) {
+  if (active.loading && !active.data) {
     return (
       <div className="container page">
         <LoadingBlock label="Đang tải thư viện..." />
       </div>
     );
   }
-  if (error) {
+  if (active.error) {
     return (
       <div className="container page">
-        <ErrorState message={toMessage(error)} onRetry={reload} />
+        <ErrorState
+          message={toMessage(active.error)}
+          onRetry={() => {
+            reading.reload();
+            saved.reload();
+          }}
+        />
       </div>
     );
   }
@@ -148,9 +135,7 @@ export default function LibraryPage() {
     <div className="container page library-page">
       <header className="library-page__head">
         <h1 className="page__title">Thư viện của tôi</h1>
-        <p className="field__hint library-page__intro">
-          Sách đang đọc và sách đã lưu — cùng một kiểu thẻ để dễ duyệt.
-        </p>
+        <p className="field__hint library-page__intro">Sách đang đọc và sách đã lưu — cùng một kiểu thẻ để dễ duyệt.</p>
       </header>
 
       <div className="library-tabs" role="tablist" aria-label="Phân mục thư viện">

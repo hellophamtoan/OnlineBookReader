@@ -96,8 +96,19 @@ export const orderRoutes: Route[] = [
       // --- Mọi kiểm tra đã qua: áp dụng thay đổi ---
       const now = new Date().toISOString();
       const order: MockOrder = {
-        id: nextOrderId(), userId: user.id, status: 'PENDING', paymentMethod: paymentMethod as MockOrder['paymentMethod'],
-        totalAmount: total, receiverName, receiverPhone, shippingAddress, note: note || null, createdAt: now, updatedAt: now, items,
+        id: nextOrderId(),
+        userId: user.id,
+        status: 'PENDING',
+        paymentMethod: paymentMethod as MockOrder['paymentMethod'],
+        paymentStatus: paymentMethod === 'WALLET' ? 'PAID' : 'UNPAID',
+        totalAmount: total,
+        receiverName,
+        receiverPhone,
+        shippingAddress,
+        note: note || null,
+        createdAt: now,
+        updatedAt: now,
+        items,
       };
       lines.forEach((l) => setStock(l.bookId, getStock(findBook(l.bookId)!) - l.quantity));
       if (paymentMethod === 'WALLET') {
@@ -171,11 +182,16 @@ export const orderRoutes: Route[] = [
         const book = findBook(i.bookId);
         if (book) setStock(book.id, getStock(book) + i.quantity);
       });
-      if (order.paymentMethod === 'WALLET') {
+      if (order.paymentMethod === 'WALLET' && order.paymentStatus === 'PAID') {
         setWallet(user.id, getWallet(user) + order.totalAmount);
         addWalletTx({ userId: user.id, type: 'REFUND', amount: order.totalAmount, refType: 'ORDER', refId: order.id });
       }
-      const cancelled: MockOrder = { ...order, status: 'CANCELLED', updatedAt: new Date().toISOString() };
+      const cancelled: MockOrder = {
+        ...order,
+        status: 'CANCELLED',
+        paymentStatus: order.paymentMethod === 'WALLET' && order.paymentStatus === 'PAID' ? 'REFUNDED' : order.paymentStatus,
+        updatedAt: new Date().toISOString(),
+      };
       saveOrders(allOrders().map((o: MockOrder) => (o.id === order.id ? cancelled : o)));
 
       return { message: 'Đã hủy đơn hàng', data: { order: publicOrder(cancelled) } };

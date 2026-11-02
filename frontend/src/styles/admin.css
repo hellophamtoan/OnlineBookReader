@@ -383,3 +383,195 @@
   line-height: 1.45;
   word-break: break-word;
 }
+
+
+/* Trạng thái đơn (tone từ config/orders) */
+.tag--wait { background: #fff4e5; color: #9a6700; }
+.tag--doing { background: #e8f0fe; color: #1a56db; }
+.tag--ok { background: #e8f8ee; color: #0f7b3c; }
+.tag--bad { background: #fde8e8; color: #b42318; }
+
+.admin-form__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.admin-form__row > .form-section {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+
+/* ===== UC011 Báo cáo: lưới thẳng hàng, khoảng cách đều ===== */
+.report-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 18px 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+.report-toolbar__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.report-toolbar__dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+}
+.report-toolbar__field {
+  margin: 0;
+  min-width: 160px;
+  flex: 0 1 180px;
+}
+.report-toolbar__apply {
+  margin-bottom: 2px;
+}
+.report-toolbar__hint {
+  margin: 0;
+}
+
+.report-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.report-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.report-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  min-height: 88px;
+}
+.report-stat__value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+  word-break: break-word;
+}
+.report-stat__label {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  align-items: stretch;
+}
+.report-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  min-width: 0;
+}
+.report-panel--full {
+  width: 100%;
+}
+.report-panel__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.report-panel__meta {
+  margin: 0;
+}
+.report-panel__sep {
+  margin: 0 8px;
+  opacity: 0.6;
+}
+.report-table {
+  width: 100%;
+}
+.report-table th,
+.report-table td {
+  vertical-align: middle;
+}
+
+@media (max-width: 900px) {
+  .report-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .report-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 560px) {
+  .report-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+.report-section-title {
+  margin: 8px 0 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* Bảng tổng quan: cột vừa chữ, tối đa ~30 ký tự */
+.report-table-wrap {
+  overflow-x: auto;
+}
+.report-table--overview {
+  table-layout: fixed;
+  width: 100%;
+}
+.report-table--overview th,
+.report-table--overview td {
+  vertical-align: middle;
+  padding: 10px 12px;
+}
+.report-table--overview th:first-child,
+.report-table--overview td:first-child {
+  width: 30%;
+  max-width: 30ch;
+}
+.report-table--overview th:nth-child(2),
+.report-table--overview td:nth-child(2),
+.report-table--overview th:nth-child(3),
+.report-table--overview td:nth-child(3) {
+  width: 18%;
+  max-width: 30ch;
+}
+.report-table--overview th:nth-child(4),
+.report-table--overview td:nth-child(4) {
+  width: 34%;
+  max-width: 30ch;
+}
+.report-clip {
+  display: inline-block;
+  max-width: 30ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+.report-table--overview th .report-clip,
+.report-table--overview td .report-clip {
+  max-width: 100%;
+}
+.report-delta {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
