@@ -26,7 +26,7 @@ describe('UC006 - quyền đọc', () => {
     await requireReadAccess({ user }, res, next);
     expect(res.status).toHaveBeenCalledWith(403);
     expect(next).not.toHaveBeenCalled();
-    expect(pool.execute.mock.calls[0][0]).toContain('start_date <= NOW() AND end_date >= NOW()');
+    expect(pool.execute.mock.calls[0][0]).toContain('start_date <= NOW() AND end_date > NOW()');
   });
   test('Có gói còn hạn -> next()', async () => {
     pool.execute.mockResolvedValueOnce([[{ id: 1 }]]);
