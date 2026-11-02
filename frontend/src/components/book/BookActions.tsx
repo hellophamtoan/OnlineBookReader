@@ -1,15 +1,16 @@
-import { useState } from 'react';
+// Chi tiết sách: giỏ / mua ngay (USER) + lưu thư viện; ADMIN chỉ đọc (nếu không hideRead)
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { ROUTES } from '../../config/routes';
+import { libraryService } from '../../services/libraryservice';
 import type { Book } from '../../types';
 import { isPhysical } from '../../utils/book';
 import { formatPrice } from '../../utils/format';
 import { toMessage } from '../../utils/errors';
 import ReadBookButton from '../reader/ReadBookButton';
 
-/** Chi tiết sách (USER): icon giỏ + mua ngay. ADMIN không hiện khối mua. */
 export default function BookActions({ book, hideRead = false }: { book: Book; hideRead?: boolean }) {
   const { user } = useAuth();
   const { addItem } = useCart();
@@ -19,18 +20,34 @@ export default function BookActions({ book, hideRead = false }: { book: Book; hi
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [inLibrary, setInLibrary] = useState(false);
+  const [busyLib, setBusyLib] = useState(false);
 
-  // Admin / chưa phải USER: không hiện mua hàng
-  if (user?.role === 'ADMIN') {
+  const isUser = user?.role === 'USER';
+  const isAdmin = user?.role === 'ADMIN';
+
+  useEffect(() => {
+    if (!isUser) return;
+    let cancelled = false;
+    libraryService
+      .status(book.id)
+      .then((lib) => {
+        if (!cancelled) setInLibrary(lib.inLibrary);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [book.id, isUser, user?.id]);
+
+  if (isAdmin) {
     return !hideRead ? <ReadBookButton book={book} /> : null;
   }
 
   const physical = isPhysical(book);
   const stock = book.stockQuantity ?? 0;
   const canBuy = physical && stock > 0;
-  const isUser = user?.role === 'USER';
   const maxQty = Math.min(99, Math.max(1, stock));
-
   const goLogin = () => navigate(ROUTES.LOGIN, { state: { from: location } });
 
   const addToCart = async () => {
@@ -49,7 +66,6 @@ export default function BookActions({ book, hideRead = false }: { book: Book; hi
     }
   };
 
-  /** Chỉ đặt đúng sách + số lượng đang chọn trên trang chi tiết */
   const buyNow = () => {
     if (!isUser) return goLogin();
     if (!canBuy) return;
@@ -68,6 +84,24 @@ export default function BookActions({ book, hideRead = false }: { book: Book; hi
         buyNow: true,
       },
     });
+  };
+
+  const toggleLib = async () => {
+    if (!isUser || busyLib) return;
+    setBusyLib(true);
+    try {
+      if (inLibrary) {
+        await libraryService.remove(book.id);
+        setInLibrary(false);
+      } else {
+        await libraryService.add(book.id);
+        setInLibrary(true);
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setBusyLib(false);
+    }
   };
 
   return (
@@ -132,6 +166,15 @@ export default function BookActions({ book, hideRead = false }: { book: Book; hi
           )}
         </div>
       )}
+
+      {isUser && (
+        <div className="detail-actions" role="group" aria-label="Thư viện" style={{ marginTop: 12 }}>
+          <button type="button" className="btn btn--ghost" disabled={busyLib} onClick={toggleLib}>
+            {busyLib ? '...' : inLibrary ? '📚 Đã lưu · Gỡ' : '📚 Lưu vào thư viện'}
+          </button>
+        </div>
+      )}
+
       {!hideRead && <ReadBookButton book={book} />}
     </>
   );

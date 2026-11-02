@@ -3,7 +3,6 @@
 import { Link, useParams } from 'react-router-dom';
 import BookActions from '../components/book/BookActions';
 import BookCover from '../components/book/BookCover';
-import BookDetailActions from '../components/book/BookDetailActions';
 import BookToc from '../components/book/BookToc';
 import { EmptyState, ErrorState, LoadingBlock } from '../components/common/States';
 import { useAsync } from '../hooks/useAsync';
@@ -70,7 +69,6 @@ export default function BookDetailPage() {
       <article className="detail">
         <div className="detail__cover-col">
           <BookCover book={book} className="detail__cover" enableZoom />
-          <BookDetailActions book={book} />
         </div>
 
         <div className="detail__info">
