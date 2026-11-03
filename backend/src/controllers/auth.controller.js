@@ -50,7 +50,7 @@ const login = async (req, res) => {
     if (!user) return fail(res, 401, 'Email hoặc mật khẩu không chính xác');
     const matched = await bcrypt.compare(password, user.password_hash);
     if (!matched) return fail(res, 401, 'Email hoặc mật khẩu không chính xác');
-    if (!user.is_active) return fail(res, 403, 'Tài khoản đã bị khóa');
+    if (!user.is_active) return fail(res, 403, 'Tài khoản đã bị khóa', 'ACCOUNT_LOCKED');
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
@@ -74,7 +74,7 @@ const me = async (req, res) => {
     );
     const user = rows[0];
     if (!user) return fail(res, 401, 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn');
-    if (!user.is_active) return fail(res, 403, 'Tài khoản đã bị khóa');
+    if (!user.is_active) return fail(res, 403, 'Tài khoản đã bị khóa', 'ACCOUNT_LOCKED');
     return success(res, 200, 'Lấy thông tin tài khoản thành công', {
       id: user.id, fullName: user.full_name, email: user.email,
       role: user.role, avatarUrl: user.avatar_url

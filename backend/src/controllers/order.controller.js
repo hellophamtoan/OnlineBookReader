@@ -1,5 +1,5 @@
 const {pool,success,bad,posId,qty,money,validation,replyError,withTx,claimRequest,finishRequest,audit,sendTransaction} = require('../services/week3.common');
-const validStatuses = new Set(['PENDING','PREPARING','SHIPPING','DELIVERED','FAILED','CANCELLED']);
+const validStatuses = new Set(['PENDING','CONFIRMED','SHIPPING','DELIVERED','FAILED','CANCELLED']);
 const validateCheckout = b => {
   const errors=[];
   const receiverName=typeof b?.receiverName==='string'?b.receiverName.trim():'';
