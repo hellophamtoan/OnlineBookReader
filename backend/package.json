@@ -5,7 +5,8 @@
   "main": "src/server.js",
   "scripts": {
     "dev": "nodemon src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "test": "jest --runInBand && node --test tests/*.node.test.js"
   },
   "dependencies": {
     "adm-zip": "^0.6.1",

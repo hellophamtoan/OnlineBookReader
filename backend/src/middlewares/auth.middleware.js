@@ -15,7 +15,7 @@ const verifyToken = async (req, res, next) => {
     }
     const [rows] = await pool.execute('SELECT id, email, role, is_active FROM users WHERE id = ? LIMIT 1', [decoded.id]);
     if (!rows.length) return fail(res, 401, 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn');
-    if (!rows[0].is_active) return fail(res, 403, 'Tài khoản đã bị khóa');
+    if (!rows[0].is_active) return fail(res, 403, 'Tài khoản đã bị khóa', 'ACCOUNT_LOCKED');
     req.user = { id: rows[0].id, email: rows[0].email, role: rows[0].role };
     return next();
   } catch (error) {
