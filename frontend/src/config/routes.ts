@@ -22,6 +22,8 @@ export const ROUTES = {
   CART: '/cart',             // 👈 Thêm cho CartPage / CheckoutPage
   CHECKOUT: '/checkout',     // 👈 Thêm cho trang thanh toán
   PLANS: '/plans',           // 👈 Thêm cho SubscriptionRequired
+  WALLET_TOPUP: '/wallet/topup',
+  WALLET_TOPUP_RETURN: '/wallet/topup/return',
 
   // UC007+ - Khu quản trị
   ADMIN_HOME: '/admin',

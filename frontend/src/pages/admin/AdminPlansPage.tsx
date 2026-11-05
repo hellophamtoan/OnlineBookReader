@@ -42,6 +42,7 @@ export default function AdminPlansPage() {
   const [editPlan, setEditPlan] = useState<AdminPlan | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [topup, setTopup] = useState({ userId: '', amount: '100000', note: 'Nạp test — môi trường học tập' });
+  const [topupHistoryKey, setTopupHistoryKey] = useState(0);
   const crumbs = [
     { label: 'Tổng quan', to: ROUTES.ADMIN_HOME },
     { label: 'Gói đọc' },
@@ -272,6 +273,7 @@ export default function AdminPlansPage() {
         `Đã nạp ${formatPrice(data.amount)} cho user #${data.userId}. Số dư mới: ${formatPrice(data.balance)}. (Môi trường học tập)`,
       );
       users.reload();
+      setTopupHistoryKey((k) => k + 1);
     } catch (err) {
       setError(toMessage(err));
     } finally {
@@ -385,6 +387,7 @@ export default function AdminPlansPage() {
         selectedUser={selectedUser}
         topup={topup}
         busy={busy}
+        historyKey={topupHistoryKey}
         onChange={(patch) => setTopup((t) => ({ ...t, ...patch }))}
         onSubmit={doTopup}
       />
