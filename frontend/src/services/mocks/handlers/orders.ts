@@ -11,10 +11,11 @@ import { MESSAGES, RULES } from '../../../config/rules';
 import { MockHttpError, flag } from '../http';
 import type { Route } from '../router';
 import {
-  addWalletTx, allOrders, findBook, getCartLines, getStock, getWallet, nextOrderId, publicOrder, saveCartLines, saveOrders,
-  setStock, setWallet, toOrderItems,
+  adjustWallet, allOrders, findBook, getCartLines, getStock, getWallet, nextOrderId, publicOrder, saveCartLines, saveOrders,
+  setStock, toOrderItems,
 } from '../shopdb';
 import type { MockOrder } from '../shopdb';
+import { paginate } from './common';
 import { requireCustomer } from './guards';
 
 const str = (v: unknown) => (typeof v === 'string' ? v : '');
@@ -112,8 +113,7 @@ export const orderRoutes: Route[] = [
       };
       lines.forEach((l) => setStock(l.bookId, getStock(findBook(l.bookId)!) - l.quantity));
       if (paymentMethod === 'WALLET') {
-        setWallet(user.id, getWallet(user) - total);
-        addWalletTx({ userId: user.id, type: 'PAY_ORDER', amount: -total, refType: 'ORDER', refId: order.id });
+        adjustWallet(user, -total, { type: 'PAY_ORDER', refType: 'ORDER', refId: order.id });
       }
       saveOrders([order, ...allOrders()]);
       // Chỉ gỡ khỏi giỏ các sách đã đặt (giữ lại sách chưa chọn)
@@ -137,20 +137,18 @@ export const orderRoutes: Route[] = [
       if (!Number.isInteger(page) || page < 1) throw validation('page không hợp lệ');
       if (!Number.isInteger(limit) || limit < 1 || limit > 50) throw validation('limit không hợp lệ');
 
-      // Sửa đoạn trong route GET /orders/my (khoảng dòng 115-118):
       const mine = allOrders()
         .filter((o: MockOrder) => o.userId === user.id && (!status || o.status === status))
         .sort((a: MockOrder, b: MockOrder) => b.createdAt.localeCompare(a.createdAt) || b.id - a.id);
-        
-        const total = mine.length;
+      const pageData = paginate(mine, page, limit);
       return {
         message: 'Lấy danh sách đơn hàng thành công',
         data: {
-          items: mine.slice((page - 1) * limit, page * limit).map(publicOrder),
+          items: pageData.items.map(publicOrder),
           page,
           limit,
-          total,
-          totalPages: Math.max(1, Math.ceil(total / limit)),
+          total: pageData.total,
+          totalPages: pageData.totalPages,
         },
       };
     },
@@ -183,8 +181,7 @@ export const orderRoutes: Route[] = [
         if (book) setStock(book.id, getStock(book) + i.quantity);
       });
       if (order.paymentMethod === 'WALLET' && order.paymentStatus === 'PAID') {
-        setWallet(user.id, getWallet(user) + order.totalAmount);
-        addWalletTx({ userId: user.id, type: 'REFUND', amount: order.totalAmount, refType: 'ORDER', refId: order.id });
+        adjustWallet(user, order.totalAmount, { type: 'REFUND', refType: 'ORDER', refId: order.id });
       }
       const cancelled: MockOrder = {
         ...order,

@@ -1,20 +1,20 @@
 // UC009 — Admin quản lý đơn hàng (API-60..64)
 import { ORDER_STATUSES } from '../../../config/orders';
 import type { OrderStatus } from '../../../types';
+import { ADMIN_ORDER_NEXT } from '../../../utils/adminOrderStatus';
 import { MockHttpError, toInt } from '../http';
 import type { Route } from '../router';
 import { findUserById } from '../db';
 import {
-  addWalletTx,
+  adjustWallet,
   allOrders,
   findBook,
   getStock,
-  getWallet,
   saveOrders,
   setStock,
-  setWallet,
   type MockOrder,
 } from '../shopdb';
+import { paginate } from './common';
 import { requireAdmin } from './guards';
 
 const validation = (message: string, field?: string) =>
@@ -28,15 +28,6 @@ export const paymentStatusOf = (o: MockOrder): 'PAID' | 'UNPAID' | 'REFUNDED' =>
   return 'PAID';
 };
 
-const ALLOWED: Record<OrderStatus, OrderStatus[]> = {
-  PENDING: ['PREPARING', 'CANCELLED', 'FAILED'],
-  PREPARING: ['SHIPPING', 'CANCELLED', 'FAILED'],
-  SHIPPING: ['DELIVERED', 'FAILED'],
-  DELIVERED: [],
-  CANCELLED: [],
-  FAILED: [],
-};
-
 function restoreStock(order: MockOrder) {
   for (const it of order.items) {
     const b = findBook(it.bookId);
@@ -48,12 +39,8 @@ function refundWalletIfNeeded(order: MockOrder): MockOrder {
   if (paymentStatusOf(order) !== 'PAID' || order.paymentMethod !== 'WALLET') return order;
   const user = findUserById(order.userId);
   if (!user) return order;
-  const bal = getWallet(user) + order.totalAmount;
-  setWallet(order.userId, bal);
-  addWalletTx({
-    userId: order.userId,
+  adjustWallet(user, order.totalAmount, {
     type: 'REFUND',
-    amount: order.totalAmount,
     refType: 'ORDER',
     refId: order.id,
   });
@@ -93,7 +80,7 @@ function detail(o: MockOrder) {
 }
 
 function applyStatus(order: MockOrder, next: OrderStatus, _note?: string): MockOrder {
-  if (!ALLOWED[order.status].includes(next)) {
+  if (!ADMIN_ORDER_NEXT[order.status].includes(next)) {
     throw new MockHttpError(
       409,
       `Không thể chuyển từ ${order.status} sang ${next}`,
@@ -145,13 +132,16 @@ export const adminOrderRoutes: Route[] = [
         });
       }
       list = [...list].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
-      const total = list.length;
-      const totalPages = Math.max(1, Math.ceil(total / limit));
-      const start = (page - 1) * limit;
-      const items = list.slice(start, start + limit).map(listItem);
+      const pageData = paginate(list, page, limit);
       return {
         message: 'Lấy danh sách đơn hàng thành công',
-        data: { items, page, limit, total, totalPages },
+        data: {
+          items: pageData.items.map(listItem),
+          page,
+          limit,
+          total: pageData.total,
+          totalPages: pageData.totalPages,
+        },
       };
     },
   },
