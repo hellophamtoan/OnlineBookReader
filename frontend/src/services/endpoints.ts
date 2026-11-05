@@ -88,6 +88,10 @@ export const ENDPOINTS = {
     userLock: (id: number) => `/admin/users/${id}/lock`,
     userUnlock: (id: number) => `/admin/users/${id}/unlock`,
     walletTopup: (userId: number) => `/admin/users/${userId}/wallet/topup`, // API-58
+    userWalletTopups: (userId: number) => `/admin/users/${userId}/wallet/topups`,
+    confirmUserTopup: (userId: number, orderCode: string) =>
+      `/admin/users/${userId}/wallet/topups/${encodeURIComponent(orderCode)}/confirm`,
+    storeBankAccount: '/admin/store/bank-account',
     // UC011
     reports: {
       overview: '/admin/reports/overview',
@@ -103,6 +107,15 @@ export const ENDPOINTS = {
     reading: '/library/reading',
     item: (bookId: number) => `/library/${bookId}`,
     status: (bookId: number) => `/library/${bookId}/status`,
+  },
+
+  // ----- Nạp ví (VNPay / MoMo) -----
+  wallet: {
+    topup: '/wallet/topup',
+    topups: '/wallet/topups',
+    topupStatus: (orderCode: string) => `/wallet/topup/${encodeURIComponent(orderCode)}`,
+    balance: '/wallet/balance',
+    transactions: '/wallet/transactions',
   },
 
 } as const;

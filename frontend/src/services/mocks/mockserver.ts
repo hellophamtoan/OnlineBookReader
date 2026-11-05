@@ -4,6 +4,7 @@ import { adminBookRoutes } from './handlers/adminBooks';
 import { adminChapterRoutes } from './handlers/adminChapters';
 import { adminOrderRoutes } from './handlers/adminOrders';
 import { adminUserRoutes } from './handlers/adminUsers';
+import { adminWalletRoutes } from './handlers/adminWallet';
 import { adminReportRoutes } from './handlers/adminReports';
 import { adminTaxonomyRoutes } from './handlers/adminTaxonomy';
 import { authRoutes } from './handlers/auth';
@@ -15,6 +16,7 @@ import { planRoutes } from './handlers/plans';
 import { readingRoutes } from './handlers/reading';
 import { storeRoutes } from './handlers/store';
 import { userRoutes } from './handlers/users';
+import { walletRoutes } from './handlers/wallet';
 import { MockHttpError, delay, flag } from './http';
 import { matchRoute } from './router';
 import type { Route } from './router';
@@ -22,6 +24,7 @@ import type { Route } from './router';
 const ROUTES: Route[] = [
   ...authRoutes,
   ...userRoutes,
+  ...walletRoutes,
   ...bookRoutes,
   ...storeRoutes,
   ...cartRoutes,
@@ -34,6 +37,7 @@ const ROUTES: Route[] = [
   ...adminChapterRoutes,
   ...adminOrderRoutes,
   ...adminUserRoutes,
+  ...adminWalletRoutes,
   ...adminReportRoutes,
 ];
 

@@ -22,6 +22,8 @@ const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
 const MyOrdersPage = lazy(() => import('./pages/MyOrdersPage'));
 const OrderDetailPage = lazy(() => import('./pages/OrderDetailPage'));
 const PlansPage = lazy(() => import('./pages/PlansPage'));
+const WalletTopupPage = lazy(() => import('./pages/WalletTopupPage'));
+const WalletTopupReturnPage = lazy(() => import('./pages/WalletTopupReturnPage'));
 
 const AdminHomePage = lazy(() => import('./pages/admin/AdminHomePage'));
 const AdminBooksPage = lazy(() => import('./pages/admin/AdminBooksPage'));
@@ -60,6 +62,8 @@ export default function App() {
               <Route path={ROUTES.LIBRARY} element={<LibraryPage />} />
               <Route path={ROUTES.CART} element={<CartPage />} />
               <Route path={ROUTES.CHECKOUT} element={<CheckoutPage />} />
+              <Route path={ROUTES.WALLET_TOPUP} element={<WalletTopupPage />} />
+              <Route path={ROUTES.WALLET_TOPUP_RETURN} element={<WalletTopupReturnPage />} />
               <Route path={ROUTES.MY_ORDERS} element={<MyOrdersPage />} />
               <Route path={ROUTE_PATTERNS.ORDER_DETAIL} element={<OrderDetailPage />} />
             </Route>

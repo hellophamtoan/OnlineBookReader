@@ -25,9 +25,84 @@
 .profile-form__avatar { display: flex; align-items: flex-start; gap: 20px; }
 .profile-form__avatar-field { flex: 1; min-width: 0; }
 
-/* ---------- 3) Responsive ---------- */
+/* ---------- 3) Modal nạp ví ---------- */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 1000;
+  display: grid; place-items: center;
+  background: rgba(15, 23, 42, 0.45);
+  padding: 16px;
+}
+.modal {
+  width: min(480px, 100%);
+  max-height: min(90vh, 720px);
+  overflow: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
+}
+.modal__head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-bottom: 12px;
+}
+.modal__title { font-size: 20px; font-weight: 800; margin: 0; }
+.modal__actions {
+  display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 20px;
+}
+.btn--secondary {
+  background: var(--brand-tint, #eef2ff);
+  color: var(--brand);
+  border: 1px solid var(--brand);
+}
+.btn--secondary:hover:not(:disabled) {
+  background: var(--brand);
+  color: #fff;
+}
+.btn--icon {
+  width: 36px; height: 36px; padding: 0; font-size: 22px; line-height: 1;
+}
+.btn--sm {
+  min-height: 34px; padding: 0 12px; font-size: 13px;
+}
+.wallet-topup-modal__balance { margin: 0 0 16px; color: var(--muted); }
+.wallet-topup-modal__presets {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.alert--info {
+  background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a;
+  padding: 16px; border-radius: var(--radius-lg);
+}
+.muted { color: var(--muted); font-size: 0.9em; }
+
+/* ---------- 4) Responsive ---------- */
 @media (max-width: 560px) {
   .profile-card { padding: 20px 16px; }
   .profile-card__head, .profile-form__avatar { flex-direction: column; align-items: flex-start; gap: 14px; }
   .profile-form__avatar-field { width: 100%; }
 }
+
+/* ---------- Trang nạp ví QR ---------- */
+.wallet-topup-page__balance { margin: 0 0 16px; color: var(--muted); }
+.wallet-topup-qr__title { font-size: 18px; font-weight: 800; margin: 0 0 8px; }
+.wallet-topup-qr__hint { color: var(--muted); margin: 0 0 16px; line-height: 1.5; }
+.wallet-topup-qr__image-wrap {
+  display: flex; justify-content: center; padding: 12px;
+  background: #fff; border: 1px solid var(--line); border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+}
+.wallet-topup-qr__image { max-width: 320px; width: 100%; height: auto; border-radius: 8px; }
+.wallet-topup-qr__meta { margin: 0 0 12px; }
+.wallet-topup-qr__code {
+  font-family: ui-monospace, monospace; font-weight: 700;
+  background: var(--brand-tint, #eef2ff); padding: 2px 8px; border-radius: 6px;
+  user-select: all;
+}
+.wallet-topup-qr__waiting { color: var(--brand); font-weight: 600; margin: 8px 0 0; }
+
+/* bảng lịch sử nạp ví (user) */
+.wallet-topup-page .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); }
+.wallet-topup-page .table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.wallet-topup-page .table th,
+.wallet-topup-page .table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); }
+.wallet-topup-page .table th { font-weight: 700; background: var(--brand-tint, #eef2ff); }

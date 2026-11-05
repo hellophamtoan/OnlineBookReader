@@ -152,13 +152,17 @@ export const planRoutes: Route[] = [
       if (plan.isFree || pricePaid <= 0) {
         markFreeClaimed(user.id);
       } else {
-        setWallet(user.id, getWallet(user) - pricePaid);
+        const newBalance = getWallet(user) - pricePaid;
+        setWallet(user.id, newBalance);
         addWalletTx({
           userId: user.id,
           type: 'PAY_PLAN',
           amount: -pricePaid,
+          balanceAfter: newBalance,
+          note: null,
           refType: 'SUBSCRIPTION',
           refId: sub.id,
+          externalReference: null,
         });
       }
 
@@ -356,15 +360,18 @@ export const planRoutes: Route[] = [
       const b = (body ?? {}) as Record<string, unknown>;
       const amount = Number(b.amount);
       if (!Number.isFinite(amount) || amount <= 0) throw validation('Số tiền không hợp lệ', 'amount');
-      const note = b.note != null ? String(b.note) : null;
+      const note = b.note != null ? String(b.note).trim() : null;
       const balance = getWallet(user) + amount;
       setWallet(userId, balance);
       addWalletTx({
         userId,
         type: 'TOPUP',
         amount,
+        balanceAfter: balance,
+        note: note || null,
         refType: 'ADMIN',
         refId: null,
+        externalReference: null,
       });
       return {
         message: 'Nạp ví thành công',

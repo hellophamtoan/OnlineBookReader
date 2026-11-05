@@ -1,4 +1,4 @@
-// UC008 admin plans + UC013 topup
+// UC008 admin plans + UC013 topup + TK nhận tiền + lịch sử nạp
 import { api } from '../api';
 import { ENDPOINTS } from '../endpoints';
 import type { PlanKind } from '../../utils/planDates';
@@ -32,6 +32,42 @@ export type AdminPlanPayload = {
   price: number;
   durationDays: number;
 };
+
+export interface WalletTopupTx {
+  id: number;
+  type: string;
+  amount: number;
+  balanceAfter?: number | null;
+  note?: string | null;
+  externalReference?: string | null;
+  createdAt: string;
+}
+
+export interface WalletTopupRequestRow {
+  id: number;
+  amount: number;
+  gateway: string;
+  status: string;
+  orderCode: string;
+  gatewayTxnId?: string | null;
+  paidAt?: string | null;
+  createdAt: string;
+  note?: string | null;
+}
+
+export interface UserTopupHistory {
+  user: { id: number; fullName: string; email: string; walletBalance: number };
+  transactions: WalletTopupTx[];
+  requests: WalletTopupRequestRow[];
+}
+
+export interface StoreBankAccount {
+  bin: string;
+  accountNo: string;
+  accountName: string;
+  bankName: string;
+  source?: string;
+}
 
 export const planAdminService = {
   async list(): Promise<AdminPlan[]> {
@@ -77,5 +113,47 @@ export const planAdminService = {
     return (
       await api.post(ENDPOINTS.admin.walletTopup(userId), { amount, note: note || undefined })
     ).data as { userId: number; amount: number; balance: number; note: string | null };
+  },
+
+  async getUserTopupHistory(userId: number): Promise<UserTopupHistory> {
+    return (await api.get(ENDPOINTS.admin.userWalletTopups(userId))).data as UserTopupHistory;
+  },
+
+  async getStoreBankAccount(): Promise<{
+    configured: boolean;
+    bank: StoreBankAccount | null;
+    hint?: string;
+  }> {
+    return (await api.get(ENDPOINTS.admin.storeBankAccount)).data as {
+      configured: boolean;
+      bank: StoreBankAccount | null;
+      hint?: string;
+    };
+  },
+
+  async updateStoreBankAccount(body: {
+    bin: string;
+    accountNo: string;
+    accountName: string;
+    bankName?: string;
+  }): Promise<{ bank: StoreBankAccount; configured: boolean }> {
+    return (await api.put(ENDPOINTS.admin.storeBankAccount, body)).data as {
+      bank: StoreBankAccount;
+      configured: boolean;
+    };
+  },
+
+  /** Admin xác nhận đã nhận CK → cộng ví, PENDING → PAID */
+  async confirmUserTopup(userId: number, orderCode: string) {
+    return (
+      await api.post(ENDPOINTS.admin.confirmUserTopup(userId, orderCode), {})
+    ).data as {
+      userId: number;
+      orderCode: string;
+      amount: number;
+      balance: number;
+      status: string;
+      paidAt: string;
+    };
   },
 };
