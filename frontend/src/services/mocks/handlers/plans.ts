@@ -16,7 +16,7 @@ import {
   saveSubscriptions,
   allSubscriptions,
 } from '../subscriptiondb';
-import { addWalletTx, getWallet, setWallet } from '../shopdb';
+import { adjustWallet, getWallet } from '../shopdb';
 import { requireAdmin, requireCustomer } from './guards';
 import { allUsers } from '../db';
 import {
@@ -152,17 +152,10 @@ export const planRoutes: Route[] = [
       if (plan.isFree || pricePaid <= 0) {
         markFreeClaimed(user.id);
       } else {
-        const newBalance = getWallet(user) - pricePaid;
-        setWallet(user.id, newBalance);
-        addWalletTx({
-          userId: user.id,
+        adjustWallet(user, -pricePaid, {
           type: 'PAY_PLAN',
-          amount: -pricePaid,
-          balanceAfter: newBalance,
-          note: null,
           refType: 'SUBSCRIPTION',
           refId: sub.id,
-          externalReference: null,
         });
       }
 
@@ -361,17 +354,10 @@ export const planRoutes: Route[] = [
       const amount = Number(b.amount);
       if (!Number.isFinite(amount) || amount <= 0) throw validation('Số tiền không hợp lệ', 'amount');
       const note = b.note != null ? String(b.note).trim() : null;
-      const balance = getWallet(user) + amount;
-      setWallet(userId, balance);
-      addWalletTx({
-        userId,
+      const balance = adjustWallet(user, amount, {
         type: 'TOPUP',
-        amount,
-        balanceAfter: balance,
-        note: note || null,
         refType: 'ADMIN',
-        refId: null,
-        externalReference: null,
+        note: note || null,
       });
       return {
         message: 'Nạp ví thành công',

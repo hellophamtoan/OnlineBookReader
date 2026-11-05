@@ -4,6 +4,7 @@ import type { Route } from '../router';
 import { allUsers, findUserById, setUserActive } from '../db';
 import { getWallet, allOrders } from '../shopdb';
 import { hasActiveSubscription, hasLifetimeSubscription, currentEndDate } from '../subscriptiondb';
+import { paginate } from './common';
 import { requireAdmin } from './guards';
 
 const validation = (message: string, field?: string) =>
@@ -49,13 +50,16 @@ export const adminUserRoutes: Route[] = [
         );
       }
       list = [...list].sort((a, b) => a.id - b.id);
-      const total = list.length;
-      const totalPages = Math.max(1, Math.ceil(total / limit));
-      const start = (page - 1) * limit;
-      const items = list.slice(start, start + limit).map(publicAdminUser);
+      const pageData = paginate(list, page, limit);
       return {
         message: 'Lấy danh sách người dùng thành công',
-        data: { items, page, limit, total, totalPages },
+        data: {
+          items: pageData.items.map(publicAdminUser),
+          page,
+          limit,
+          total: pageData.total,
+          totalPages: pageData.totalPages,
+        },
       };
     },
   },
