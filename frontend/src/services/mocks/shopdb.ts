@@ -35,13 +35,16 @@ export const getWallet = (u: MockUser) => walletOverrides()[u.id] ?? u.walletBal
 export const setWallet = (userId: number, value: number) => writeJson(WALLET_KEY, { ...walletOverrides(), [userId]: value });
 
 export const walletTransactions = (userId: number) => readJson<WalletTx[]>(TX_KEY, []).filter((t) => t.userId === userId);
-export const addWalletTx = (tx: Omit<WalletTx, 'id' | 'createdAt'>) => {
+export const addWalletTx = (
+  tx: Omit<WalletTx, 'id' | 'createdAt' | 'note' | 'balanceAfter' | 'externalReference'> &
+    Partial<Pick<WalletTx, 'note' | 'balanceAfter' | 'externalReference'>>,
+) => {
   const all = readJson<WalletTx[]>(TX_KEY, []);
   writeJson(TX_KEY, [{
-    balanceAfter: null,
-    note: null,
-    externalReference: null,
     ...tx,
+    balanceAfter: tx.balanceAfter ?? null,
+    note: tx.note ?? null,
+    externalReference: tx.externalReference ?? null,
     id: all.length + 1,
     createdAt: new Date().toISOString(),
   }, ...all]);

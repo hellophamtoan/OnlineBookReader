@@ -207,8 +207,8 @@ export default function WalletTopupPage() {
           <h2 className="wallet-topup-qr__title">Quét mã QR để chuyển khoản</h2>
           <p className="wallet-topup-qr__hint">
             Mở app ngân hàng → quét QR → kiểm tra <strong>đúng số tiền</strong> và{' '}
-            <strong>nội dung chuyển khoản</strong> → xác nhận. Hệ thống sẽ tự cộng tiền vào ví khi nhận
-            được giao dịch.
+            <strong>nội dung chuyển khoản</strong> → xác nhận chuyển khoản. Ví chỉ được cộng sau khi
+            admin xác nhận đã nhận tiền.
           </p>
 
           <div className="wallet-topup-qr__image-wrap">
@@ -262,7 +262,7 @@ export default function WalletTopupPage() {
 
           <p className="wallet-topup-qr__waiting" role="status">
             {status?.status === 'PENDING' || !status
-              ? 'Chờ xác nhận…'
+              ? 'Chờ admin xác nhận đã nhận tiền…'
               : status.status === 'PAID'
                 ? 'Đã nạp'
                 : `Trạng thái: ${topupStatusLabel(status.status)}`}

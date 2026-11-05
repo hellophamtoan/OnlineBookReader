@@ -1,6 +1,7 @@
 // Mock nạp ví bằng QR chuyển khoản (VietQR) — FE độc lập
 import type { Route } from '../router';
 import { MockHttpError } from '../http';
+import { findUserById } from '../db';
 import { requireUser } from './auth';
 import { requireCustomer } from './guards';
 import { failValidation, str, toNumber } from './common';
@@ -82,33 +83,7 @@ export const walletRoutes: Route[] = [
         note: note || null,
       });
 
-      // Mock: sau 8 giây tự coi như đã nhận CK (giả lập webhook ngân hàng)
-      const uid = user.id;
-      setTimeout(() => {
-        try {
-          const current = findTopupByCode(orderCode);
-          if (!current || current.status !== 'PENDING') return;
-          // eslint-disable-next-line @typescript-eslint/no-require-imports
-          const { findUserById } = require('../db');
-          const u = findUserById(uid);
-          if (!u) return;
-          adjustWallet(u, amount, {
-            type: 'TOPUP',
-            refType: 'TOPUP_REQUEST',
-            refId: row.id,
-            note: content,
-            externalReference: content,
-          });
-          updateTopup(orderCode, {
-            status: 'PAID',
-            gatewayTxnId: `MOCK-BANK-${Date.now()}`,
-            paidAt: new Date().toISOString(),
-          });
-        } catch {
-          /* ignore */
-        }
-      }, 8000);
-
+      // Không tự cộng ví: chờ admin xác nhận (POST /admin/users/:id/wallet/topups/:orderCode/confirm)
       return {
         status: 201,
         message: 'Tạo yêu cầu nạp tiền thành công',
@@ -124,7 +99,7 @@ export const walletRoutes: Route[] = [
           status: 'PENDING',
           expiresInSeconds: 1800,
           message:
-            'MOCK: quét QR hoặc đợi ~8 giây hệ thống giả lập nhận tiền và cộng ví. Nội dung CK phải khớp mã.',
+            'Quét QR / chuyển khoản đúng nội dung. Ví chỉ được cộng sau khi admin xác nhận đã nhận tiền.',
         },
       };
     },
@@ -139,8 +114,6 @@ export const walletRoutes: Route[] = [
       const content = str(b.content ?? b.description).replace(/\s+/g, '').toUpperCase();
       if (!amount || !content) throw failValidation([{ field: 'content', message: 'Thiếu nội dung hoặc số tiền' }]);
 
-      // Tìm trong storage — shopdb allTopups
-      const { allTopups } = require('../shopdb') as typeof import('../shopdb');
       const pending = allTopups().filter((t) => t.status === 'PENDING' && t.amount === amount);
       const matched = pending.find((t) => {
         const code = transferContent(t.orderCode).toUpperCase();
@@ -149,8 +122,6 @@ export const walletRoutes: Route[] = [
       if (!matched) {
         return { message: 'Không khớp giao dịch', data: { matched: false } };
       }
-      // Cần user object — lấy balance qua adjust cần MockUser
-      const { findUserById } = require('../db');
       const user = findUserById(matched.userId);
       if (!user) throw new MockHttpError(404, 'User không tồn tại', 'NOT_FOUND');
       const ck = transferContent(matched.orderCode);
@@ -242,7 +213,7 @@ export const walletRoutes: Route[] = [
     path: '/wallet/topups',
     handler: ({ token, query }) => {
       const user = requireCustomer(token);
-      const limit = Math.min(Number(query?.limit) || 50, 100);
+      const limit = Math.min(Number(query.get('limit') || 50) || 50, 100);
       const items = allTopups()
         .filter((r) => r.userId === user.id)
         .slice(0, limit)
