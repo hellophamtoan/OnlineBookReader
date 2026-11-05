@@ -173,7 +173,11 @@ export const mapOrder = (raw: unknown): Order => {
   const items = Array.isArray(r.items) ? r.items.map(mapOrderItem) : [];
   return {
     id: Number(r.id),
-    status: String(r.status ?? 'PENDING').toUpperCase() as OrderStatus,
+    status: (() => {
+      const s = String(r.status ?? 'PENDING').toUpperCase();
+      // BE thật dùng CONFIRMED; FE/mock hiển thị PREPARING («Đang chuẩn bị»)
+      return (s === 'CONFIRMED' ? 'PREPARING' : s) as OrderStatus;
+    })(),
     paymentMethod: String(r.paymentMethod ?? 'COD').toUpperCase() as PaymentMethod,
     totalAmount: num(r.totalAmount) ?? items.reduce((sum, i) => sum + i.subtotal, 0),
     receiverName: String(r.receiverName ?? ''),

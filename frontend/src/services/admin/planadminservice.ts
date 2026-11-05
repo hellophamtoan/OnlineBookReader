@@ -102,11 +102,43 @@ export const planAdminService = {
   },
 
   async listUsers(): Promise<AdminUserOption[]> {
-    const data = (await api.get(ENDPOINTS.admin.users, { role: 'USER', limit: 500 })).data as {
-      items?: AdminUserOption[];
-    } | AdminUserOption[];
-    const items = Array.isArray(data) ? data : data?.items ?? [];
-    return items.filter((u) => (u as { role?: string }).role !== 'ADMIN');
+    // BE paging: limit tối đa 100 — lấy nhiều trang nếu cần
+    const pageSize = 100;
+    const all: AdminUserOption[] = [];
+    let page = 1;
+    let totalPages = 1;
+    do {
+      const data = (await api.get(ENDPOINTS.admin.users, {
+        role: 'USER',
+        limit: pageSize,
+        page,
+      })).data as {
+        items?: AdminUserOption[];
+        totalPages?: number;
+        page?: number;
+      } | AdminUserOption[];
+      if (Array.isArray(data)) {
+        all.push(...data);
+        break;
+      }
+      const items = data?.items ?? [];
+      all.push(...items);
+      totalPages = Number(data?.totalPages) || 1;
+      page += 1;
+    } while (page <= totalPages && page <= 20);
+    return all
+      .filter((u) => (u as { role?: string }).role !== 'ADMIN')
+      .map((u) => ({
+        id: Number(u.id),
+        fullName: String(u.fullName ?? (u as { full_name?: string }).full_name ?? ''),
+        email: u.email,
+        phone: u.phone ?? null,
+        role: String(u.role ?? 'USER'),
+        walletBalance:
+          u.walletBalance != null
+            ? Number(u.walletBalance)
+            : Number((u as { wallet_balance?: number }).wallet_balance ?? 0),
+      }));
   },
 
   async topupWallet(userId: number, amount: number, note?: string) {

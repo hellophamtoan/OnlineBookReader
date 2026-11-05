@@ -125,7 +125,7 @@ export default function AdminWalletTopup({
             <option value="">— Chọn user —</option>
             {userOptions.map((u) => (
               <option key={u.id} value={u.id}>
-                #{u.id} — {u.fullName}
+                #{u.id} — {u.fullName || u.email || 'User'}
               </option>
             ))}
           </select>
