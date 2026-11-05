@@ -10,19 +10,26 @@ export const orderService = {
   // EMPTY_CART, OUT_OF_STOCK, INSUFFICIENT_BALANCE.
   async createOrder(p: CheckoutPayload): Promise<Order> {
     const note = p.note.trim();
+    const hasItems = !!(p.items && p.items.length);
+    // BE: source cart|buy_now cần items; all = cả giỏ và không được gửi items
+    const source = p.source ?? (hasItems ? 'cart' : 'all');
     const res = await api.post(ENDPOINTS.orders.root, {
       receiverName: p.receiverName.trim(),
       receiverPhone: p.receiverPhone.trim(),
       shippingAddress: p.shippingAddress.trim(),
       paymentMethod: p.paymentMethod,
+      source,
       ...(note ? { note } : {}),
-      ...(p.items && p.items.length ? { items: p.items } : {}),
+      ...(hasItems ? { items: p.items } : {}),
     });
     return mapOrderDetail(res.data);
   },
 
   async getMyOrders(q: OrderQuery = {}): Promise<OrderListResult> {
-    const res = await api.get(ENDPOINTS.orders.my, { status: q.status, page: q.page, limit: q.limit });
+    // BE enum: CONFIRMED; FE UI: PREPARING
+    const status =
+      q.status === 'PREPARING' ? 'CONFIRMED' : q.status;
+    const res = await api.get(ENDPOINTS.orders.my, { status, page: q.page, limit: q.limit });
     return mapOrderList(res.data);
   },
 

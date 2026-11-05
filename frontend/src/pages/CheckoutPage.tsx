@@ -116,13 +116,14 @@ export default function CheckoutPage() {
       const order = await orderService.createOrder({
         ...values,
         paymentMethod: values.paymentMethod as PaymentMethod,
+        // Mua ngay → buy_now (không kiểm tra giỏ); chọn từ giỏ → cart
+        source: state.buyNow ? 'buy_now' : 'cart',
         items: orderItems.map((i) => ({ bookId: i.bookId, quantity: i.quantity })),
       });
       // Làm mới giỏ (mock chỉ xóa các dòng đã đặt)
       await refresh().catch(() => reset());
       navigate(ROUTES.ORDER_DETAIL(order.id), { replace: true, state: { justOrdered: true } });
     } catch (err) {
-      setLoading(false);
       if (err instanceof ApiError) {
         const fieldErrors = err.errors.filter((fe) => fe.field in values);
         if (fieldErrors.length) {
@@ -134,7 +135,7 @@ export default function CheckoutPage() {
           scheduleFocusFirstFieldError(mapped);
           return;
         }
-        if (err.code === 'OUT_OF_STOCK' || err.code === 'EMPTY_CART') {
+        if (err.code === 'OUT_OF_STOCK' || err.code === 'EMPTY_CART' || err.code === 'CART_CHANGED') {
           setGeneralError(err.message);
           return void refresh().catch(() => {});
         }
@@ -144,6 +145,8 @@ export default function CheckoutPage() {
         }
       }
       setGeneralError(toMessage(err));
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -148,6 +148,8 @@ export interface CheckoutPayload {
   shippingAddress: string;
   paymentMethod: PaymentMethod;
   note: string;
+  /** cart = sách chọn từ giỏ; buy_now = mua ngay; all = cả giỏ (không gửi items) */
+  source?: 'cart' | 'buy_now' | 'all';
   /** Chỉ đặt các dòng này (chọn từ giỏ hoặc Mua ngay). Không gửi = cả giỏ. */
   items?: { bookId: number; quantity: number }[];
 }

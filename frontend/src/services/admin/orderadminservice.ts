@@ -110,8 +110,9 @@ function normalizeList(raw: unknown): AdminOrderListResult {
 
 export const orderAdminService = {
   async list(q: AdminOrderQuery = {}): Promise<AdminOrderListResult> {
-    // Query status: luôn gửi enum BE (PREPARING), không gửi CONFIRMED
-    const status = q.status ? normalizeOrderStatus(q.status) ?? q.status : undefined;
+    // BE thật dùng CONFIRMED; FE dùng PREPARING để hiển thị
+    let status = q.status ? normalizeOrderStatus(q.status) ?? q.status : undefined;
+    if (status === 'PREPARING') status = 'CONFIRMED';
     const data = (
       await api.get(ENDPOINTS.admin.orders.root, {
         ...q,
@@ -127,9 +128,11 @@ export const orderAdminService = {
   },
 
   async updateStatus(id: number, status: OrderStatus | string, note?: string) {
-    const normalized = normalizeOrderStatus(String(status)) ?? (status as OrderStatus);
+    let normalized = normalizeOrderStatus(String(status)) ?? (status as OrderStatus);
+    // Gửi CONFIRMED cho BE khi FE chọn PREPARING
+    const payloadStatus = normalized === 'PREPARING' ? 'CONFIRMED' : normalized;
     return (
-      await api.patch(ENDPOINTS.admin.orders.status(id), { status: normalized, note })
+      await api.patch(ENDPOINTS.admin.orders.status(id), { status: payloadStatus, note })
     ).data as { id: number; status: OrderStatus; paymentStatus: string; updatedAt: string };
   },
 
