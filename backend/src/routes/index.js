@@ -15,6 +15,7 @@ const cartRoutes = require('./cart.routes');
 const orderRoutes = require('./order.routes');
 const planRoutes = require('./plan.routes');
 const subscriptionRoutes = require('./subscription.routes');
+const walletRoutes = require('./wallet.routes');
 
 router.use('/auth', authRoutes);
 router.use('/books', bookRoutes);
@@ -29,5 +30,6 @@ router.use('/cart',cartRoutes);
 router.use('/orders',orderRoutes);
 router.use('/plans',planRoutes);
 router.use('/subscriptions',subscriptionRoutes);
+router.use('/wallet', walletRoutes);
 
 module.exports = router;

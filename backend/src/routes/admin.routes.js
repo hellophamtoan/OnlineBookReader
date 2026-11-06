@@ -55,5 +55,11 @@ router.get('/reports/revenue',w4.revenue);
 router.get('/reports/best-sellers',w4.best);
 router.get('/reports/subscriptions',w4.subscriptions);
 router.post('/users/:id/wallet/topup',wallet.topup);
+// UC013: nạp ví QR - tài khoản nhận tiền, lịch sử, xác nhận đã nhận tiền
+const topupAdmin=require('../controllers/wallet.topup.admin.controller');
+router.get('/store/bank-account',topupAdmin.getBankAccount);
+router.put('/store/bank-account',topupAdmin.updateBankAccount);
+router.get('/users/:id/wallet/topups',topupAdmin.userTopupHistory);
+router.post('/users/:id/wallet/topups/:orderCode/confirm',topupAdmin.confirmTopup);
 
 module.exports = router;
