@@ -6,6 +6,7 @@ import type { Route } from '../router';
 import { normalizeText } from '../../../utils/text';
 import { getCatalog } from '../catalogdb';
 import type { CatalogBook, CatalogRef, CatalogState } from '../catalogdb';
+import { paginate } from './common';
 
 const byName = <T extends { name: string }>(list: T[]) => [...list].sort((a, b) => a.name.localeCompare(b.name, 'vi'));
 const nameOf = (list: CatalogRef[], id: number) => list.find((x) => x.id === id)?.name ?? '';
@@ -86,10 +87,17 @@ export const bookRoutes: Route[] = [
         : b.createdAt.localeCompare(a.createdAt)
       );
 
-      const total = list.length;
-      const items = list.slice((page - 1) * limit, page * limit).map((b) => toListItem(b, c));
+      const pageData = paginate(list, page, limit);
       // Danh sách rỗng vẫn là 200 với items = [] (không trả 404)
-      return { message: 'Lấy danh sách sách thành công', data: { items, page, limit, total } };
+      return {
+        message: 'Lấy danh sách sách thành công',
+        data: {
+          items: pageData.items.map((b) => toListItem(b, c)),
+          page,
+          limit,
+          total: pageData.total,
+        },
+      };
     },
   },
 

@@ -575,3 +575,44 @@
   font-variant-numeric: tabular-nums;
   font-weight: 600;
 }
+
+/* Ảnh QR admin tải lên */
+.admin-qr-upload__row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.admin-qr-upload__preview {
+  margin-top: 12px; padding: 12px; display: inline-block;
+  background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
+}
+.admin-qr-upload__preview img { display: block; max-width: 220px; height: auto; border-radius: 8px; }
+
+/* QR admin căn giữa */
+.admin-qr-preview {
+  margin-top: 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.admin-qr-preview img {
+  display: block;
+  margin: 0 auto;
+  max-width: 220px;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 8px;
+}
+.admin-qr-preview .field__hint {
+  text-align: center;
+  max-width: 320px;
+}
+
+.admin-user-card .admin-qr-preview { width: 100%; }
+
+.admin-topup-confirm {
+  padding: 12px 8px;
+  background: var(--brand-tint, #f5f3ff);
+  border-radius: var(--radius);
+}
+.admin-topup-confirm .admin-user-card__list { margin-bottom: 12px; }

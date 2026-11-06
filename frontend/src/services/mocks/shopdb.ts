@@ -20,8 +20,11 @@ export interface WalletTx {
   userId: number;
   type: WalletTxType;
   amount: number; // dương: cộng ví, âm: trừ ví
+  balanceAfter: number | null; // số dư ví sau giao dịch
+  note: string | null; // ghi chú admin / nội dung nạp
   refType: string | null;
   refId: number | null;
+  externalReference: string | null;
   createdAt: string;
 }
 
@@ -32,10 +35,139 @@ export const getWallet = (u: MockUser) => walletOverrides()[u.id] ?? u.walletBal
 export const setWallet = (userId: number, value: number) => writeJson(WALLET_KEY, { ...walletOverrides(), [userId]: value });
 
 export const walletTransactions = (userId: number) => readJson<WalletTx[]>(TX_KEY, []).filter((t) => t.userId === userId);
-export const addWalletTx = (tx: Omit<WalletTx, 'id' | 'createdAt'>) => {
+export const addWalletTx = (
+  tx: Omit<WalletTx, 'id' | 'createdAt' | 'note' | 'balanceAfter' | 'externalReference'> &
+    Partial<Pick<WalletTx, 'note' | 'balanceAfter' | 'externalReference'>>,
+) => {
   const all = readJson<WalletTx[]>(TX_KEY, []);
-  writeJson(TX_KEY, [{ ...tx, id: all.length + 1, createdAt: new Date().toISOString() }, ...all]);
+  writeJson(TX_KEY, [{
+    ...tx,
+    balanceAfter: tx.balanceAfter ?? null,
+    note: tx.note ?? null,
+    externalReference: tx.externalReference ?? null,
+    id: all.length + 1,
+    createdAt: new Date().toISOString(),
+  }, ...all]);
 };
+
+/**
+ * Cộng/trừ ví theo số dư hiện tại (getWallet) rồi ghi lịch sử.
+ * amount > 0 = nạp, amount < 0 = trừ.
+ */
+export const adjustWallet = (
+  user: MockUser,
+  amount: number,
+  meta: {
+    type?: WalletTxType;
+    refType?: string | null;
+    refId?: number | null;
+    note?: string | null;
+    externalReference?: string | null;
+  } = {},
+) => {
+  const balance = getWallet(user) + amount;
+  if (balance < 0) throw new Error('INSUFFICIENT_BALANCE');
+  setWallet(user.id, balance);
+  addWalletTx({
+    userId: user.id,
+    type: meta.type ?? (amount >= 0 ? 'TOPUP' : 'PAY_ORDER'),
+    amount,
+    balanceAfter: balance,
+    note: meta.note ?? null,
+    refType: meta.refType ?? null,
+    refId: meta.refId ?? null,
+    externalReference: meta.externalReference ?? null,
+  });
+  return balance;
+};
+
+// ---------- Yêu cầu nạp ví (VNPay/MoMo/DEMO mock) ----------
+export type TopupGateway = 'VNPAY' | 'MOMO' | 'DEMO' | 'BANK_QR';
+export type TopupStatus = 'PENDING' | 'PAID' | 'FAILED' | 'CANCELLED' | 'EXPIRED';
+
+export interface MockTopupRequest {
+  id: number;
+  userId: number;
+  amount: number;
+  gateway: TopupGateway;
+  status: TopupStatus;
+  orderCode: string;
+  gatewayTxnId: string | null;
+  paymentUrl: string;
+  note: string | null;
+  paidAt: string | null;
+  createdAt: string;
+}
+
+const TOPUP_KEY = 'mock_wallet_topups';
+export const allTopups = () => readJson<MockTopupRequest[]>(TOPUP_KEY, []);
+export const saveTopups = (list: MockTopupRequest[]) => writeJson(TOPUP_KEY, list);
+
+export const findTopupByCode = (orderCode: string) =>
+  allTopups().find((t) => t.orderCode === orderCode);
+
+export const createTopupRequest = (
+  data: Omit<MockTopupRequest, 'id' | 'createdAt' | 'paidAt' | 'status' | 'gatewayTxnId'> & {
+    status?: TopupStatus;
+  },
+): MockTopupRequest => {
+  const list = allTopups();
+  const row: MockTopupRequest = {
+    id: list.reduce((m, t) => Math.max(m, t.id), 0) + 1,
+    userId: data.userId,
+    amount: data.amount,
+    gateway: data.gateway,
+    status: data.status ?? 'PENDING',
+    orderCode: data.orderCode,
+    gatewayTxnId: null,
+    paymentUrl: data.paymentUrl,
+    note: data.note ?? null,
+    paidAt: null,
+    createdAt: new Date().toISOString(),
+  };
+  saveTopups([row, ...list]);
+  return row;
+};
+
+export const updateTopup = (orderCode: string, patch: Partial<MockTopupRequest>) => {
+  const list = allTopups();
+  const i = list.findIndex((t) => t.orderCode === orderCode);
+  if (i < 0) return null;
+  list[i] = { ...list[i], ...patch };
+  saveTopups(list);
+  return list[i];
+};
+
+
+// ---------- Tài khoản nhận tiền cửa hàng (admin) ----------
+const STORE_BANK_KEY = 'mock_store_bank';
+export interface StoreBank {
+  bin: string;
+  accountNo: string;
+  accountName: string;
+  bankName: string;
+  /** Ảnh QR do admin chọn (data URL hoặc URL) — user nạp ví hiển thị ảnh này */
+  qrImageUrl: string | null;
+}
+const DEFAULT_STORE_BANK: StoreBank = {
+  bin: '970422', // MB Bank
+  accountNo: '0989807884',
+  accountName: 'NGUYEN VAN HA',
+  bankName: 'MB Bank',
+  qrImageUrl: null,
+};
+export const getStoreBank = (): StoreBank => {
+  const raw = readJson<Partial<StoreBank> | null>(STORE_BANK_KEY, null);
+  if (!raw) return { ...DEFAULT_STORE_BANK };
+  return {
+    bin: raw.bin || DEFAULT_STORE_BANK.bin,
+    accountNo: raw.accountNo || DEFAULT_STORE_BANK.accountNo,
+    accountName: raw.accountName || DEFAULT_STORE_BANK.accountName,
+    bankName: raw.bankName || DEFAULT_STORE_BANK.bankName,
+    qrImageUrl: raw.qrImageUrl ?? null,
+  };
+};
+export const setStoreBank = (b: StoreBank) => writeJson(STORE_BANK_KEY, b);
 
 // ---------- Giỏ hàng ----------
 export interface CartLine {

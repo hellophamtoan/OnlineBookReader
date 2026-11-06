@@ -27,3 +27,17 @@ export const idParam = (v: string, label = 'id'): number => {
   if (!Number.isInteger(n) || n < 1) throw badRequest(`${label} không hợp lệ`);
   return n;
 };
+
+/** Phân trang danh sách in-memory — cùng shape data list các handler mock. */
+export const paginate = <T,>(list: T[], page: number, limit: number) => {
+  const total = list.length;
+  const totalPages = Math.max(1, Math.ceil(total / limit) || 1);
+  const start = (page - 1) * limit;
+  return {
+    items: list.slice(start, start + limit),
+    page,
+    limit,
+    total,
+    totalPages,
+  };
+};

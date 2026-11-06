@@ -6,7 +6,7 @@ import { chaptersOf } from '../chapterdb';
 import { getCatalog, nextId, updateCatalog } from '../catalogdb';
 import type { CatalogBook, CatalogRef, EntityStatus } from '../catalogdb';
 import type { Route } from '../router';
-import { badRequest, failValidation, idParam, notFound, str, toNumber } from './common';
+import { badRequest, failValidation, idParam, notFound, paginate, str, toNumber } from './common';
 import type { FieldErr } from './common';
 import { requireAdmin } from './guards';
 
@@ -115,9 +115,15 @@ export const adminBookRoutes: Route[] = [
       const list = getCatalog().books
         .filter((b) => (!status || b.status === status) && (!kw || normalizeText(b.title).includes(kw)))
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id - a.id);
+      const pageData = paginate(list, page, limit);
       return {
         message: 'Lấy danh sách sách thành công',
-        data: { items: list.slice((page - 1) * limit, page * limit).map(listItem), page, limit, total: list.length },
+        data: {
+          items: pageData.items.map(listItem),
+          page,
+          limit,
+          total: pageData.total,
+        },
       };
     },
   },

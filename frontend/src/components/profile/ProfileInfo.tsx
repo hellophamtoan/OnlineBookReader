@@ -1,10 +1,18 @@
+import { Link } from 'react-router-dom';
 import { ROLE_LABELS } from '../../config/profile';
+import { ROUTES } from '../../config/routes';
 import type { UserProfile } from '../../types';
 import { formatDate, formatPrice } from '../../utils/format';
 import Avatar from '../common/Avatar';
 
-// UC012 bước 2: hiển thị hồ sơ hiện tại (chỉ đọc). Số dư ví chỉ để xem: tiền được cửa hàng nạp thủ công, người dùng không tự sửa.
-export default function ProfileInfo({ profile, onEdit }: { profile: UserProfile; onEdit: () => void }) {
+export default function ProfileInfo({
+  profile,
+  onEdit,
+}: {
+  profile: UserProfile;
+  onEdit: () => void;
+  onBalanceChange?: (balance: number) => void;
+}) {
   const rows: { label: string; value: string }[] = [
     { label: 'Email', value: profile.email },
     { label: 'Số điện thoại', value: profile.phone ?? 'Chưa cập nhật' },
@@ -32,10 +40,16 @@ export default function ProfileInfo({ profile, onEdit }: { profile: UserProfile;
           </div>
         ))}
       </dl>
-      {profile.role === 'USER' && <p className="field__hint">Muốn nạp thêm tiền vào ví? Vui lòng liên hệ cửa hàng.</p>}
 
       <div className="profile-card__actions">
-        <button type="button" className="btn btn--primary" onClick={onEdit}>Chỉnh sửa thông tin</button>
+        <button type="button" className="btn btn--primary" onClick={onEdit}>
+          Chỉnh sửa thông tin
+        </button>
+        {profile.role === 'USER' && (
+          <Link to={ROUTES.WALLET_TOPUP} className="btn btn--secondary">
+            Nạp ví
+          </Link>
+        )}
       </div>
     </section>
   );

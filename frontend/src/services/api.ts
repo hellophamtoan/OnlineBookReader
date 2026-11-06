@@ -48,6 +48,18 @@ interface RawResponse {
   body: unknown;
 }
 
+/** UUID v4 cho header Idempotency-Key (BE bắt buộc khi đặt hàng / đăng ký gói / nạp ví admin) */
+export const newIdempotencyKey = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
 export const buildQuery = (params?: Query) => {
   if (!params) return '';
   const sp = new URLSearchParams();
@@ -66,12 +78,17 @@ async function transport(method: Method, path: string, body: unknown, token: str
 
   let res: Response;
   try {
+    const headers: Record<string, string> = {
+      ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+    // BE bắt buộc Idempotency-Key (UUID) cho tạo đơn / đăng ký gói / nạp ví
+    if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
+      headers['Idempotency-Key'] = newIdempotencyKey();
+    }
     res = await fetch(`${env.API_URL}${path}`, {
       method,
-      headers: {
-        ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
+      headers,
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch {
