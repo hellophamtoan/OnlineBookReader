@@ -43,6 +43,9 @@ function setupCart(source){
       shippingFee:0,receiverName:'Nguyen An',receiverPhone:valid.receiverPhone,shippingAddress:valid.shippingAddress
     }]];
     if(sql.includes('SELECT book_id AS bookId,book_title AS title'))return [[{bookId:source==='buy_now'?4:2,quantity:1,unitPrice:20000,subtotal:20000}]];
+    if(sql.startsWith('DELETE FROM cart_items WHERE user_id=? AND book_id=? AND quantity=?')){
+      const cart={2:2,3:1};return [{affectedRows:cart[args[1]]===args[2]?1:0}];
+    }
     return [{affectedRows:1}];
   }};
   return statements;
@@ -67,6 +70,13 @@ test('selected cart order updates only selected quantities',async()=>{
   assert.equal(queries.filter(q=>q.sql.startsWith('UPDATE cart_items')).length,1);
   assert.deepEqual(queries.find(q=>q.sql.startsWith('UPDATE cart_items')).args.slice(0,3),[1,7,2]);
   assert.equal(queries.some(q=>q.sql.includes('DELETE FROM cart_items WHERE user_id=?')&&q.args.length===1),false);
+});
+test('ordering the whole cart line deletes it instead of updating quantity to 0',async()=>{
+  const queries=setupCart('cart');
+  const outcome=await create({user:customer,body:{...valid,source:'cart',items:[{bookId:3,quantity:1}]}},{});
+  assert.equal(outcome.status,201);
+  assert.equal(queries.some(q=>q.sql.startsWith('DELETE FROM cart_items WHERE user_id=? AND book_id=? AND quantity=?')),true);
+  assert.equal(queries.some(q=>q.sql.startsWith('UPDATE cart_items')),false);
 });
 test('free, custom and lifetime plan forms validate and price is server-owned',()=>{
   assert.equal(planBody({name:'Free',price:0,durationDays:30}).price,0);

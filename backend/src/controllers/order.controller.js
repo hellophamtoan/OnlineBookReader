@@ -92,10 +92,13 @@ const create=async(req,res)=>{
     if(body.source==='all')await conn.execute('DELETE FROM cart_items WHERE user_id=?',[req.user.id]);
     if(body.source==='cart'){
       for(const line of lines){
-        const [updated]=await conn.execute('UPDATE cart_items SET quantity=quantity-? WHERE user_id=? AND book_id=? AND quantity>=?',
+        // Mua hết số lượng thì xóa dòng; không trừ về 0 vì bảng có CHECK (quantity > 0)
+        const [removed]=await conn.execute('DELETE FROM cart_items WHERE user_id=? AND book_id=? AND quantity=?',
+          [req.user.id,line.bookId,line.quantity]);
+        if(removed.affectedRows===1)continue;
+        const [updated]=await conn.execute('UPDATE cart_items SET quantity=quantity-? WHERE user_id=? AND book_id=? AND quantity>?',
           [line.quantity,req.user.id,line.bookId,line.quantity]);
         if(updated.affectedRows!==1)bad(409,'CART_CHANGED','Giỏ hàng đã thay đổi');
-        await conn.execute('DELETE FROM cart_items WHERE user_id=? AND book_id=? AND quantity=0',[req.user.id,line.bookId]);
       }
     }
     await audit(conn,req.user.id,'ORDER_CREATE','ORDER',orderId,{paymentMethod:body.paymentMethod,total});

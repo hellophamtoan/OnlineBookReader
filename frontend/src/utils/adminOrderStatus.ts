@@ -24,7 +24,8 @@ export function normalizeOrderStatus(raw: string | null | undefined): OrderStatu
 /** Trạng thái kế tiếp hợp lệ (khớp logic BE order + hợp đồng admin) */
 export const ADMIN_ORDER_NEXT: Record<OrderStatus, OrderStatus[]> = {
   PENDING: ['PREPARING', 'CANCELLED', 'FAILED'],
-  PREPARING: ['SHIPPING', 'CANCELLED', 'FAILED'],
+  // Khớp backend: giao thất bại chỉ xảy ra khi đơn đang giao (SHIPPING)
+  PREPARING: ['SHIPPING', 'CANCELLED'],
   SHIPPING: ['DELIVERED', 'FAILED'],
   DELIVERED: [],
   CANCELLED: [],

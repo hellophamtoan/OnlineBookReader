@@ -20,14 +20,14 @@ export function payLabel(method: string): string {
   return method;
 }
 
+// Định dạng YYYY-MM-DD theo giờ máy (không dùng toISOString: ở UTC+7 sẽ lùi 1 ngày)
+const ymd = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 export function rangeMonth(year: number, month: number) {
-  const iso = (d: Date) => d.toISOString().slice(0, 10);
-  const from = new Date(year, month - 1, 1);
-  const to = new Date(year, month, 0);
-  return { from: iso(from), to: iso(to) };
+  return { from: ymd(new Date(year, month - 1, 1)), to: ymd(new Date(year, month, 0)) };
 }
 
 export function rangeYear(year: number) {
-  const iso = (d: Date) => d.toISOString().slice(0, 10);
-  return { from: iso(new Date(year, 0, 1)), to: iso(new Date(year, 11, 31)) };
+  return { from: ymd(new Date(year, 0, 1)), to: ymd(new Date(year, 11, 31)) };
 }

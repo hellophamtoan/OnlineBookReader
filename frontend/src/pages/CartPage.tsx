@@ -36,6 +36,8 @@ export default function CartPage() {
   useEffect(() => {
     const validIds = cart.items.filter((i) => !lineProblem(i)).map((i) => i.bookId);
     setSelected((prev) => {
+      // Chờ tải xong giỏ hàng mới chọn mặc định; nếu chạy sớm khi giỏ còn rỗng thì sẽ không chọn được dòng nào
+      if (!ready) return prev;
       if (!didInitSelect.current) {
         didInitSelect.current = true;
         return new Set(validIds);
@@ -46,7 +48,7 @@ export default function CartPage() {
       }
       return next;
     });
-  }, [cart.items]);
+  }, [cart.items, ready]);
 
   const run = async (id: number | 'all', action: () => Promise<void>) => {
     setBusyId(id);

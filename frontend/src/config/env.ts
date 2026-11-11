@@ -6,7 +6,7 @@
 //        VITE_API_URL=http://localhost:5000/api
 //        VITE_USE_MOCK=false
 //   2. Khởi động BE trước, rồi npm run dev
-//   3. Kiểm tra CORS: BE phải cho origin của FE (vd http://localhost:5173)
+//   3. Kiểm tra CORS: BE phải cho origin của FE (vd http://localhost:3000)
 //
 // Hợp đồng: Base URL đã gồm /api. FE chỉ nối thêm path kiểu /auth/login.
 
@@ -19,6 +19,6 @@ export const env = {
   API_URL,
   // Gốc server để ghép /uploads/... (bỏ hậu tố /api)
   ASSET_ORIGIN: API_URL.replace(/\/api$/, ''),
-  // true = mock (chạy độc lập); false = gọi BE thật tại API_URL
-  USE_MOCK: toBool(import.meta.env.VITE_USE_MOCK, true),
+  // Mặc định gọi BE thật tại API_URL; chỉ dùng mock khi đặt VITE_USE_MOCK=true
+  USE_MOCK: toBool(import.meta.env.VITE_USE_MOCK, false),
 } as const;
