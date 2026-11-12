@@ -1,0 +1,56 @@
+name: OnlineBookReader Backend CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+      - BE-UC006-007-012
+      - BE-UC001-002-003
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+  workflow_dispatch:
+
+jobs:
+  backend-ci:
+    name: Backend CI
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Only run tests written for Jest. Do not let Jest discover node:test files.
+      - name: Run Jest unit tests
+        run: |
+          npx jest --runInBand --runTestsByPath \
+            tests/auth.controller.test.js \
+            tests/author_publisher.controller.test.js \
+            tests/book.controller.test.js \
+            tests/category.controller.test.js \
+            tests/epub.import.test.js \
+            tests/week2.controller.test.js \
+            tests/week2.routes.test.js \
+            tests/week3.contract.test.js
+
+      # node:test uses its own runner and must not be executed by Jest.
+      - name: Run new API contract tests
+        run: node --test tests/new-contract.node.test.js tests/week3.integrated.node.test.js

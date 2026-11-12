@@ -1,0 +1,10 @@
+const router=require('express').Router();
+const {verifyToken,requireRole}=require('../middlewares/auth.middleware');
+const {ROLES}=require('../utils/constants');
+const o=require('../controllers/order.controller');
+router.use(verifyToken,requireRole(ROLES.USER));
+router.post('/',o.create);
+router.get('/my',o.list);
+router.get('/:id',o.detail);
+router.put('/:id/cancel',o.cancel);
+module.exports=router;

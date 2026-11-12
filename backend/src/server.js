@@ -1,3 +1,4 @@
+
 // server.js
 // File gốc để chạy server backend.
 
@@ -12,18 +13,29 @@ const { notFound, errorHandler } = require('./middlewares/error.middleware');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:3000' }));
-// Nội dung chương có thể dài nên nới giới hạn body so với mặc định (100kb)
-app.use(express.json({ limit: '2mb' }));
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || '*'
+}));
+
+// Nội dung chương e-book có thể lớn hơn mặc định 100kb
+app.use(express.json({ limit: '5mb' }));
 
 app.get('/', (req, res) => {
-  res.json({ success: true, message: 'Online Book Reader API đang chạy', data: null });
+  res.json({
+    message: 'Online Book Reader API dang chay'
+  });
 });
 
 app.use('/api', routes);
 
-// Đặt cuối cùng, sau tất cả route
-app.use(notFound);
+// Xu ly duong dan khong ton tai
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Khong tim thay duong dan nay'
+  });
+});
+
 app.use(errorHandler);
 
 app.listen(PORT, () => {
