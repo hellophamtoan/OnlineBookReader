@@ -43,7 +43,7 @@ const login = async (req, res) => {
     const normalizedEmail = normalizeEmail(email);
     if (!isValidEmail(normalizedEmail)) return fail(res, 400, 'Email không hợp lệ');
     const [rows] = await pool.execute(
-      'SELECT id, full_name, email, password_hash, role, is_active FROM users WHERE email = ? LIMIT 1',
+      'SELECT id, full_name, email, password_hash, role, avatar_url, is_active FROM users WHERE email = ? LIMIT 1',
       [normalizedEmail]
     );
     const user = rows[0];
@@ -58,7 +58,8 @@ const login = async (req, res) => {
     );
     return success(res, 200, 'Đăng nhập thành công', {
       token,
-      user: { id: user.id, fullName: user.full_name, email: user.email, role: user.role }
+      // Trả kèm avatarUrl giống GET /auth/me để header hiện ảnh ngay sau khi đăng nhập
+      user: { id: user.id, fullName: user.full_name, email: user.email, role: user.role, avatarUrl: user.avatar_url }
     });
   } catch (error) {
     return serverError(res, 'Đăng nhập', error);

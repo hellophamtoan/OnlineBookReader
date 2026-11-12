@@ -32,7 +32,7 @@ describe('UC002 - POST /api/auth/login', () => {
     expect(pool.execute).toHaveBeenCalledWith(expect.any(String), ['user1@gmail.com']);
     expect(bcrypt.compare).toHaveBeenCalledWith('12345678', 'hashed');
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ data: {
-      token: 'test.jwt.token', user: { id: 1, fullName: 'Nguyen Van A', email: 'user1@gmail.com', role: 'USER' }
+      token: 'test.jwt.token', user: { id: 1, fullName: 'Nguyen Van A', email: 'user1@gmail.com', role: 'USER', avatarUrl: null }
     } }));
   });
   test('Thieu email hoac mat khau', async () => {
