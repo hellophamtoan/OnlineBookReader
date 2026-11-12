@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `password_hash` varchar(255) NOT NULL,
   `full_name` varchar(100) NOT NULL,
   `phone` varchar(20) DEFAULT NULL,
+  `address` varchar(255) DEFAULT NULL,
   `avatar_url` varchar(500) DEFAULT NULL,
   `role` enum('USER','ADMIN') NOT NULL DEFAULT 'USER',
   `is_active` tinyint(1) NOT NULL DEFAULT '1',

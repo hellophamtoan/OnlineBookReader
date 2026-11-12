@@ -73,7 +73,7 @@ test('UC012 - đổi mật khẩu thành công', async () => {
   await updateProfile(req({}, { fullName: 'Test', email: 'a@b.com', currentPassword: 'current123', newPassword: 'newpassword', confirmNewPassword: 'newpassword' }), response);
   assert.equal(response.code, 200);
   assert.match(calls[2][0], /password_hash = \?/);
-  assert.equal(calls[2][1][4], 'newhash');
+  assert.equal(calls[2][1][5], 'newhash');
   assert.equal('password_hash' in response.body.data, false);
 });
 test('UC012 - sai mật khẩu hiện tại không ghi dữ liệu', async () => {

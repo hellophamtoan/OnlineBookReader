@@ -135,7 +135,7 @@ describe('UC012 - hồ sơ', () => {
     const res = resMock();
     await updateProfile({ user, body: { fullName: ' Toản ', email: 'a@x.com', phone: '0912 345 678', avatarUrl: '' } }, res);
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(pool.execute.mock.calls[1][1]).toEqual(['Toản', 'a@x.com', '0912 345 678', null, 5]);
+    expect(pool.execute.mock.calls[1][1]).toEqual(['Toản', 'a@x.com', '0912 345 678', null, null, 5]);
   });
 });
 

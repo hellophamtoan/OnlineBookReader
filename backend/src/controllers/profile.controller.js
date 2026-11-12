@@ -4,13 +4,13 @@ const { success, fail, serverError } = require('../utils/response');
 const { normalizeEmail, isValidEmail, isNonEmptyString, isValidPhone, isHttpUrl, isValidPassword, SALT_ROUNDS } = require('../utils/validators');
 
 const toProfile = (u) => ({
-  id: u.id, fullName: u.full_name, email: u.email, phone: u.phone, avatarUrl: u.avatar_url,
+  id: u.id, fullName: u.full_name, email: u.email, phone: u.phone, address: u.address, avatarUrl: u.avatar_url,
   role: u.role, walletBalance: Number(u.wallet_balance), createdAt: u.created_at
 });
 
 const findProfile = async (id) => {
   const [rows] = await pool.execute(
-    'SELECT id, full_name, email, phone, avatar_url, role, wallet_balance, created_at FROM users WHERE id = ? LIMIT 1',
+    'SELECT id, full_name, email, phone, address, avatar_url, role, wallet_balance, created_at FROM users WHERE id = ? LIMIT 1',
     [id]
   );
   return rows[0];
@@ -30,7 +30,7 @@ const getProfile = async (req, res) => {
 // UC012 bước 5-8 - Cập nhật hồ sơ (người dùng và Admin đều dùng)
 const updateProfile = async (req, res) => {
   try {
-    const { fullName, email, phone, avatarUrl, currentPassword, newPassword, confirmNewPassword } = req.body || {};
+    const { fullName, email, phone, address, avatarUrl, currentPassword, newPassword, confirmNewPassword } = req.body || {};
     if (!isNonEmptyString(fullName) || !isNonEmptyString(email)) {
       return fail(res, 400, 'Vui lòng nhập họ tên và email');
     }
@@ -43,6 +43,10 @@ const updateProfile = async (req, res) => {
     const hasValue = (v) => v !== undefined && v !== null && String(v).trim() !== '';
     if (hasValue(phone) && (!isValidPhone(String(phone).trim()) || String(phone).trim().length > 20)) {
       return fail(res, 400, 'Số điện thoại không hợp lệ');
+    }
+    // address: không bắt buộc, tối đa 255 ký tự (dùng điền sẵn khi đặt hàng)
+    if (hasValue(address) && (typeof address !== 'string' || address.trim().length > 255)) {
+      return fail(res, 400, 'Địa chỉ tối đa 255 ký tự');
     }
     const isUploadPath = (v) => /^\/uploads\/(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_.-]+$/.test(v) && !v.split('/').includes('..');
     if (hasValue(avatarUrl) && (typeof avatarUrl !== 'string' || avatarUrl.trim().length > 500 || (!isHttpUrl(avatarUrl.trim()) && !isUploadPath(avatarUrl.trim())))) {
@@ -76,17 +80,18 @@ const updateProfile = async (req, res) => {
 
     const phoneValue = hasValue(phone) ? String(phone).trim() : null;
     const avatarValue = hasValue(avatarUrl) ? avatarUrl.trim() : null;
+    const addressValue = hasValue(address) ? address.trim() : null;
     if (wantsPasswordChange) {
       // Điều kiện password_hash tránh ghi đè nếu mật khẩu bị thay đổi bởi request khác.
       const [result] = await pool.execute(
-        'UPDATE users SET full_name = ?, email = ?, phone = ?, avatar_url = ?, password_hash = ? WHERE id = ? AND password_hash = ?',
-        [name, mail, phoneValue, avatarValue, newHash, req.user.id, oldHash]
+        'UPDATE users SET full_name = ?, email = ?, phone = ?, address = ?, avatar_url = ?, password_hash = ? WHERE id = ? AND password_hash = ?',
+        [name, mail, phoneValue, addressValue, avatarValue, newHash, req.user.id, oldHash]
       );
       if (result.affectedRows === 0) return fail(res, 409, 'Mật khẩu đã thay đổi; vui lòng thử lại');
     } else {
       await pool.execute(
-        'UPDATE users SET full_name = ?, email = ?, phone = ?, avatar_url = ? WHERE id = ?',
-        [name, mail, phoneValue, avatarValue, req.user.id]
+        'UPDATE users SET full_name = ?, email = ?, phone = ?, address = ?, avatar_url = ? WHERE id = ?',
+        [name, mail, phoneValue, addressValue, avatarValue, req.user.id]
       );
     }
     const user = await findProfile(req.user.id);
