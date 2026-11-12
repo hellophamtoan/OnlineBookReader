@@ -15,6 +15,7 @@ import type { OrderStatus } from '../types';
 import { toMessage } from '../utils/errors';
 import { parseOrderFilters, patchOrderParams, toOrderQuery } from '../utils/orderFilters';
 
+// [Trang] Trang Đơn hàng (/orders): danh sách đơn của tôi, lọc theo trạng thái, phân trang.
 export default function MyOrdersPage() {
   useDocumentTitle('Đơn hàng của tôi');
   const [sp, setSp] = useSearchParams();

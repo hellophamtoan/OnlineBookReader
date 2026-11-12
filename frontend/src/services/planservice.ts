@@ -37,6 +37,7 @@ export interface SubscribeResult {
 }
 
 export const planService = {
+  // [Gọi API] GET /plans – danh sách gói ở trang Gói đọc.
   async list(): Promise<ReadingPlan[]> {
     const data = (await api.get(ENDPOINTS.plans.root)).data as { items?: ReadingPlan[] };
     return Array.isArray(data?.items)
@@ -48,6 +49,7 @@ export const planService = {
       : [];
   },
 
+  // [Gọi API] GET /subscriptions/me – gói đang dùng và ngày hết hạn.
   async me(): Promise<MySubscriptionInfo> {
     const data = (await api.get(ENDPOINTS.plans.me)).data as MySubscriptionInfo;
     return {
@@ -59,6 +61,7 @@ export const planService = {
     };
   },
 
+  // [Gọi API] POST /subscriptions – mua gói bằng ví (kèm khóa chống gửi trùng).
   async subscribe(planId: number, endDate?: string): Promise<SubscribeResult> {
     return (
       await api.post(ENDPOINTS.plans.subscribe, {

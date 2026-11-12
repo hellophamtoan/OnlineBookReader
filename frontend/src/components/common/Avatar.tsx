@@ -7,6 +7,7 @@ interface AvatarProps {
   className?: string;
 }
 
+// [Giao diện] Ảnh đại diện tròn; không có ảnh thì hiện chữ cái đầu của tên.
 // Ảnh đại diện tròn (UC012). Không có ảnh hoặc ảnh lỗi thì hiện chữ cái đầu của tên.
 export default function Avatar({ name, src, size = 'sm', className = '' }: AvatarProps) {
   const [failed, setFailed] = useState(false);

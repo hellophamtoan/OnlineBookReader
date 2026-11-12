@@ -2,9 +2,11 @@
 // Suy ra thông tin hiển thị từ dữ liệu sách (để UC004/UC006 dùng lại).
 import type { Book } from '../types';
 
+// [Xử lý] Sách có bản giấy hay không.
 // Có bán bản giấy? Nếu BE không gửi hasPhysical thì suy từ giá.
 export const isPhysical = (b: Book) => b.hasPhysical ?? b.price !== null;
 
+// [Xử lý] Nhãn tồn kho ("Còn hàng", "Hết hàng", "Chỉ đọc online").
 export const stockLabel = (b: Book): { text: string; tone: 'ok' | 'low' | 'out' } | null => {
   if (!isPhysical(b) || b.stockQuantity === null) return null;
   if (b.stockQuantity <= 0) return { text: 'Hết hàng', tone: 'out' };
@@ -12,4 +14,5 @@ export const stockLabel = (b: Book): { text: string; tone: 'ok' | 'low' | 'out' 
   return { text: 'Còn hàng', tone: 'ok' };
 };
 
+// [Xử lý] Ghép tên các tác giả thành một dòng.
 export const authorLine = (b: Pick<Book, 'authors'>) => b.authors.map((a) => a.name).join(', ') || 'Chưa rõ tác giả';

@@ -28,6 +28,7 @@ export const FONT_FAMILIES: { value: string; label: string; stack: string }[] = 
   { value: 'Courier New', label: 'Courier New', stack: "'Courier New', Courier, monospace" },
 ];
 
+// [Xử lý] Chuỗi font CSS tương ứng font người dùng chọn trong trình đọc.
 export const fontStack = (name: string) =>
   FONT_FAMILIES.find((f) => f.value === name)?.stack ?? `"${name.replace(/["\\]/g, '')}", sans-serif`;
 

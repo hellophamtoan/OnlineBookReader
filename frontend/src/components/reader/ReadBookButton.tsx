@@ -3,6 +3,7 @@ import { ROUTES } from '../../config/routes';
 import { useAuth } from '../../context/AuthContext';
 import type { Book } from '../../types';
 
+// [Giao diện] Nút "Đọc sách" / "Đọc tiếp", mở trình đọc đúng chương đọc dở.
 // UC006 - nút "Đọc trực tuyến" ở trang chi tiết sách (UC006 bước 1-2). Chỉ hiện khi sách có bản e-book.
 // Việc kiểm tra gói đọc còn hiệu lực do ReaderPage làm (API trả 403 thì hiện thông báo + dẫn tới trang Gói đọc), nên nút này không cần biết về gói.
 export default function ReadBookButton({ book }: { book: Book }) {

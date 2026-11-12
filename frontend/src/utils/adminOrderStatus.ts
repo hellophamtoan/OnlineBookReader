@@ -12,6 +12,7 @@ const ALLOWED: OrderStatus[] = [
   'CANCELLED',
 ];
 
+// [Xử lý] Chuẩn hóa tên trạng thái đơn (PREPARING → CONFIRMED...).
 /** Map body hợp đồng (CONFIRMED) → enum BE/FE (PREPARING) */
 export function normalizeOrderStatus(raw: string | null | undefined): OrderStatus | null {
   if (!raw) return null;

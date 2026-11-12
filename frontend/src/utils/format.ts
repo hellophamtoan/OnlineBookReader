@@ -1,9 +1,11 @@
 // utils/format.ts
 const vnd = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 });
 
+// [Xử lý] Định dạng tiền: 85.000 ₫.
 // 79000 -> "79.000 ₫"
 export const formatPrice = (value: number) => vnd.format(value);
 
+// [Xử lý] Định dạng ngày dd/mm/yyyy.
 // ISO -> "02/08/2026"
 export const formatDate = (iso?: string | null) => {
   if (!iso) return '';
@@ -11,6 +13,7 @@ export const formatDate = (iso?: string | null) => {
   return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('vi-VN');
 };
 
+// [Xử lý] Định dạng ngày giờ.
 // ISO -> "12/10/2026 17:00"
 export const formatDateTime = (iso?: string | null) => {
   if (!iso) return '';

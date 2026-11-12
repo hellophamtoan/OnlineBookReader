@@ -21,6 +21,7 @@ const NAV_ITEMS: { to: string; label: string; end: boolean; roles?: Role[]; auth
   { to: ROUTES.ADMIN_HOME, label: 'Quản trị', end: false, roles: ['ADMIN'] },
 ];
 
+// [Giao diện] Header: logo, menu, ô tìm sách, giỏ hàng, ảnh đại diện + tên, nút Đăng nhập/Đăng xuất.
 export default function Header() {
   const { user } = useAuth();
   const { count } = useCart();

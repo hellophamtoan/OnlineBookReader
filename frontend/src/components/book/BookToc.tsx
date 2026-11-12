@@ -7,6 +7,7 @@ import { readerService } from '../../services/readerservice';
 import type { ChapterSummary } from '../../types';
 import { isSectionTitle, withTocDisplayOrder } from '../../utils/chapterMeta';
 
+// [Xử lý] Kiểm tra chương có cần gói đọc không (chương > 10).
 /** Chương thuộc phần cần gói (từ chương 11) — chỉ để hiện 🔒, không đổi màu xám */
 function needsPackage(c: ChapterSummary, freeLimit: number) {
   if (c.isFree === false) return true;
@@ -14,6 +15,7 @@ function needsPackage(c: ChapterSummary, freeLimit: number) {
   return c.chapterNumber > freeLimit;
 }
 
+// [Giao diện] Chi tiết sách: mục lục chương, đánh dấu khóa chương cần gói đọc.
 export default function BookToc({ bookId, hasEbook }: { bookId: number; hasEbook: boolean }) {
   const { user } = useAuth();
   const list = useAsync(

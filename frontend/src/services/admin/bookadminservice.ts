@@ -25,6 +25,7 @@ import {
   saveClientCover,
 } from '../../utils/clientCoverStore';
 
+// [Xử lý] Chuẩn hóa link ảnh bìa trước khi gửi backend.
 /**
  * coverUrl gửi lên API:
  * - mock: giữ data:image (mock chấp nhận)
@@ -41,6 +42,7 @@ const normalizeCoverUrlForApi = (raw: string | null | undefined): string | null 
   return v;
 };
 
+// [Xử lý] Tạo body thêm/sửa sách.
 /** Chuẩn hóa body đúng field hợp đồng API-28 / API-29 */
 const toBookBody = (p: AdminBookPayload): Record<string, unknown> => {
   const onlyEbook = !!p.hasEbook && !p.hasPhysical;
@@ -60,11 +62,13 @@ const toBookBody = (p: AdminBookPayload): Record<string, unknown> => {
   return body;
 };
 
+// [Xử lý] Gắn ảnh bìa lưu tạm trên trình duyệt (ảnh dạng data URL) vào sách để hiển thị.
 const withClientCover = (book: AdminBookDetail): AdminBookDetail => ({
   ...book,
   coverUrl: mergeClientCover(book.id, book.coverUrl),
 });
 
+// [Xử lý] Lưu ảnh bìa tạm sau khi lưu sách thành công.
 const attachClientCoverAfterSave = (book: AdminBookDetail, payloadCover: string | null | undefined) => {
   if (isDataImageUrl(payloadCover)) {
     saveClientCover(book.id, payloadCover);
@@ -76,6 +80,7 @@ const attachClientCoverAfterSave = (book: AdminBookDetail, payloadCover: string 
 };
 
 export const bookAdminService = {
+  // [Gọi API] GET /admin/books – bảng Quản lý sách.
   /** API-26 */
   async list(q: AdminBookQuery = {}): Promise<AdminBookListResult> {
     const res = await api.get(ENDPOINTS.admin.books.root, {
@@ -94,6 +99,7 @@ export const bookAdminService = {
     };
   },
 
+  // [Gọi API] GET /admin/books/:id – chi tiết / form sửa sách.
   /** API-27 */
   async get(id: number): Promise<AdminBookDetail> {
     const book = mapAdminBookDetail((await api.get(ENDPOINTS.admin.books.detail(id))).data);
@@ -104,6 +110,7 @@ export const bookAdminService = {
     return withClientCover(book);
   },
 
+  // [Gọi API] POST /admin/books – thêm sách.
   /** API-28 */
   async create(p: AdminBookPayload): Promise<AdminBookDetail> {
     const { status: _s, ...createPayload } = p;
@@ -113,6 +120,7 @@ export const bookAdminService = {
     return attachClientCoverAfterSave(book, p.coverUrl);
   },
 
+  // [Gọi API] PUT /admin/books/:id – sửa sách.
   /** API-29 */
   async update(id: number, p: AdminBookPayload): Promise<AdminBookDetail> {
     const book = mapAdminBookDetail(
@@ -121,11 +129,13 @@ export const bookAdminService = {
     return attachClientCoverAfterSave(book, p.coverUrl);
   },
 
+  // [Gọi API] DELETE /admin/books/:id – ẩn sách (xóa mềm).
   /** API-30 — xóa mềm (status = inactive) */
   async deactivate(id: number): Promise<void> {
     await api.delete(ENDPOINTS.admin.books.detail(id));
   },
 
+  // [Gọi API] PUT /admin/books/:id – hiện lại sách đã ẩn.
   /** Kích hoạt lại: PUT đủ body + status active (không có API riêng) */
   async activate(id: number): Promise<AdminBookDetail> {
     const b = await this.get(id);
@@ -144,6 +154,7 @@ export const bookAdminService = {
     });
   },
 
+  // [Xử lý] Đọc file / link EPUB ngay trên trình duyệt để lấy tên sách, ảnh bìa, chương.
   /**
    * Phân tích EPUB trên trình duyệt (không gọi backend).
    * Mock và BE thật dùng chung; chỉ khi LƯU mới gọi API-28 + API-32.

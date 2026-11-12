@@ -5,6 +5,7 @@ const KEY = 'obr_client_covers';
 
 type CoverMap = Record<string, string>;
 
+// [Xử lý] Đọc kho ảnh bìa tạm trong localStorage.
 const read = (): CoverMap => {
   try {
     const raw = localStorage.getItem(KEY);
@@ -16,6 +17,7 @@ const read = (): CoverMap => {
   }
 };
 
+// [Xử lý] Ghi kho ảnh bìa tạm.
 const write = (map: CoverMap) => {
   try {
     localStorage.setItem(KEY, JSON.stringify(map));
@@ -32,9 +34,11 @@ const write = (map: CoverMap) => {
   }
 };
 
+// [Xử lý] Kiểm tra ảnh dạng data URL.
 export const isDataImageUrl = (url: string | null | undefined): boolean =>
   !!url && /^data:image\//i.test(url.trim());
 
+// [Xử lý] Lưu ảnh bìa tạm của một sách.
 /** Lưu / cập nhật bìa local theo id sách */
 export const saveClientCover = (bookId: number, dataUrl: string | null | undefined) => {
   if (!bookId || !isDataImageUrl(dataUrl)) return;
@@ -43,17 +47,20 @@ export const saveClientCover = (bookId: number, dataUrl: string | null | undefin
   write(map);
 };
 
+// [Xử lý] Xóa ảnh bìa tạm.
 export const removeClientCover = (bookId: number) => {
   const map = read();
   delete map[String(bookId)];
   write(map);
 };
 
+// [Xử lý] Lấy ảnh bìa tạm.
 export const getClientCover = (bookId: number): string | null => {
   const v = read()[String(bookId)];
   return typeof v === 'string' && v.startsWith('data:') ? v : null;
 };
 
+// [Xử lý] Dùng ảnh bìa tạm khi sách chưa có ảnh từ backend.
 /** Ưu tiên cover từ BE; nếu trống thì lấy bìa local (EPUB) */
 export const mergeClientCover = (bookId: number, coverUrl: string | null | undefined): string | null => {
   if (coverUrl && String(coverUrl).trim()) return String(coverUrl).trim();

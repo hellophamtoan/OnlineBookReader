@@ -70,6 +70,7 @@ export interface StoreBankAccount {
 }
 
 export const planAdminService = {
+  // [Gọi API] GET /admin/plans – danh sách gói Admin.
   async list(): Promise<AdminPlan[]> {
     const data = (await api.get(ENDPOINTS.admin.plans.root)).data as { items?: AdminPlan[] };
     return Array.isArray(data?.items)
@@ -81,15 +82,18 @@ export const planAdminService = {
       : [];
   },
 
+  // [Gọi API] GET /admin/plans/:id – lấy gói để sửa.
   async get(id: number): Promise<AdminPlan> {
     const p = (await api.get(ENDPOINTS.admin.plans.detail(id))).data as AdminPlan;
     return { ...p, planKind: p.planKind ?? 'fixed', basePrice30: p.basePrice30 ?? p.price };
   },
 
+  // [Gọi API] POST /admin/plans – thêm gói đọc.
   async create(p: AdminPlanPayload): Promise<AdminPlan> {
     return (await api.post(ENDPOINTS.admin.plans.root, p)).data as AdminPlan;
   },
 
+  // [Gọi API] PUT /admin/plans/:id – sửa gói đọc.
   async update(
     id: number,
     p: Partial<AdminPlanPayload & { status: string }>,
@@ -97,10 +101,12 @@ export const planAdminService = {
     return (await api.put(ENDPOINTS.admin.plans.detail(id), p)).data as AdminPlan;
   },
 
+  // [Gọi API] DELETE /admin/plans/:id – ngừng bán gói.
   async remove(id: number): Promise<AdminPlan> {
     return (await api.delete(ENDPOINTS.admin.plans.detail(id))).data as AdminPlan;
   },
 
+  // [Gọi API] GET /admin/users – chọn người dùng để nạp ví.
   async listUsers(): Promise<AdminUserOption[]> {
     // BE paging: limit tối đa 100 — lấy nhiều trang nếu cần
     const pageSize = 100;
@@ -141,16 +147,19 @@ export const planAdminService = {
       }));
   },
 
+  // [Gọi API] POST /admin/users/:id/wallet/topup – nạp ví thủ công.
   async topupWallet(userId: number, amount: number, note?: string) {
     return (
       await api.post(ENDPOINTS.admin.walletTopup(userId), { amount, note: note || undefined })
     ).data as { userId: number; amount: number; balance: number; note: string | null };
   },
 
+  // [Gọi API] GET /admin/users/:id/wallet/topups – lịch sử yêu cầu nạp của người dùng.
   async getUserTopupHistory(userId: number): Promise<UserTopupHistory> {
     return (await api.get(ENDPOINTS.admin.userWalletTopups(userId))).data as UserTopupHistory;
   },
 
+  // [Gọi API] GET /admin/store/bank-account – tài khoản nhận tiền.
   async getStoreBankAccount(): Promise<{
     configured: boolean;
     bank: StoreBankAccount | null;
@@ -163,6 +172,7 @@ export const planAdminService = {
     };
   },
 
+  // [Gọi API] PUT /admin/store/bank-account – lưu tài khoản nhận tiền.
   async updateStoreBankAccount(body: {
     bin: string;
     accountNo: string;
@@ -175,6 +185,7 @@ export const planAdminService = {
     };
   },
 
+  // [Gọi API] POST /admin/users/:id/wallet/topups/:mã/confirm – xác nhận đã nhận tiền.
   /** Admin xác nhận đã nhận CK → cộng ví, PENDING → PAID */
   async confirmUserTopup(userId: number, orderCode: string) {
     return (

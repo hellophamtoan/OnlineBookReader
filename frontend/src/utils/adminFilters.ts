@@ -8,6 +8,7 @@ export interface AdminFilterState {
   page: number;
 }
 
+// [Xử lý] Đọc bộ lọc bảng Admin từ URL.
 export const parseAdminFilters = (sp: URLSearchParams): AdminFilterState => {
   const status = sp.get('status');
   const page = Number(sp.get('page'));
@@ -18,6 +19,7 @@ export const parseAdminFilters = (sp: URLSearchParams): AdminFilterState => {
   };
 };
 
+// [Xử lý] Cập nhật bộ lọc Admin lên URL.
 // Đổi bộ lọc (không phải đổi trang) thì quay về trang 1
 export const patchAdminParams = (sp: URLSearchParams, patch: { search?: string; status?: EntityStatus | ''; page?: number }) => {
   const next = new URLSearchParams(sp);

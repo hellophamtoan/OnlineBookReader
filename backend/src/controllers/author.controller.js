@@ -1,7 +1,7 @@
 const pool = require('../config/db.config');
 const { success, serverError } = require('../utils/response');
 
-// Lấy danh sách tác giả đang hoạt động (dùng cho bộ lọc trang Sách)
+// [Giao diện] Trang Sách: đổ danh sách tác giả vào bộ lọc.
 const getAuthors = async (req, res) => {
   try {
     const [items] = await pool.query(

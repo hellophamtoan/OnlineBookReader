@@ -15,6 +15,7 @@ import { toMessage } from '../utils/errors';
 import { formatDateTime } from '../utils/format';
 import { paymentLabel } from '../utils/order';
 
+// [Trang] Trang Chi tiết đơn (/orders/:id): sách trong đơn, người nhận, tiến trình giao hàng, nút Hủy đơn.
 export default function OrderDetailPage() {
   const id = Number(useParams().id);
   const validId = Number.isInteger(id) && id >= 1;

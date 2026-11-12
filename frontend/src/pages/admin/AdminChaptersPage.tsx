@@ -17,6 +17,7 @@ import type { ChapterSummary } from '../../types';
 import { withTocDisplayOrder } from '../../utils/chapterMeta';
 import { toMessage } from '../../utils/errors';
 
+// [Trang] Admin > Chương e-book (/admin/books/:id/chapters): mục lục chương, thêm/sửa/xóa, nhập chương từ EPUB.
 export default function AdminChaptersPage() {
   const bookId = Number(useParams().id);
   const validId = Number.isInteger(bookId) && bookId >= 1;

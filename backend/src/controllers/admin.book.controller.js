@@ -2,9 +2,10 @@ const pool = require('../config/db.config');
 const { success, fail, serverError } = require('../utils/response');
 const { isPositiveInt, isNonEmptyString } = require('../utils/validators');
 
+// [Backend] Chuẩn hóa mảng mã tác giả/thể loại gửi lên (bỏ trùng, tối đa 20).
 const toIds = (v) => (Array.isArray(v) && v.length > 0 && v.length <= 20 && v.every(isPositiveInt) ? [...new Set(v.map(Number))] : null);
 
-// Kiểm tra và chuẩn hóa body thêm/sửa sách (UC007 luồng A2a/B2a)
+// [Backend] Kiểm tra và chuẩn hóa dữ liệu form thêm/sửa sách (UC007).
 const parseBookBody = (body, isUpdate) => {
   const b = body || {};
   if (!isNonEmptyString(b.title) || b.title.trim().length > 255) return { error: 'Tên sách là bắt buộc và không vượt quá 255 ký tự' };
@@ -42,8 +43,9 @@ const parseBookBody = (body, isUpdate) => {
   };
 };
 
-// Tác giả/thể loại/NXB được chọn phải tồn tại và đang hoạt động
+// [Backend] Kiểm tra tác giả, thể loại, NXB được chọn có tồn tại và đang hoạt động.
 const checkReferences = async (v) => {
+  // [Backend] Đếm số mã hợp lệ trong một bảng.
   const count = async (table, ids) => {
     const [[row]] = await pool.query(`SELECT COUNT(*) AS n FROM ${table} WHERE status = 'active' AND id IN (?)`, [ids]);
     return row.n;
@@ -54,6 +56,7 @@ const checkReferences = async (v) => {
   return null;
 };
 
+// [Backend] Ghi lại liên kết sách – tác giả và sách – thể loại.
 const replaceLinks = async (conn, bookId, v) => {
   await conn.execute('DELETE FROM book_authors WHERE book_id = ?', [bookId]);
   await conn.execute('DELETE FROM book_categories WHERE book_id = ?', [bookId]);
@@ -61,6 +64,7 @@ const replaceLinks = async (conn, bookId, v) => {
   await conn.query('INSERT INTO book_categories (book_id, category_id) VALUES ?', [v.categoryIds.map((c) => [bookId, c])]);
 };
 
+// [Backend] Lấy đầy đủ thông tin một sách kèm tác giả, thể loại, NXB.
 const findBookDetail = async (id) => {
   const [rows] = await pool.execute(
     `SELECT id, title, description, cover_url AS coverUrl, publisher_id AS publisherId,
@@ -79,7 +83,7 @@ const findBookDetail = async (id) => {
   return { ...b, hasPhysical: !!b.hasPhysical, hasEbook: !!b.hasEbook, price: b.price === null ? null : Number(b.price), authors, categories };
 };
 
-// Chạy fn(conn) trong một transaction
+// [Backend] Chạy một nhóm câu lệnh trong transaction (lỗi thì rollback).
 const withTransaction = async (fn) => {
   const conn = await pool.getConnection();
   try {
@@ -95,7 +99,7 @@ const withTransaction = async (fn) => {
   }
 };
 
-// UC007 - Danh sách sách cho Admin (gồm cả sách đã ngừng hoạt động)
+// [Giao diện] Admin > Quản lý sách: hiển thị bảng danh sách sách, tìm kiếm, lọc trạng thái, phân trang (UC007).
 const listBooks = async (req, res) => {
   try {
     const { search = '', status, page = '1', limit = '20' } = req.query;
@@ -123,6 +127,7 @@ const listBooks = async (req, res) => {
   }
 };
 
+// [Giao diện] Admin > Chi tiết / Sửa sách: hiển thị thông tin sách để xem hoặc điền sẵn vào form.
 const getBook = async (req, res) => {
   try {
     if (!isPositiveInt(req.params.id)) return fail(res, 400, 'Mã sách không hợp lệ');
@@ -134,6 +139,7 @@ const getBook = async (req, res) => {
   }
 };
 
+// [Giao diện] Admin > Thêm sách: lưu sách mới; sách xuất hiện ngay trong danh sách và trang Sách của người dùng.
 const createBook = async (req, res) => {
   try {
     const { error, value: v } = parseBookBody(req.body, false);
@@ -155,6 +161,7 @@ const createBook = async (req, res) => {
   }
 };
 
+// [Giao diện] Admin > Sửa sách: lưu thay đổi; giá, tồn kho, ảnh bìa mới hiển thị ngay cho người dùng.
 const updateBook = async (req, res) => {
   try {
     const { id } = req.params;
@@ -180,6 +187,7 @@ const updateBook = async (req, res) => {
   }
 };
 
+// [Giao diện] Admin > Xóa sách: ẩn sách (xóa mềm), sách biến mất khỏi trang Sách nhưng đơn cũ vẫn giữ.
 // Xóa mềm (quy tắc 3)
 const deleteBook = async (req, res) => {
   try {

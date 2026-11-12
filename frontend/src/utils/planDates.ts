@@ -21,6 +21,7 @@ export const PLAN_KIND_LABEL: Record<PlanKind, string> = {
   custom: 'Gói tùy chọn',
 };
 
+// [Xử lý] Ngày hôm nay (YYYY-MM-DD).
 export function todayYmd(now = new Date()): string {
   const y = now.getFullYear();
   const m = String(now.getMonth() + 1).padStart(2, '0');
@@ -28,12 +29,14 @@ export function todayYmd(now = new Date()): string {
   return `${y}-${m}-${d}`;
 }
 
+// [Xử lý] Đọc chuỗi ngày.
 export function parseYmd(ymd: string): Date | null {
   if (!isRealDate(ymd)) return null;
   const [y, m, d] = ymd.split('-').map(Number);
   return new Date(y, m - 1, d);
 }
 
+// [Xử lý] Kiểm tra ngày có thật.
 export function isRealDate(ymd: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return false;
   const [y, m, d] = ymd.split('-').map(Number);
@@ -42,6 +45,7 @@ export function isRealDate(ymd: string): boolean {
   return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
 }
 
+// [Xử lý] Cộng số ngày.
 export function addDays(ymd: string, days: number): string {
   const dt = parseYmd(ymd);
   if (!dt) return ymd;
@@ -49,6 +53,7 @@ export function addDays(ymd: string, days: number): string {
   return todayYmd(dt);
 }
 
+// [Xử lý] Số ngày giữa hai mốc.
 export function diffDays(startYmd: string, endYmd: string): number {
   const a = parseYmd(startYmd);
   const b = parseYmd(endYmd);
@@ -56,12 +61,14 @@ export function diffDays(startYmd: string, endYmd: string): number {
   return Math.round((b.getTime() - a.getTime()) / DAY_MS);
 }
 
+// [Xử lý] Định dạng ngày hiển thị.
 export function formatDisplayDate(ymd: string): string {
   if (!isRealDate(ymd)) return ymd || '—';
   const [y, m, d] = ymd.split('-');
   return `${d}/${m}/${y}`;
 }
 
+// [Xử lý] Ngày kết thúc sớm nhất được chọn (gói tùy chọn).
 export function minEndDate(startYmd: string, minDays = PLAN_MIN_DAYS): string {
   return addDays(startYmd, minDays);
 }
@@ -70,6 +77,7 @@ export type EndDateValidation =
   | { ok: true; days: number }
   | { ok: false; message: string };
 
+// [Xử lý] Kiểm tra ngày kết thúc gói tùy chọn.
 export function validateEndDate(
   startYmd: string,
   endYmd: string,
@@ -90,6 +98,7 @@ export function validateEndDate(
   return { ok: true, days };
 }
 
+// [Xử lý] Tính giá xem trước của gói tùy chọn (server vẫn tính lại).
 /**
  * Giá lũy tiến theo đoạn 30 ngày (basePrice / 30 ngày):
  * - Segment 1: × 1
@@ -123,10 +132,12 @@ export function progressivePlanPrice(
   return Math.round(price / 1000) * 1000;
 }
 
+// [Xử lý] Nhãn khoảng thời gian gói.
 export function formatRangeLabel(startYmd: string, endYmd: string, days: number): string {
   return `Từ ${formatDisplayDate(startYmd)} đến ${formatDisplayDate(endYmd)} — ${days} ngày`;
 }
 
+// [Xử lý] Chuẩn hóa loại gói (cố định / tùy chọn / trọn đời).
 export function normalizePlanKind(v: unknown): PlanKind {
   if (v === 'lifetime' || v === 'custom' || v === 'fixed') return v;
   return 'fixed';

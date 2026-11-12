@@ -8,6 +8,7 @@ import type { StoreInfo } from '../types';
 
 let cached: Promise<StoreInfo> | null = null;
 
+// [Xử lý] Lấy thông tin cửa hàng cho chân trang (dùng giá trị mặc định nếu backend chưa có).
 export function useStoreInfo(): StoreInfo {
   const [info, setInfo] = useState<StoreInfo>(STORE_INFO);
 

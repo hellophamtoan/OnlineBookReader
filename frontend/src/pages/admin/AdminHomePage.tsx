@@ -12,6 +12,7 @@ import { taxonomyService } from '../../services/admin/taxonomyservice';
 import { formatPrice } from '../../utils/format';
 import { toMessage } from '../../utils/errors';
 
+// [Trang] Admin > Tổng quan (/admin): lối tắt tới các chức năng quản trị.
 export default function AdminHomePage() {
   useDocumentTitle('Quản trị');
   const { user } = useAuth();

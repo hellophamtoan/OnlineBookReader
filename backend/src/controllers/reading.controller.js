@@ -7,7 +7,7 @@ const DEFAULT_FONT = 'Arial';
 const DEFAULT_SIZE = 16;
 const FONT_PATTERN = /^[\p{L}0-9 ,'-]{1,100}$/u;
 
-// UC006 bước 3-4 - Lấy tiến trình đã lưu để mở sách đúng vị trí đọc dở
+// [Giao diện] Trình đọc: mở sách đúng chương, vị trí cuộn, font và cỡ chữ đã lưu (UC006).
 const getProgress = async (req, res) => {
   try {
     const { bookId } = req.params;
@@ -31,6 +31,7 @@ const getProgress = async (req, res) => {
   }
 };
 
+// [Giao diện] Trình đọc: lưu vị trí đọc và font/cỡ chữ khi người dùng đọc hoặc thoát.
 // UC006 bước 8-9 - Lưu tiến trình (vị trí + font/cỡ chữ). Mỗi (user, sách) một bản ghi.
 const saveProgress = async (req, res) => {
   try {

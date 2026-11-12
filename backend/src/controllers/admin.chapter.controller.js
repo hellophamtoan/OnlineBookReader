@@ -5,6 +5,7 @@ const { sanitizeChapterContent } = require('../utils/sanitize');
 
 const MAX_CONTENT = 2000000; // ký tự
 
+// [Backend] Kiểm tra dữ liệu form chương và làm sạch nội dung HTML (chống XSS).
 const parseChapterBody = (body) => {
   const b = body || {};
   if (!isPositiveInt(b.chapterNumber)) return { error: 'Số chương phải là số nguyên dương' };
@@ -15,7 +16,7 @@ const parseChapterBody = (body) => {
   return { value: { chapterNumber: Number(b.chapterNumber), title: b.title.trim(), content } };
 };
 
-// UC007 - Mục lục chương của một sách (Admin)
+// [Giao diện] Admin > Quản lý chương: hiển thị mục lục chương của một sách (UC007).
 const listChapters = async (req, res) => {
   try {
     if (!isPositiveInt(req.params.bookId)) return fail(res, 400, 'Mã sách không hợp lệ');
@@ -30,7 +31,7 @@ const listChapters = async (req, res) => {
   }
 };
 
-// Lấy đủ nội dung một chương để Admin chỉnh sửa
+// [Giao diện] Admin > Sửa chương: lấy đủ nội dung một chương để điền vào form chỉnh sửa.
 const getChapter = async (req, res) => {
   try {
     if (!isPositiveInt(req.params.id)) return fail(res, 400, 'Mã chương không hợp lệ');
@@ -44,6 +45,7 @@ const getChapter = async (req, res) => {
   }
 };
 
+// [Giao diện] Admin > Thêm chương: lưu chương mới; người đọc thấy chương trong mục lục trình đọc.
 const createChapter = async (req, res) => {
   try {
     if (!isPositiveInt(req.params.bookId)) return fail(res, 400, 'Mã sách không hợp lệ');
@@ -65,6 +67,7 @@ const createChapter = async (req, res) => {
   }
 };
 
+// [Giao diện] Admin > Sửa chương: lưu nội dung mới, trình đọc hiển thị bản đã sửa.
 const updateChapter = async (req, res) => {
   try {
     if (!isPositiveInt(req.params.id)) return fail(res, 400, 'Mã chương không hợp lệ');
@@ -85,6 +88,7 @@ const updateChapter = async (req, res) => {
   }
 };
 
+// [Giao diện] Admin > Xóa chương: xóa khỏi mục lục (bị chặn nếu đang có người đọc dở).
 // Chương không có cột status nên xóa thật; chương đang có tiến trình đọc thì bị FK chặn -> 409
 const deleteChapter = async (req, res) => {
   try {

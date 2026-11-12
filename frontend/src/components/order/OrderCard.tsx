@@ -6,6 +6,7 @@ import { paymentLabel } from '../../utils/order';
 import CancelOrderButton from './CancelOrderButton';
 import OrderStatusBadge from './OrderStatusBadge';
 
+// [Giao diện] Trang Đơn hàng: thẻ tóm tắt một đơn (mã, ngày, tổng tiền, trạng thái).
 // Một đơn trong danh sách "Đơn hàng của tôi" (O02)
 export default function OrderCard({ order, onChanged }: { order: Order; onChanged: () => void }) {
   const quantity = order.items.reduce((n, i) => n + i.quantity, 0);

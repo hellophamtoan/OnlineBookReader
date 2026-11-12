@@ -1,7 +1,7 @@
 const pool = require('../config/db.config');
 const { success, serverError } = require('../utils/response');
 
-// Lấy danh sách nhà xuất bản đang hoạt động (dùng cho bộ lọc trang Sách)
+// [Giao diện] Trang Sách: đổ danh sách nhà xuất bản vào bộ lọc.
 const getPublishers = async (req, res) => {
   try {
     const [items] = await pool.query(

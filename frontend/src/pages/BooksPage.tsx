@@ -18,6 +18,7 @@ import type { BookSort, Option } from '../types';
 
 const NO_OPTIONS: Option[] = [];
 
+// [Trang] Trang Sách (/books): danh sách sách, ô tìm kiếm, bộ lọc thể loại/tác giả/NXB, sắp xếp, phân trang.
 export default function BooksPage() {
   useDocumentTitle('Sách');
   const [sp, setSp] = useSearchParams();

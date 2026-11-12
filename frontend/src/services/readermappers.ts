@@ -5,6 +5,7 @@ import type { Chapter, ChapterList, ChapterSummary, ReadingProgress } from '../t
 import { isObj, num } from './mappers';
 import type { Raw } from './mappers';
 
+// [Xử lý] Chuẩn hóa thông tin sách trong trình đọc.
 const mapSummary = (raw: unknown): ChapterSummary => {
   const r: Raw = isObj(raw) ? raw : {};
   return {
@@ -16,6 +17,7 @@ const mapSummary = (raw: unknown): ChapterSummary => {
   };
 };
 
+// [Xử lý] Chuẩn hóa mục lục chương (kèm cờ khóa).
 export const mapChapterList = (data: unknown): ChapterList => {
   const d: Raw = isObj(data) ? data : {};
   const book: Raw = isObj(d.book) ? d.book : {};
@@ -28,6 +30,7 @@ export const mapChapterList = (data: unknown): ChapterList => {
   };
 };
 
+// [Xử lý] Chuẩn hóa nội dung một chương.
 export const mapChapter = (data: unknown): Chapter => {
   const r: Raw = isObj(data) ? data : {};
   return {
@@ -41,6 +44,7 @@ export const mapChapter = (data: unknown): Chapter => {
   };
 };
 
+// [Xử lý] Chuẩn hóa tiến trình đọc.
 export const mapProgress = (data: unknown): ReadingProgress => {
   const r: Raw = isObj(data) ? data : {};
   return {

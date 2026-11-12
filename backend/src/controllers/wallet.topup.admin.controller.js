@@ -4,6 +4,7 @@ const { pool, success, posId, money, validation, replyError } = require('../serv
 const { audit } = require('../services/week3.common');
 const walletService = require('../services/wallet.service');
 
+// [Giao diện] Admin > Tài khoản nhận tiền: hiển thị ngân hàng, số tài khoản dùng tạo QR.
 // GET /api/admin/store/bank-account
 const getBankAccount = async (req, res) => {
   try {
@@ -16,6 +17,7 @@ const getBankAccount = async (req, res) => {
   } catch (e) { return replyError(res, 'Lấy tài khoản nhận tiền', e); }
 };
 
+// [Giao diện] Admin > Tài khoản nhận tiền: lưu tài khoản; QR nạp ví của người dùng đổi theo.
 // PUT /api/admin/store/bank-account
 const updateBankAccount = async (req, res) => {
   try {
@@ -32,6 +34,7 @@ const updateBankAccount = async (req, res) => {
   } catch (e) { return replyError(res, 'Cập nhật tài khoản nhận tiền', e); }
 };
 
+// [Giao diện] Admin > Chi tiết người dùng: hiển thị lịch sử yêu cầu nạp ví.
 // GET /api/admin/users/:id/wallet/topups
 const userTopupHistory = async (req, res) => {
   try {
@@ -56,6 +59,7 @@ const userTopupHistory = async (req, res) => {
   } catch (e) { return replyError(res, 'Lịch sử nạp ví của user', e); }
 };
 
+// [Giao diện] Admin > Chi tiết người dùng: xác nhận đã nhận tiền, cộng ví cho người dùng.
 // POST /api/admin/users/:id/wallet/topups/:orderCode/confirm
 const confirmTopup = async (req, res) => {
   try {

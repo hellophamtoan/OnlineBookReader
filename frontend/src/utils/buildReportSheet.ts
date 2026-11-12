@@ -11,6 +11,7 @@ import { formatDelta, payLabel } from './reportMetrics';
 
 export type PrevPack = NonNullable<ReportOverview['previousPeriod']>;
 
+// [Xử lý] Tạo một khối chỉ số trong file Excel báo cáo.
 function metricBlock(
   ov: ReportOverview,
   compare: boolean,
@@ -50,6 +51,7 @@ function metricBlock(
   ];
 }
 
+// [Xử lý] Dựng nội dung sheet Excel báo cáo.
 export function buildReportSheet(opts: {
   name: string;
   periodLabel: string;

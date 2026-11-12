@@ -27,6 +27,7 @@ export const ALLOWED_TAGS = [
 const SAFE_IMG_SRC =
   /^(data:image\/[a-z0-9+.-]+(;[^,]*)?,|https?:\/\/|\/uploads\/)/i;
 
+// [Xử lý] Làm sạch HTML chương trước khi hiển thị (chống XSS).
 export const sanitizeChapterHtml = (html: string): string => {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');

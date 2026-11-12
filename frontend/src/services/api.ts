@@ -27,6 +27,7 @@ export class ApiError extends Error {
   code?: string; // EMAIL_EXISTS, INVALID_CREDENTIALS, ACCOUNT_LOCKED... (nếu BE có gửi)
   errors: FieldError[]; // lỗi theo từng ô nhập (nếu BE có gửi)
 
+  // [Xử lý] Tạo lỗi API kèm mã HTTP, mã lỗi và lỗi từng trường.
   constructor(message: string, status: number, code?: string, errors: FieldError[] = []) {
     super(message);
     this.name = 'ApiError';
@@ -36,6 +37,7 @@ export class ApiError extends Error {
     Object.setPrototypeOf(this, ApiError.prototype);
   }
 
+  // [Xử lý] Lấy thông báo lỗi của một trường để hiện dưới ô nhập.
   fieldMessage(field: string) {
     return this.errors.find((e) => e.field === field)?.message;
   }
@@ -48,6 +50,7 @@ interface RawResponse {
   body: unknown;
 }
 
+// [Xử lý] Sinh khóa chống gửi trùng khi Đặt hàng / Mua gói.
 /** UUID v4 cho header Idempotency-Key (BE bắt buộc khi đặt hàng / đăng ký gói / nạp ví admin) */
 export const newIdempotencyKey = () => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -60,6 +63,7 @@ export const newIdempotencyKey = () => {
   });
 };
 
+// [Xử lý] Ghép tham số tìm kiếm/lọc vào URL.
 export const buildQuery = (params?: Query) => {
   if (!params) return '';
   const sp = new URLSearchParams();
@@ -70,6 +74,7 @@ export const buildQuery = (params?: Query) => {
   return s ? `?${s}` : '';
 };
 
+// [Xử lý] Chọn gửi tới backend thật hoặc dữ liệu giả (mock).
 async function transport(method: Method, path: string, body: unknown, token: string | null): Promise<RawResponse> {
   if (env.USE_MOCK) {
     const { handleMockRequest } = await import('./mocks/mockserver');
@@ -106,6 +111,7 @@ async function transport(method: Method, path: string, body: unknown, token: str
   return { status: res.status, body: parsed };
 }
 
+// [Xử lý] Đổi danh sách lỗi từ backend thành lỗi theo từng ô nhập.
 const toFieldErrors = (raw: unknown): FieldError[] => {
   if (!Array.isArray(raw)) return [];
   return raw.flatMap((e): FieldError[] => {
@@ -118,6 +124,7 @@ const toFieldErrors = (raw: unknown): FieldError[] => {
   });
 };
 
+// [Xử lý] Hàm gọi API chung: gắn token, đọc { success, message, data }, tự đăng xuất khi 401 hoặc tài khoản bị khóa.
 async function request<T>(method: Method, path: string, body?: unknown): Promise<ApiResponse<T>> {
   const token = localStorage.getItem(TOKEN_KEY);
   const { status, body: parsed } = await transport(method, path, body, token);

@@ -9,6 +9,7 @@ interface AsyncState<T> {
   error: unknown;
 }
 
+// [Xử lý] Gọi hàm bất đồng bộ và quản lý trạng thái đang tải / lỗi / dữ liệu.
 export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]) {
   const [state, setState] = useState<AsyncState<T>>({ data: null, loading: true, error: null });
   const [tick, setTick] = useState(0);

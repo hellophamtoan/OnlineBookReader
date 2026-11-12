@@ -21,6 +21,7 @@ interface Props {
   onNotice: (message: string, tone?: 'success' | 'error') => void;
 }
 
+// [Xử lý] Nhãn trạng thái từng chương khi nhập từ EPUB (mới / trùng / lỗi).
 function statusLabel(r: EpubDiffRow): string {
   if (!r.countsAsChapter && r.kind === 'new') return 'Phần phụ · mới';
   if (!r.countsAsChapter && r.kind !== 'serverOnly') return 'Phần phụ';
@@ -31,6 +32,7 @@ function statusLabel(r: EpubDiffRow): string {
   return r.kind;
 }
 
+// [Giao diện] Admin > Chương: khung nhập hàng loạt chương từ EPUB, xem trước và chọn chương cần lưu.
 export default function EpubChapterImportPanel({
   bookId,
   existing,

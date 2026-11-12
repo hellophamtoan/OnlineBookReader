@@ -21,6 +21,7 @@ interface BookCoverProps {
   enableZoom?: boolean;
 }
 
+// [Giao diện] Ảnh bìa sách, có ảnh dự phòng khi thiếu hoặc lỗi ảnh.
 export default function BookCover({ book, className = '', enableZoom = false }: BookCoverProps) {
   const [failed, setFailed] = useState(false);
   const [open, setOpen] = useState(false);

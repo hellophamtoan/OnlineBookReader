@@ -3,11 +3,13 @@ const pool = require('../config/db.config');
 const { success, fail, serverError } = require('../utils/response');
 const { normalizeEmail, isValidEmail, isNonEmptyString, isValidPhone, isHttpUrl, isValidPassword, SALT_ROUNDS } = require('../utils/validators');
 
+// [Backend] Định dạng dữ liệu hồ sơ (không kèm mật khẩu).
 const toProfile = (u) => ({
   id: u.id, fullName: u.full_name, email: u.email, phone: u.phone, address: u.address, avatarUrl: u.avatar_url,
   role: u.role, walletBalance: Number(u.wallet_balance), createdAt: u.created_at
 });
 
+// [Backend] Truy vấn hồ sơ theo mã người dùng.
 const findProfile = async (id) => {
   const [rows] = await pool.execute(
     'SELECT id, full_name, email, phone, address, avatar_url, role, wallet_balance, created_at FROM users WHERE id = ? LIMIT 1',
@@ -16,7 +18,7 @@ const findProfile = async (id) => {
   return rows[0];
 };
 
-// UC012 bước 1-2 - Xem hồ sơ (không bao giờ trả password_hash)
+// [Giao diện] Trang Thông tin cá nhân: hiển thị họ tên, email, SĐT, địa chỉ, ảnh, số dư ví (UC012).
 const getProfile = async (req, res) => {
   try {
     const user = await findProfile(req.user.id);
@@ -27,7 +29,7 @@ const getProfile = async (req, res) => {
   }
 };
 
-// UC012 bước 5-8 - Cập nhật hồ sơ (người dùng và Admin đều dùng)
+// [Giao diện] Trang Thông tin cá nhân > Chỉnh sửa: lưu hồ sơ và đổi mật khẩu, báo lỗi ngay trên form (UC012).
 const updateProfile = async (req, res) => {
   try {
     const { fullName, email, phone, address, avatarUrl, currentPassword, newPassword, confirmNewPassword } = req.body || {};
@@ -40,6 +42,7 @@ const updateProfile = async (req, res) => {
     if (!isValidEmail(mail) || mail.length > 255) return fail(res, 400, 'Email không hợp lệ');
 
     // phone / avatarUrl: bỏ trống hoặc null = xóa giá trị
+    // [Backend] Kiểm tra ô nhập có giá trị.
     const hasValue = (v) => v !== undefined && v !== null && String(v).trim() !== '';
     if (hasValue(phone) && (!isValidPhone(String(phone).trim()) || String(phone).trim().length > 20)) {
       return fail(res, 400, 'Số điện thoại không hợp lệ');
@@ -48,6 +51,7 @@ const updateProfile = async (req, res) => {
     if (hasValue(address) && (typeof address !== 'string' || address.trim().length > 255)) {
       return fail(res, 400, 'Địa chỉ tối đa 255 ký tự');
     }
+    // [Backend] Kiểm tra đường dẫn ảnh tải lên hợp lệ (/uploads/...).
     const isUploadPath = (v) => /^\/uploads\/(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_.-]+$/.test(v) && !v.split('/').includes('..');
     if (hasValue(avatarUrl) && (typeof avatarUrl !== 'string' || avatarUrl.trim().length > 500 || (!isHttpUrl(avatarUrl.trim()) && !isUploadPath(avatarUrl.trim())))) {
       return fail(res, 400, 'Đường dẫn ảnh đại diện không hợp lệ');

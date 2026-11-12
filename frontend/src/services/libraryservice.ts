@@ -24,12 +24,14 @@ const soft = async <T>(run: () => Promise<T>, fallback: T): Promise<T> => {
 };
 
 export const libraryService = {
+  // [Gọi API] GET /library – sách đã lưu (trang Thư viện).
   async list(): Promise<LibraryBook[]> {
     return soft(async () => {
       const res = await api.get<{ items: LibraryBook[] }>(ENDPOINTS.library.root);
       return res.data?.items ?? [];
     }, []);
   },
+  // [Gọi API] GET /library/reading – sách đang đọc dở (trang Thư viện).
   /** Sách đang đọc (có tiến trình). BE chưa có → fallback lọc list() có lastChapterNumber */
   async listReading(): Promise<LibraryBook[]> {
     try {
@@ -41,18 +43,21 @@ export const libraryService = {
       return all.filter((b) => b.lastChapterNumber != null);
     }
   },
+  // [Gọi API] POST /library/:bookId – nút Lưu vào thư viện.
   async add(bookId: number) {
     return soft(
       async () => (await api.post(ENDPOINTS.library.item(bookId))).data as { bookId: number; inLibrary: boolean },
       { bookId, inLibrary: false },
     );
   },
+  // [Gọi API] DELETE /library/:bookId – bỏ lưu sách.
   async remove(bookId: number) {
     return soft(
       async () => (await api.delete(ENDPOINTS.library.item(bookId))).data as { bookId: number; inLibrary: boolean },
       { bookId, inLibrary: false },
     );
   },
+  // [Gọi API] GET /library/:bookId/status – biết sách đã lưu chưa để hiện đúng nút.
   async status(bookId: number) {
     return soft(
       async () => (await api.get(ENDPOINTS.library.status(bookId))).data as { bookId: number; inLibrary: boolean },

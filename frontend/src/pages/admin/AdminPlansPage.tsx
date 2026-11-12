@@ -28,6 +28,7 @@ const emptyForm: PlanFormState = {
   durationDays: String(PLAN_MIN_DAYS),
 };
 
+// [Trang] Admin > Gói đọc (/admin/plans): danh sách gói, thêm/sửa/ngừng bán gói.
 export default function AdminPlansPage() {
   useDocumentTitle('Quản lý gói đọc');
   const list = useAsync(() => planAdminService.list(), []);

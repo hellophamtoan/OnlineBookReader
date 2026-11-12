@@ -17,6 +17,7 @@ export interface UpdateProfilePayload {
   confirmNewPassword?: string;
 }
 
+// [Xử lý] Chuẩn hóa đường dẫn ảnh đại diện trước khi gửi.
 const normalizeAvatar = (raw: string): string | null => {
   const v = raw.trim();
   if (!v) return null;
@@ -24,10 +25,12 @@ const normalizeAvatar = (raw: string): string | null => {
 };
 
 export const userService = {
+  // [Gọi API] GET /users/me – trang Thông tin cá nhân.
   async getProfile(): Promise<UserProfile> {
     return mapProfile((await api.get(ENDPOINTS.users.me)).data);
   },
 
+  // [Gọi API] PUT /users/me – lưu hồ sơ và đổi mật khẩu.
   async updateProfile(p: UpdateProfilePayload): Promise<UserProfile> {
     const body: Record<string, unknown> = {
       fullName: p.fullName.trim(),

@@ -9,19 +9,23 @@ export type ExcelCell = { v: string | number; style?: ExcelStyle; mergeAcross?: 
 export type ExcelRow = ExcelCell[];
 export type ExcelSheet = { name: string; rows: ExcelRow[]; colCount?: number };
 
+// [Xử lý] Cắt nội dung ô quá dài.
 export function clipCell(v: string | number | null | undefined, max = MAX): string {
   const s = String(v ?? '').trim();
   return s.length <= max ? s : `${s.slice(0, max - 1)}…`;
 }
 
+// [Xử lý] Dòng tiêu đề mục.
 export function sectionRow(text: string, colCount: number, style: ExcelStyle = 'section'): ExcelRow {
   return [{ v: text, style, mergeAcross: Math.max(0, colCount - 1) }];
 }
 
+// [Xử lý] Dòng tiêu đề cột.
 export function headerRow(labels: string[]): ExcelRow {
   return labels.map((v) => ({ v: clipCell(v), style: 'header' as const }));
 }
 
+// [Xử lý] Dòng dữ liệu.
 export function valuesRow(vals: (string | number)[]): ExcelRow {
   return vals.map((v) =>
     typeof v === 'number' && Number.isFinite(v)
@@ -30,10 +34,12 @@ export function valuesRow(vals: (string | number)[]): ExcelRow {
   );
 }
 
+// [Xử lý] Thoát ký tự XML.
 function esc(s: string) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+// [Xử lý] Đổi số cột sang chữ (A, B...).
 function colLetter(i0: number) {
   let n = i0 + 1;
   let s = '';
@@ -46,6 +52,7 @@ function colLetter(i0: number) {
 
 const SID: Record<ExcelStyle, number> = { normal: 1, number: 2, header: 3, section: 4, title: 5 };
 
+// [Xử lý] Tính CRC32 cho file zip.
 /* ZIP STORE */
 function crc32(buf: Uint8Array) {
   let c = 0xffffffff;
@@ -55,16 +62,19 @@ function crc32(buf: Uint8Array) {
   }
   return (c ^ 0xffffffff) >>> 0;
 }
+// [Xử lý] Ghi số 2 byte.
 function u16(n: number) {
   const b = new Uint8Array(2);
   new DataView(b.buffer).setUint16(0, n, true);
   return b;
 }
+// [Xử lý] Ghi số 4 byte.
 function u32(n: number) {
   const b = new Uint8Array(4);
   new DataView(b.buffer).setUint32(0, n, true);
   return b;
 }
+// [Xử lý] Nối các mảng byte.
 function cat(parts: Uint8Array[]) {
   const out = new Uint8Array(parts.reduce((s, p) => s + p.length, 0));
   let o = 0;
@@ -74,6 +84,7 @@ function cat(parts: Uint8Array[]) {
   }
   return out;
 }
+// [Xử lý] Đóng gói file .xlsx (zip).
 function zip(files: { path: string; data: Uint8Array }[]) {
   const locals: Uint8Array[] = [];
   const centrals: Uint8Array[] = [];
@@ -101,6 +112,7 @@ function zip(files: { path: string; data: Uint8Array }[]) {
   );
 }
 
+// [Xử lý] Định dạng ô Excel.
 function stylesXml() {
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
@@ -132,6 +144,7 @@ function stylesXml() {
 </styleSheet>`;
 }
 
+// [Xử lý] Nội dung sheet Excel.
 function sheetXml(rowsIn: ExcelRow[], colCount: number, shared: string[], idx: (s: string) => number) {
   const rows = rowsIn.map((r) => (r?.length ? r : [{ v: '', style: 'normal' as const }]));
   const merges: string[] = [];
@@ -178,6 +191,7 @@ function sheetXml(rowsIn: ExcelRow[], colCount: number, shared: string[], idx: (
 </worksheet>`;
 }
 
+// [Xử lý] Admin > Báo cáo: tạo và tải file Excel báo cáo về máy.
 /** Tải file .xlsx */
 export function downloadExcelXml(filename: string, sheets: ExcelSheet[]) {
   const enc = new TextEncoder();

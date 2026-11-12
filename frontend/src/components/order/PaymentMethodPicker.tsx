@@ -11,6 +11,7 @@ interface PaymentMethodPickerProps {
   onChange: (method: PaymentMethod) => void;
 }
 
+// [Giao diện] Thanh toán: chọn COD hoặc ví, báo nếu số dư ví không đủ.
 // Chọn hình thức thanh toán (UC004). Ví không đủ thì khóa và hiện chữ đỏ bên dưới.
 export default function PaymentMethodPicker({
   value,

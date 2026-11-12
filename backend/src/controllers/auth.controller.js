@@ -4,6 +4,7 @@ const pool = require('../config/db.config');
 const { success, fail, serverError } = require('../utils/response');
 const { normalizeEmail, isValidEmail, isValidPassword, isNonEmptyString, SALT_ROUNDS } = require('../utils/validators');
 
+// [Giao diện] Trang Đăng ký: tạo tài khoản mới, báo lỗi email trùng / dữ liệu sai trên form.
 // UC001 - Đăng ký tài khoản (giữ nguyên logic đã chạy)
 const register = async (req, res) => {
   try {
@@ -33,7 +34,7 @@ const register = async (req, res) => {
   }
 };
 
-// UC002 - Đăng nhập
+// [Giao diện] Trang Đăng nhập: kiểm tra tài khoản, trả token và thông tin hiển thị trên header (tên, ảnh đại diện) (UC002).
 const login = async (req, res) => {
   try {
     const { email, password } = req.body || {};
@@ -66,7 +67,7 @@ const login = async (req, res) => {
   }
 };
 
-// UC002 - Khôi phục thông tin tài khoản từ JWT
+// [Giao diện] Mọi trang: khôi phục thông tin người dùng từ token khi tải lại trang (giữ trạng thái đăng nhập) (UC002).
 const me = async (req, res) => {
   try {
     const [rows] = await pool.execute(
@@ -85,7 +86,7 @@ const me = async (req, res) => {
   }
 };
 
-// UC002 - Logout phía client: frontend xóa JWT đã lưu
+// [Giao diện] Nút Đăng xuất: xác nhận đăng xuất, frontend xóa token và quay về trang chủ (UC002).
 const logout = (req, res) => {
   return success(res, 200, 'Đăng xuất thành công', null);
 };

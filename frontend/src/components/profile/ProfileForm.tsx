@@ -20,6 +20,7 @@ interface ProfileFormProps {
   onCancel: () => void;
 }
 
+// [Xử lý] Đọc ảnh chọn từ máy thành chuỗi data URL để xem trước.
 const readFileAsDataUrl = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -28,6 +29,7 @@ const readFileAsDataUrl = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
+// [Giao diện] Hồ sơ: form sửa họ tên, email, SĐT, địa chỉ, ảnh đại diện và đổi mật khẩu.
 // UC012: form sửa họ tên, email, SĐT, ảnh đại diện (URL hoặc file máy), mật khẩu mới tùy chọn.
 export default function ProfileForm({ profile, onSaved, onCancel }: ProfileFormProps) {
   const { values, errors, setErrors, setFieldError, onChange, setValues } = useForm<ProfileFormValues>({

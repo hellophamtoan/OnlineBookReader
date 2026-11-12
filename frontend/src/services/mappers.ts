@@ -14,8 +14,10 @@ import type {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Raw = Record<string, any>;
 
+// [Xử lý] Kiểm tra giá trị là object.
 export const isObj = (v: unknown): v is Raw => !!v && typeof v === 'object' && !Array.isArray(v);
 
+// [Xử lý] Đổi sang số an toàn.
 // MySQL DECIMAL thường trả về chuỗi "79000.00" -> ép về số
 export const num = (v: unknown): number | null => {
   if (typeof v === 'number') return Number.isFinite(v) ? v : null;
@@ -23,11 +25,13 @@ export const num = (v: unknown): number | null => {
   return null;
 };
 
+// [Xử lý] Đổi sang true/false an toàn.
 export const bool = (v: unknown): boolean | null => {
   if (v === null || v === undefined) return null;
   return v === true || v === 1 || v === '1' || v === 'true';
 };
 
+// [Xử lý] Ghép đường dẫn ảnh /uploads/... với địa chỉ backend để hiển thị.
 // "/uploads/covers/a.jpg" -> "http://localhost:5000/uploads/covers/a.jpg"
 export const resolveAssetUrl = (url?: unknown): string | null => {
   if (typeof url !== 'string' || !url) return null;
@@ -35,17 +39,20 @@ export const resolveAssetUrl = (url?: unknown): string | null => {
   return `${env.ASSET_ORIGIN}${url.startsWith('/') ? '' : '/'}${url}`;
 };
 
+// [Xử lý] Chuẩn hóa một tác giả/thể loại/NXB.
 const toRef = (v: unknown): NamedRef | null => {
   if (typeof v === 'string') return { name: v };
   if (isObj(v) && typeof v.name === 'string') return { id: num(v.id) ?? undefined, name: v.name };
   return null;
 };
 
+// [Xử lý] Chuẩn hóa danh sách tác giả/thể loại.
 const toRefs = (list: unknown, single: unknown, names: unknown): NamedRef[] => {
   const source = Array.isArray(list) ? list : single ? [single] : Array.isArray(names) ? names : [];
   return source.map(toRef).filter((r): r is NamedRef => r !== null);
 };
 
+// [Xử lý] Chuẩn hóa dữ liệu người dùng đăng nhập (tên, vai trò, ảnh).
 export const mapUser = (raw: unknown): AuthUser => {
   const r: Raw = isObj(raw) ? raw : {};
   const role: Role = r.role === 'ADMIN' ? 'ADMIN' : 'USER';
@@ -58,6 +65,7 @@ export const mapUser = (raw: unknown): AuthUser => {
   };
 };
 
+// [Xử lý] Chuẩn hóa một sách cho thẻ sách.
 export const mapBook = (raw: unknown): Book => {
   const r: Raw = isObj(raw) ? raw : {};
   const publisher = toRef(r.publisher ?? (r.publisherName ? r.publisherName : null));
@@ -78,6 +86,7 @@ export const mapBook = (raw: unknown): Book => {
   };
 };
 
+// [Xử lý] Chuẩn hóa thông tin phân trang.
 export const mapPagination = (data: Raw, itemCount: number): Pagination => {
   const p: Raw = isObj(data.pagination) ? data.pagination : data;
   const limit = num(p.limit) ?? (itemCount || 12);
@@ -90,15 +99,18 @@ export const mapPagination = (data: Raw, itemCount: number): Pagination => {
   };
 };
 
+// [Xử lý] Chuẩn hóa danh sách sách.
 export const mapBookList = (data: unknown): BookListResult => {
   const d: Raw = isObj(data) ? data : {};
   const items = Array.isArray(d.items) ? d.items.map(mapBook) : [];
   return { items, pagination: mapPagination(d, items.length) };
 };
 
+// [Xử lý] Chuẩn hóa chi tiết sách.
 // Chi tiết sách: data có thể là sách trực tiếp hoặc { book }
 export const mapBookDetail = (data: unknown): Book => mapBook(isObj(data) && isObj(data.book) ? data.book : data);
 
+// [Xử lý] Chuẩn hóa danh sách lựa chọn cho bộ lọc.
 // API-07: data = { items: [{ id, name }] }. Một số BE trả mảng thẳng — chấp nhận cả hai.
 export const mapOptions = (data: unknown): Option[] => {
   const items = Array.isArray(data)
@@ -111,6 +123,7 @@ export const mapOptions = (data: unknown): Option[] => {
   );
 };
 
+// [Xử lý] Chuẩn hóa thông tin cửa hàng.
 // Thông tin cửa hàng: nhận data trực tiếp hoặc { store }; thiếu trường nào thì dùng giá trị dự phòng
 export const mapStoreInfo = (data: unknown, fallback: StoreInfo): StoreInfo => {
   const d: Raw = isObj(data) && isObj(data.store) ? data.store : isObj(data) ? data : {};
@@ -128,6 +141,7 @@ export const mapStoreInfo = (data: unknown, fallback: StoreInfo): StoreInfo => {
 // ---------- UC004: giỏ hàng, đơn hàng, hồ sơ ----------
 // Dạng chung của hợp đồng MNM: giỏ -> data { items, totalAmount }; đơn -> data { order }; danh sách đơn -> data { items, pagination }.
 
+// [Xử lý] Chuẩn hóa một dòng giỏ hàng.
 export const mapCartItem = (raw: unknown): CartItem => {
   const r: Raw = isObj(raw) ? raw : {};
   const unitPrice = num(r.unitPrice ?? r.price) ?? 0;
@@ -146,6 +160,7 @@ export const mapCartItem = (raw: unknown): CartItem => {
   };
 };
 
+// [Xử lý] Chuẩn hóa giỏ hàng.
 export const mapCart = (data: unknown): Cart => {
   const d: Raw = isObj(data) ? data : {};
   const items = Array.isArray(d.items) ? d.items.map(mapCartItem) : [];
@@ -155,6 +170,7 @@ export const mapCart = (data: unknown): Cart => {
   return { items, totalAmount, canCheckout };
 };
 
+// [Xử lý] Chuẩn hóa một sách trong đơn.
 const mapOrderItem = (raw: unknown): OrderItem => {
   const r: Raw = isObj(raw) ? raw : {};
   const unitPrice = num(r.unitPrice) ?? 0;
@@ -168,6 +184,7 @@ const mapOrderItem = (raw: unknown): OrderItem => {
   };
 };
 
+// [Xử lý] Chuẩn hóa một đơn hàng.
 export const mapOrder = (raw: unknown): Order => {
   const r: Raw = isObj(raw) ? raw : {};
   const items = Array.isArray(r.items) ? r.items.map(mapOrderItem) : [];
@@ -190,15 +207,18 @@ export const mapOrder = (raw: unknown): Order => {
   };
 };
 
+// [Xử lý] Chuẩn hóa chi tiết đơn hàng.
 // Một đơn: data có thể là đơn trực tiếp hoặc { order }
 export const mapOrderDetail = (data: unknown): Order => mapOrder(isObj(data) && isObj(data.order) ? data.order : data);
 
+// [Xử lý] Chuẩn hóa danh sách đơn hàng.
 export const mapOrderList = (data: unknown): OrderListResult => {
   const d: Raw = isObj(data) ? data : {};
   const items = Array.isArray(d.items) ? d.items.map(mapOrder) : [];
   return { items, pagination: mapPagination(d, items.length) };
 };
 
+// [Xử lý] Chuẩn hóa hồ sơ cá nhân.
 export const mapProfile = (data: unknown): UserProfile => {
   const r: Raw = isObj(data) && isObj(data.user) ? data.user : isObj(data) ? data : {};
   return {

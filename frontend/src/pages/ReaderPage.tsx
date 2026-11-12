@@ -12,6 +12,7 @@ import { ApiError } from '../services/api';
 import { readerService } from '../services/readerservice';
 import { toMessage } from '../utils/errors';
 
+// [Trang] Trang Đọc sách (/read/:bookId): đọc từng chương, đổi font/cỡ chữ, tự lưu vị trí đọc dở.
 export default function ReaderPage() {
   const bookId = Number(useParams().bookId);
   const validId = Number.isInteger(bookId) && bookId >= 1;

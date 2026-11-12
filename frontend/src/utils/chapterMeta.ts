@@ -7,6 +7,7 @@ export const SECTION_MARK = '\u2060';
 const FRONT_MATTER_TITLE =
   /^(nh?ời\s*nói\s*đầu|lời\s*nói\s*đầu|lời\s*tựa|lời\s*mở\s*đầu|lời\s*nhà\s*xuất\s*bản|lời\s*người\s*dịch|lời\s*kết|phần\s*kết|kết\s*luận|giới\s*thiệu|phần\s*mở\s*đầu|ghi\s*chú(\s+của\s+nhóm)?|cảm\s*nhận(\s+của\s+độc\s*giả)?|ý\s*kiến\s*bạn\s*đọc|sách\s*của\s*(soạn\s*giả|tác\s*giả)|tác\s*phẩm\s*cùng\s*tác\s*giả|về\s*tác\s*giả|tiểu\s*sử|phụ\s*lục|chú\s*thích|preface|foreword|introduction|intro|prologue|epilogue|afterword|acknowledg(?:e)?ments?|dedication|note to the reader|about the author|author'?s note|editor'?s note|publisher'?s note|to the reader|bibliography|index)\b/i;
 
+// [Xử lý] Chuẩn hóa chuỗi để so sánh.
 const normalize = (s: string) =>
   s
     .toLowerCase()
@@ -14,6 +15,7 @@ const normalize = (s: string) =>
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .trim();
 
+// [Xử lý] Bỏ tiền tố "Chương 1:"... khỏi tên chương.
 /** Bỏ prefix số «1. –» / «Chương N.» để nhận diện phần phụ */
 const stripLeadingChapterNoise = (s: string) =>
   s
@@ -21,22 +23,26 @@ const stripLeadingChapterNoise = (s: string) =>
     .replace(/^chương\s*\d+\s*[.:：\-–—]?\s*/iu, '')
     .trim();
 
+// [Xử lý] Tên chương hiển thị trong mục lục.
 /** Tiêu đề hiển thị (bỏ marker vô hình) */
 export function displayTitle(title: string): string {
   return (title || '').replace(new RegExp(`^${SECTION_MARK}+`), '').replace(/\s+/g, ' ').trim();
 }
 
+// [Xử lý] Đánh dấu chương là tiêu đề phần.
 /** Đánh dấu phần phụ trước khi lưu DB */
 export function markAsSection(title: string): string {
   const t = displayTitle(title);
   return t ? SECTION_MARK + t : SECTION_MARK;
 }
 
+// [Xử lý] Bỏ đánh dấu tiêu đề phần.
 /** Bỏ đánh dấu phần phụ (khi tích lại tính chương) */
 export function unmarkSection(title: string): string {
   return displayTitle(title);
 }
 
+// [Xử lý] Kiểm tra chương là tiêu đề phần.
 /**
  * true = không tính chương (bỏ tích / phần phụ).
  * Marker đã lưu + tiêu đề kiểu lời mở đầu / giới thiệu (kể cả «1. Lời mở đầu»).
@@ -50,11 +56,13 @@ export function isSectionTitle(title: string): boolean {
   return candidates.some((x) => x && FRONT_MATTER_TITLE.test(x));
 }
 
+// [Xử lý] Nhận biết trang bìa, lời nói đầu, mục lục.
 /** @deprecated dùng isSectionTitle */
 export function isFrontMatterTitle(title: string): boolean {
   return isSectionTitle(title);
 }
 
+// [Xử lý] Nhãn một dòng mục lục.
 /**
  * Chỉ mục tính chương (c1, c2…) mới gắn «Chương N.»
  * Phần không có số chương / không tích: chỉ tiêu đề.
@@ -67,6 +75,7 @@ export function formatTocLabel(displayChapter: number | null, title: string): st
   return `Chương ${displayChapter}. ${stripped || t}`;
 }
 
+// [Xử lý] Sắp xếp và đánh số mục lục để hiển thị.
 /**
  * Sắp theo STT (chapterNumber ASC).
  * displayChapter: null nếu phần phụ; 1..n theo các mục tính chương (khớp c1, c2…).

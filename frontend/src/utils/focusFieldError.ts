@@ -3,17 +3,20 @@
  * Gọi sau setErrors (dùng rAF để DOM kịp gắn aria-invalid / field__error).
  */
 
+// [Xử lý] Kiểm tra ô có lỗi.
 function isErrorValue(v: unknown): boolean {
   if (v == null || v === false) return false;
   if (typeof v === 'string') return v.trim().length > 0;
   return true;
 }
 
+// [Xử lý] Tìm ô lỗi đầu tiên.
 /** Thứ tự ưu tiên theo key trong object errors (thường là thứ tự field trên form) */
 export function firstErrorFields(errors: Record<string, unknown>): string[] {
   return Object.keys(errors).filter((k) => isErrorValue(errors[k]));
 }
 
+// [Xử lý] Cuộn tới và đặt con trỏ vào ô lỗi đầu tiên.
 export function focusFirstFieldError(
   errors: Record<string, unknown>,
   root?: ParentNode | Document | null,
@@ -54,6 +57,7 @@ export function focusFirstFieldError(
   }
 }
 
+// [Xử lý] Đặt con trỏ vào ô lỗi sau khi giao diện cập nhật.
 /** Gọi ngay sau setState lỗi — đợi 2 frame để React gắn class lỗi */
 export function scheduleFocusFirstFieldError(
   errors: Record<string, unknown>,

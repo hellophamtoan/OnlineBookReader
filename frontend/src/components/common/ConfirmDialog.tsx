@@ -12,6 +12,7 @@ interface ConfirmDialogProps {
   onCancel: () => void;
 }
 
+// [Giao diện] Hộp thoại xác nhận (Đăng xuất, Hủy đơn, Xóa...).
 // Hộp thoại xác nhận (UC002 nhánh B: xác nhận đăng xuất). Esc hoặc bấm nền = hủy.
 // Vẽ qua portal ra <body>: Header có backdrop-filter nên nếu để hộp thoại nằm trong Header,
 // "position: fixed" sẽ tính theo Header (bị kẹt ở trên cùng) thay vì theo cả màn hình.

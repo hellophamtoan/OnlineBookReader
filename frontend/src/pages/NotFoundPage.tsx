@@ -3,6 +3,7 @@ import { EmptyState } from '../components/common/States';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { ROUTES } from '../config/routes';
 
+// [Trang] Trang 404: báo đường dẫn không tồn tại, có nút về trang chủ.
 export default function NotFoundPage() {
   useDocumentTitle('Không tìm thấy trang');
   return (

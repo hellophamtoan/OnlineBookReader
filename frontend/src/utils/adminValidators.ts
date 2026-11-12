@@ -2,6 +2,7 @@
 // UC007 - validate form quản trị (danh mục, sách, chương) theo API-15..API-35. Server vẫn validate lại.
 import { ADMIN, ADMIN_MESSAGES } from '../config/admin';
 
+// [Xử lý] Kiểm tra tên danh mục.
 export const validateTaxonomyName = (v: string) => {
   const n = v.trim().length;
   if (n === 0) return ADMIN_MESSAGES.nameRequired;
@@ -25,6 +26,7 @@ export interface BookFormState {
 
 export type BookFormErrors = Partial<Record<'title' | 'coverUrl' | 'publisherId' | 'formats' | 'price' | 'stock' | 'authorIds' | 'categoryIds', string>>;
 
+// [Xử lý] Kiểm tra link ảnh bìa.
 /** URL http(s), /uploads/..., hoặc data:image (EPUB / máy; cho phép charset= trong header) */
 const isValidCoverUrl = (cover: string) => {
   if (/^https?:\/\/\S+/i.test(cover) || /^\/uploads\/\S+/i.test(cover)) return true;
@@ -32,6 +34,7 @@ const isValidCoverUrl = (cover: string) => {
   return false;
 };
 
+// [Xử lý] Kiểm tra form sách trước khi gửi (hiện lỗi dưới từng ô).
 export const validateBookForm = (v: BookFormState): BookFormErrors => {
   const errors: BookFormErrors = {};
   const title = v.title.trim();
@@ -60,6 +63,7 @@ export const validateBookForm = (v: BookFormState): BookFormErrors => {
 /** stt = thứ tự trong mục lục (bắt buộc); chapterNumber có thể trống (phần phụ) */
 export type ChapterFormValues = Record<'stt' | 'chapterNumber' | 'title' | 'content', string>;
 
+// [Xử lý] Kiểm tra form chương trước khi gửi.
 export const validateChapterForm = (v: ChapterFormValues): Record<keyof ChapterFormValues, string> => {
   const stt = Number(v.stt);
   const chRaw = v.chapterNumber.trim();

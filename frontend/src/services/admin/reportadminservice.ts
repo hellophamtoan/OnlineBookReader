@@ -45,9 +45,11 @@ export interface ReportOverview {
 }
 
 export const reportAdminService = {
+  // [Gọi API] GET /admin/reports/overview – thẻ tổng quan báo cáo.
   async overview(from?: string, to?: string): Promise<ReportOverview> {
     return (await api.get(ENDPOINTS.admin.reports.overview, { from, to })).data as ReportOverview;
   },
+  // [Gọi API] GET /admin/reports/revenue – biểu đồ doanh thu.
   async revenue(from?: string, to?: string, groupBy: 'day' | 'month' = 'day') {
     return (await api.get(ENDPOINTS.admin.reports.revenue, { from, to, groupBy })).data as {
       from: string;
@@ -56,11 +58,13 @@ export const reportAdminService = {
       points: { label: string; orderRevenue: number; planRevenue: number; total: number }[];
     };
   },
+  // [Gọi API] GET /admin/reports/best-sellers – sách bán chạy.
   async bestSellers(from?: string, to?: string, limit = 10) {
     return (await api.get(ENDPOINTS.admin.reports.bestSellers, { from, to, limit })).data as {
       items: { bookId: number; title: string; quantitySold: number; revenue: number }[];
     };
   },
+  // [Gọi API] GET /admin/reports/subscriptions – thống kê gói đọc.
   async subscriptions(from?: string, to?: string) {
     return (await api.get(ENDPOINTS.admin.reports.subscriptions, { from, to })).data as {
       from: string;

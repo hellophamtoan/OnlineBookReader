@@ -31,6 +31,7 @@ interface AdminPlanFormDialogProps {
   onClose: () => void;
 }
 
+// [Giao diện] Admin > Gói đọc: hộp thoại thêm/sửa gói (loại gói, giá, số ngày).
 export default function AdminPlanFormDialog({
   open,
   editId,

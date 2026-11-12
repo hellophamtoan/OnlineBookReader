@@ -5,6 +5,7 @@ const { fail, serverError } = require('../utils/response');
 // Chỉ chặn khi xem chương trả phí (chapterNumber > 10).
 const FREE_CHAPTER_LIMIT = 10;
 
+// [Backend] Kiểm tra người dùng có gói đọc còn hạn.
 const hasActiveSubscription = async (userId) => {
   const [rows] = await pool.execute(
     'SELECT id FROM subscriptions WHERE user_id = ? AND start_date <= NOW() AND end_date > NOW() LIMIT 1',
@@ -13,6 +14,7 @@ const hasActiveSubscription = async (userId) => {
   return rows.length > 0;
 };
 
+// [Giao diện] Trình đọc: chặn chương trả phí khi chưa có gói, frontend hiện thông báo mua gói.
 const requireReadAccess = async (req, res, next) => {
   try {
     if (!await hasActiveSubscription(req.user.id)) {

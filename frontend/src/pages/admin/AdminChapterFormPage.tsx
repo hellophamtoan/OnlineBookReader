@@ -11,6 +11,7 @@ import { chapterAdminService } from '../../services/admin/chapteradminservice';
 import type { AdminChapter, AdminChapterPayload } from '../../types';
 import { toMessage } from '../../utils/errors';
 
+// [Trang] Admin > Thêm / Sửa chương (/admin/books/:bookId/chapters/new | /:chapterId/edit): form số chương, tên chương và nội dung.
 export default function AdminChapterFormPage() {
   const params = useParams();
   const bookId = Number(params.bookId);

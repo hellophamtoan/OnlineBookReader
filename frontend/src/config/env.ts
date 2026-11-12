@@ -10,6 +10,7 @@
 //
 // Hợp đồng: Base URL đã gồm /api. FE chỉ nối thêm path kiểu /auth/login.
 
+// [Xử lý] Đọc biến môi trường dạng true/false.
 const toBool = (value: unknown, fallback: boolean) =>
   value === undefined || value === '' ? fallback : String(value).trim().toLowerCase() === 'true';
 

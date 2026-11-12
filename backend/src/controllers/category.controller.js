@@ -1,6 +1,7 @@
 const pool = require('../config/db.config');
 const { success, serverError } = require('../utils/response');
 
+// [Giao diện] Trang chủ / Trang Sách: đổ danh sách thể loại vào bộ lọc.
 const getCategories = async (req, res) => {
   try {
     const [items] = await pool.query(

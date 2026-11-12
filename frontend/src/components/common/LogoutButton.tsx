@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/authservice';
 import ConfirmDialog from './ConfirmDialog';
 
+// [Giao diện] Nút Đăng xuất (có hỏi xác nhận).
 // UC002 nhánh B: nút "Đăng xuất" + hộp thoại xác nhận. Dùng ở Header (khung site) và AdminLayout (khung quản trị).
 export default function LogoutButton({ className = 'btn btn--ghost' }: { className?: string }) {
   const { logout } = useAuth();

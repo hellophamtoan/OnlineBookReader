@@ -18,11 +18,13 @@ export interface BookFilterState {
 
 const SORTS: BookSort[] = ['newest', 'title_asc', 'title_desc'];
 
+// [Xử lý] Đọc số nguyên dương từ URL.
 const posInt = (v: string | null) => {
   const n = Number(v);
   return v !== null && Number.isInteger(n) && n >= 1 ? n : undefined;
 };
 
+// [Xử lý] Đọc bộ lọc trang Sách từ URL.
 export const parseFilters = (sp: URLSearchParams): BookFilterState => {
   const format = sp.get('format');
   const sort = sp.get('sort') as BookSort | null;
@@ -39,6 +41,7 @@ export const parseFilters = (sp: URLSearchParams): BookFilterState => {
 
 export type FilterPatch = Partial<Record<keyof BookFilterState, string | number | undefined>>;
 
+// [Xử lý] Cập nhật bộ lọc lên URL (giữ được khi tải lại / chia sẻ link).
 // Ghi đè một số trường lên URL hiện tại. Đổi bộ lọc (không phải đổi trang) thì quay về trang 1.
 export const patchParams = (sp: URLSearchParams, patch: FilterPatch) => {
   const next = new URLSearchParams(sp);
@@ -53,9 +56,11 @@ export const patchParams = (sp: URLSearchParams, patch: FilterPatch) => {
   return next;
 };
 
+// [Xử lý] Kiểm tra có đang lọc không (để hiện nút Xóa lọc).
 export const hasActiveFilter = (f: BookFilterState) =>
   !!(f.search || f.categoryId || f.authorId || f.publisherId || f.format !== 'all');
 
+// [Xử lý] Đổi bộ lọc thành tham số gọi API danh sách sách.
 export const toBookQuery = (f: BookFilterState, limit: number): BookQuery => ({
   search: f.search || undefined,
   categoryId: f.categoryId,

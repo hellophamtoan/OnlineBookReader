@@ -21,6 +21,7 @@ import {
   validateEndDate,
 } from '../utils/planDates';
 
+// [Xử lý] Định dạng ngày hết hạn gói để hiển thị.
 function formatDate(iso: string | null) {
   if (!iso) return '—';
   try {
@@ -30,6 +31,7 @@ function formatDate(iso: string | null) {
   }
 }
 
+// [Trang] Trang Gói đọc (/plans): danh sách gói, gói đang dùng và ngày hết hạn, mua gói bằng ví.
 export default function PlansPage() {
   useDocumentTitle('Gói đọc');
   const { user } = useAuth();

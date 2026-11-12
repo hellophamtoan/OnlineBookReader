@@ -16,6 +16,7 @@ import { formatDate, formatPrice } from '../utils/format';
 import { toMessage } from '../utils/errors';
 import ReadBookButton from '../components/reader/ReadBookButton';
 
+// [Trang] Trang Chi tiết sách (/books/:id): ảnh bìa, giá, tồn kho, mô tả, mục lục; nút Thêm vào giỏ, Mua ngay, Đọc, Lưu thư viện.
 export default function BookDetailPage() {
   const id = Number(useParams().id);
   const validId = Number.isInteger(id) && id >= 1;

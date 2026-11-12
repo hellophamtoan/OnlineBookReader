@@ -10,6 +10,7 @@ import { toMessage } from '../utils/errors';
 
 type Phase = 'loading' | 'success' | 'failed' | 'pending';
 
+// [Trang] Kết quả nạp ví (/wallet/topup/return): báo nạp thành công/thất bại và cập nhật số dư.
 export default function WalletTopupReturnPage() {
   useDocumentTitle('Kết quả nạp ví');
   const [params] = useSearchParams();

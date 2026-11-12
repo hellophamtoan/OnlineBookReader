@@ -16,6 +16,7 @@ import { toMessage } from '../../utils/errors';
 import { withTocDisplayOrder } from '../../utils/chapterMeta';
 import { sanitizeChapterHtml } from '../../utils/sanitize';
 
+// [Trang] Admin > Chi tiết sách (/admin/books/:id): thông tin sách, lối vào sửa sách và quản lý chương.
 export default function AdminBookDetailPage() {
   const id = Number(useParams().id);
   const valid = Number.isInteger(id) && id >= 1;

@@ -11,6 +11,7 @@ import { userAdminService } from '../../services/admin/useradminservice';
 import { formatDate, formatPrice } from '../../utils/format';
 import { toMessage } from '../../utils/errors';
 
+// [Trang] Admin > Chi tiết người dùng (/admin/users/:id): thông tin, số dư ví, nạp ví thủ công, xác nhận yêu cầu nạp QR.
 export default function AdminUserDetailPage() {
   const id = Number(useParams().id);
   const valid = Number.isInteger(id) && id >= 1;

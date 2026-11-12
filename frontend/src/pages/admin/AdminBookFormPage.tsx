@@ -14,6 +14,7 @@ import type { AdminBookDetail, AdminBookPayload, EpubParsedChapter } from '../..
 import { formatChapterImportReport, importEpubChaptersFully } from '../../utils/importChapters';
 import { toMessage } from '../../utils/errors';
 
+// [Trang] Admin > Thêm / Sửa sách (/admin/books/new, /admin/books/:id/edit): form sách, có thể nhập nhanh từ file EPUB.
 export default function AdminBookFormPage() {
   const idParam = useParams().id;
   const isEdit = idParam !== undefined;

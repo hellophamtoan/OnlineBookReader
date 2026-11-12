@@ -1,3 +1,4 @@
+// [Xử lý] Tên hiển thị trạng thái yêu cầu nạp (Chờ xác nhận, Đã nhận tiền...).
 /** Nhãn trạng thái yêu cầu nạp ví (QR) */
 export function topupStatusLabel(status: string): string {
   const s = (status || '').toUpperCase();

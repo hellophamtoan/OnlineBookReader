@@ -5,6 +5,7 @@ import { formatPrice } from '../../utils/format';
 import type { Book } from '../../types';
 import BookCover from './BookCover';
 
+// [Giao diện] Thẻ sách trong danh sách (ảnh bìa, tên, tác giả, giá hoặc "Chỉ đọc online", nhãn E-book).
 export default function BookCard({ book }: { book: Book }) {
   const stock = stockLabel(book);
   return (
@@ -27,6 +28,7 @@ export default function BookCard({ book }: { book: Book }) {
   );
 }
 
+// [Giao diện] Khung xám giữ chỗ khi danh sách sách đang tải.
 export function BookGridSkeleton({ count = 8 }: { count?: number }) {
   return (
     <div className="book-grid" aria-hidden="true">

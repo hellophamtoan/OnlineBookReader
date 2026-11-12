@@ -14,6 +14,7 @@ interface AdminPageHeaderProps {
   actions?: ReactNode;
 }
 
+// [Giao diện] Admin: tiêu đề trang kèm nút hành động (Thêm mới...).
 // Đầu trang của mọi trang quản trị: đường dẫn, tiêu đề, nút hành động
 export default function AdminPageHeader({ title, subtitle, crumbs, actions }: AdminPageHeaderProps) {
   return (

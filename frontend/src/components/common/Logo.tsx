@@ -8,8 +8,10 @@ import { ROUTES } from '../../config/routes';
 const IMAGES = Object.entries(
   import.meta.glob<string>('../../assets/*.{png,jpg,jpeg,webp,gif,svg}', { eager: true, query: '?url', import: 'default' })
 );
+// [Xử lý] Đường dẫn ảnh logo.
 const LOGO_SRC = (IMAGES.find(([path]) => /logo/i.test(path)) ?? (IMAGES.length === 1 ? IMAGES[0] : undefined))?.[1] ?? null;
 
+// [Giao diện] Logo nhà sách trên header, bấm để về trang chủ.
 export default function Logo() {
   const [failed, setFailed] = useState(false);
 

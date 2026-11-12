@@ -17,6 +17,7 @@ interface ChapterNavProps {
   onOpenToc: () => void;
 }
 
+// [Giao diện] Trình đọc: nút Chương trước / Chương sau.
 /** Một hàng: Chương trước | Mục lục | ⚙ | Chương sau */
 export default function ChapterNav({
   bookId,

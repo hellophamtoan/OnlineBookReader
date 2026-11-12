@@ -1,6 +1,7 @@
 import { env } from '../../config/env';
 import { TOKEN_KEY, USER_KEY } from '../../services/api';
 
+// [Giao diện] Nhãn "Mock" khi chạy dữ liệu giả (chỉ dùng lúc phát triển).
 // Nhãn nhỏ góc trái dưới khi đang chạy dữ liệu giả, để biết mình đang test mock hay BE thật.
 // Bấm vào nhãn để xóa dữ liệu mock (tài khoản đã đăng ký, phiên đăng nhập) và tải lại trang.
 export default function MockBadge() {

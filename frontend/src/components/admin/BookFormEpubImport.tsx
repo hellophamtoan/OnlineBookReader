@@ -14,6 +14,7 @@ interface BookFormEpubImportProps {
   onLoadUrl: () => void;
 }
 
+// [Giao diện] Admin > Form sách: chọn file EPUB để tự điền tên sách, ảnh bìa và danh sách chương.
 export default function BookFormEpubImport({
   epubFileRef,
   epubUrl,

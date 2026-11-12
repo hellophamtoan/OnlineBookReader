@@ -16,8 +16,10 @@ interface BookFiltersProps {
   onClear: () => void;
 }
 
+// [Xử lý] Đổi giá trị ô chọn thành mã số.
 const toId = (v: string) => (v ? Number(v) : undefined);
 
+// [Giao diện] Trang Sách: bộ lọc thể loại, tác giả, NXB, e-book và sắp xếp.
 // Bộ lọc của UC003 bước 3: từ khóa, thể loại, tác giả, NXB, hình thức
 export default function BookFilters({
   filters, keyword, categories, authors, publishers, canClear, onKeywordChange, onKeywordSubmit, onChange, onClear,

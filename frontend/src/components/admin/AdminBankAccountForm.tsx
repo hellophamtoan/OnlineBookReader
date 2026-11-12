@@ -5,6 +5,7 @@ import { planAdminService } from '../../services/admin/planadminservice';
 import { BANK_OPTIONS, binFromBankName, bankNameFromBin } from '../../utils/bankBins';
 import { toMessage } from '../../utils/errors';
 
+// [Xử lý] Tạo link QR xem trước từ thông tin ngân hàng đang nhập.
 /** Preview QR VietQR từ BIN + STK (không upload ảnh) */
 function previewQrUrl(bin: string, accountNo: string, accountName: string) {
   const acc = accountNo.replace(/\D/g, '');
@@ -16,6 +17,7 @@ function previewQrUrl(bin: string, accountNo: string, accountName: string) {
   return `https://img.vietqr.io/image/${b}-${acc}-print.jpg?${q.toString()}`;
 }
 
+// [Giao diện] Admin: form tài khoản ngân hàng nhận tiền nạp ví, có xem trước mã QR.
 export default function AdminBankAccountForm() {
   const [bankName, setBankName] = useState('MB Bank');
   const [accountNo, setAccountNo] = useState('0989807884');

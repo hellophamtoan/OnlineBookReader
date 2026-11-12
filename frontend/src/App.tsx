@@ -39,6 +39,7 @@ const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage'));
 const AdminUserDetailPage = lazy(() => import('./pages/admin/AdminUserDetailPage'));
 const AdminReportsPage = lazy(() => import('./pages/admin/AdminReportsPage'));
 
+// [Giao diện] Màn hình "Đang tải..." hiển thị trong lúc tải trang (lazy load).
 function FallBack() {
   return (
     <div className="container page" style={{ paddingTop: 48 }}>
@@ -47,6 +48,7 @@ function FallBack() {
   );
 }
 
+// [Xử lý] Khai báo toàn bộ đường dẫn trang của người dùng và trang quản trị.
 export default function App() {
   return (
     <>

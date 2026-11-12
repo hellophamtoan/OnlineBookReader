@@ -16,6 +16,7 @@ interface AuthLayoutProps {
   children: ReactNode; // các ô nhập (Field)
 }
 
+// [Giao diện] Bố cục trang Đăng nhập / Đăng ký.
 // Khung chung của Đăng nhập / Đăng ký: logo, tiêu đề, thông báo, form, nút gửi, dòng chuyển trang
 export default function AuthLayout({
   title, subtitle, error, success, loading, submitText, onSubmit, footerText, footerLinkText, footerLinkTo, children,

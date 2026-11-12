@@ -10,6 +10,7 @@ type FlashState = {
   noticeTone?: FlashTone;
 };
 
+// [Xử lý] Hiện thông báo một lần (vd. "Cập nhật thành công") rồi tự ẩn.
 export function useFlashNotice() {
   const location = useLocation();
   const navigate = useNavigate();

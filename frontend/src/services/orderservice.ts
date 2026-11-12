@@ -6,6 +6,7 @@ import { ENDPOINTS } from './endpoints';
 import { mapOrderDetail, mapOrderList } from './mappers';
 
 export const orderService = {
+  // [Gọi API] POST /orders – nút Đặt hàng / Mua ngay (kèm khóa chống gửi trùng).
   // O01: BE tạo đơn từ giỏ hàng trong một transaction (tồn kho, ví, xóa giỏ). Lỗi: VALIDATION_ERROR,
   // EMPTY_CART, OUT_OF_STOCK, INSUFFICIENT_BALANCE.
   async createOrder(p: CheckoutPayload): Promise<Order> {
@@ -25,6 +26,7 @@ export const orderService = {
     return mapOrderDetail(res.data);
   },
 
+  // [Gọi API] GET /orders/my – trang Đơn hàng.
   async getMyOrders(q: OrderQuery = {}): Promise<OrderListResult> {
     // BE enum: CONFIRMED; FE UI: PREPARING
     const status =
@@ -33,11 +35,13 @@ export const orderService = {
     return mapOrderList(res.data);
   },
 
+  // [Gọi API] GET /orders/:id – trang Chi tiết đơn.
   // Chỉ xem được đơn của chính mình; đơn người khác -> 404
   async getOrder(id: number): Promise<Order> {
     return mapOrderDetail((await api.get(ENDPOINTS.orders.detail(id))).data);
   },
 
+  // [Gọi API] PUT /orders/:id/cancel – nút Hủy đơn.
   // Chỉ hủy được đơn PENDING (400 INVALID_STATUS_TRANSITION nếu không)
   async cancelOrder(id: number): Promise<Order> {
     return mapOrderDetail((await api.put(ENDPOINTS.orders.cancel(id))).data);

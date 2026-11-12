@@ -11,6 +11,7 @@ import { ROUTES } from '../config/routes';
 import { toMessage } from '../utils/errors';
 import { lineProblem } from '../utils/order';
 
+// [Trang] Trang Giỏ hàng (/cart): sửa số lượng, xóa sách, chọn sách cần đặt và xem tổng tiền.
 export default function CartPage() {
   useDocumentTitle('Giỏ hàng');
   const navigate = useNavigate();

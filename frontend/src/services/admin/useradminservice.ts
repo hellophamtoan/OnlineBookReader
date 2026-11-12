@@ -32,6 +32,7 @@ export interface AdminUserListResult {
   totalPages: number;
 }
 
+// [Xử lý] Chuẩn hóa danh sách người dùng.
 function normalizeList(raw: unknown): AdminUserListResult {
   const d = (raw ?? {}) as Record<string, unknown>;
   const items = (Array.isArray(d.items) ? d.items : Array.isArray(raw) ? raw : []) as AdminUserListItem[];
@@ -50,6 +51,7 @@ function normalizeList(raw: unknown): AdminUserListResult {
 }
 
 export const userAdminService = {
+  // [Gọi API] GET /admin/users – bảng người dùng.
   async list(q: {
     page?: number;
     limit?: number;
@@ -60,12 +62,15 @@ export const userAdminService = {
     const data = (await api.get(ENDPOINTS.admin.users, q as Record<string, string | number | undefined>)).data;
     return normalizeList(data);
   },
+  // [Gọi API] GET /admin/users/:id – chi tiết người dùng.
   async get(id: number): Promise<AdminUserDetail> {
     return (await api.get(ENDPOINTS.admin.userDetail(id))).data as AdminUserDetail;
   },
+  // [Gọi API] PATCH /admin/users/:id/lock – khóa tài khoản.
   async lock(id: number, reason?: string) {
     return (await api.patch(ENDPOINTS.admin.userLock(id), { reason })).data as { id: number; isActive: boolean };
   },
+  // [Gọi API] PATCH /admin/users/:id/unlock – mở khóa tài khoản.
   async unlock(id: number) {
     return (await api.patch(ENDPOINTS.admin.userUnlock(id), {})).data as { id: number; isActive: boolean };
   },

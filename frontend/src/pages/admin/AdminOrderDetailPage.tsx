@@ -15,6 +15,7 @@ import { toMessage } from '../../utils/errors';
 import { statusMeta } from '../../utils/order';
 import { ADMIN_ORDER_NEXT } from '../../utils/adminOrderStatus';
 
+// [Trang] Admin > Chi tiết đơn (/admin/orders/:id): thông tin khách, sách, nút chuyển trạng thái (xác nhận, giao, đã giao, thất bại, hủy).
 export default function AdminOrderDetailPage() {
   const id = Number(useParams().id);
   const valid = Number.isInteger(id) && id >= 1;

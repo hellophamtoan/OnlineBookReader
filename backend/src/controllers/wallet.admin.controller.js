@@ -1,4 +1,5 @@
 const {pool,success,bad,posId,money,validation,replyError,withTx,claimRequest,finishRequest,audit,sendTransaction} = require('../services/week3.common');
+// [Giao diện] Admin > Nạp ví: hiển thị danh sách người dùng kèm số dư.
 const listUsers=async(req,res)=>{
  try{
   const [rows]=await pool.execute(`SELECT id,full_name AS fullName,email,phone,role,wallet_balance AS walletBalance
@@ -8,6 +9,7 @@ const listUsers=async(req,res)=>{
   });
  }catch(e){return replyError(res,'Danh sách USER cho ADMIN',e);}
 };
+// [Giao diện] Admin > Nạp ví: cộng tiền thủ công vào ví người dùng (ghi giao dịch).
 const topup=async(req,res)=>{
  try {
   const targetId=posId(req.params.id),amount=req.body?.amount,note=req.body?.note??'',reference=req.body?.externalReference??null;

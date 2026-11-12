@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const { fail, serverError } = require('../utils/response');
 const pool = require('../config/db.config');
 
+// [Giao diện] Mọi trang cần đăng nhập: kiểm tra token; token sai hoặc tài khoản bị khóa thì frontend tự đăng xuất.
 const verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !/^Bearer\s+\S+$/i.test(authHeader)) {
@@ -26,6 +27,7 @@ const verifyToken = async (req, res, next) => {
   }
 };
 
+// [Giao diện] Phân quyền: chặn người dùng thường vào trang Admin và Admin dùng chức năng mua hàng.
 const requireRole = (...allowedRoles) => (req, res, next) => {
   if (!req.user || !allowedRoles.includes(req.user.role)) {
     return fail(res, 403, 'Bạn không có quyền truy cập chức năng này');

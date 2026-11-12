@@ -26,6 +26,7 @@ export type ChapterImportResult = {
   stillMissing?: number;
 };
 
+// [Xử lý] Kiểm tra một chương trước khi nhập.
 const validateChapter = (c: EpubParsedChapter): string | null => {
   const title = (c.title || '').trim();
   if (!title) return 'Thiếu tiêu đề chương';
@@ -40,6 +41,7 @@ const validateChapter = (c: EpubParsedChapter): string | null => {
   return null;
 };
 
+// [Xử lý] Gửi lần lượt các chương EPUB lên backend.
 /**
  * Tạo lần lượt mọi chương. Lỗi từng chương được ghi nhận, không dừng sớm.
  */
@@ -80,6 +82,7 @@ export async function importEpubChapters(
   };
 }
 
+// [Xử lý] Kiểm tra lại và bổ sung chương bị thiếu sau khi nhập.
 /**
  * Sau khi import: đọc lại danh sách chương trên server, tìm số chương EPUB còn thiếu, tạo bổ sung.
  */
@@ -185,6 +188,7 @@ export async function verifyAndFillMissingChapters(
   };
 }
 
+// [Xử lý] Nhập toàn bộ chương EPUB (nhập + kiểm tra + bổ sung).
 /** Import + quét lại + bổ sung thiếu */
 export async function importEpubChaptersFully(
   bookId: number,
@@ -194,6 +198,7 @@ export async function importEpubChaptersFully(
   return verifyAndFillMissingChapters(bookId, chapters, first);
 }
 
+// [Xử lý] Tạo thông báo kết quả nhập chương.
 export function formatChapterImportReport(
   bookTitle: string,
   r: ChapterImportResult,
@@ -261,6 +266,7 @@ export type EpubDiffRow = {
   action: 'add' | 'replace' | 'keep' | 'skip';
 };
 
+// [Xử lý] So sánh chương EPUB với chương đã có.
 /**
  * So sánh EPUB với server theo STT (thứ tự mục lục từ trên xuống).
  * Mỗi mục TOC = 1 dòng: STT, số chương (hoặc —), trạng thái, tiêu đề EPUB / server.
@@ -339,6 +345,7 @@ export type ApplyDiffResult = {
   failed: ChapterImportFailure[];
 };
 
+// [Xử lý] Thêm / cập nhật chương theo kết quả so sánh.
 /** Áp dụng lựa chọn add/replace/keep trên từng dòng diff */
 export async function applyEpubChapterDiff(
   bookId: number,
@@ -420,6 +427,7 @@ export async function applyEpubChapterDiff(
   return { added, replaced, kept, skipped, failed };
 }
 
+// [Xử lý] Tạo thông báo kết quả cập nhật chương.
 export function formatApplyDiffReport(r: ApplyDiffResult): { notice: string; isError: boolean } {
   const parts = [
     r.added ? `thêm ${r.added}` : '',

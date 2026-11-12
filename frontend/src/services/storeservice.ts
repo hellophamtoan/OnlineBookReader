@@ -9,6 +9,7 @@ import { ENDPOINTS } from './endpoints';
 import { mapStoreInfo } from './mappers';
 
 export const storeService = {
+  // [Gọi API] Thông tin cửa hàng cho chân trang (backend chưa có API nên dùng giá trị mặc định).
   async getInfo(): Promise<StoreInfo> {
     // Backend chưa có GET /store-info: khi gọi BE thật thì dùng luôn giá trị dự phòng, tránh lỗi 404 ở mọi trang
     if (!env.USE_MOCK) return STORE_INFO;

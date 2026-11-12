@@ -11,6 +11,7 @@ interface CancelOrderButtonProps {
   onChanged: () => void; // đơn đã đổi (hủy xong, hoặc trạng thái đã khác) -> nơi gọi tải lại dữ liệu
 }
 
+// [Giao diện] Chi tiết đơn: nút Hủy đơn (chỉ hiện khi đơn còn chờ xác nhận).
 // Nút "Hủy đơn" + hộp thoại xác nhận (O04). Chỉ hiện với đơn PENDING. Dùng ở danh sách và trang chi tiết đơn.
 export default function CancelOrderButton({ order, onChanged }: CancelOrderButtonProps) {
   const [open, setOpen] = useState(false);

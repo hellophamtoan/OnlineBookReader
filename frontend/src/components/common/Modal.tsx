@@ -11,6 +11,7 @@ interface ModalProps {
   children: ReactNode;
 }
 
+// [Giao diện] Khung hộp thoại nổi dùng chung.
 // Hộp thoại chứa form (ConfirmDialog chỉ dành cho câu hỏi Có/Không). Esc hoặc bấm nền = đóng.
 // Vẽ qua portal ra <body> vì cùng lý do với ConfirmDialog (cha có backdrop-filter làm "fixed" bị kẹt).
 export default function Modal({ open, title, onClose, busy, wide, children }: ModalProps) {

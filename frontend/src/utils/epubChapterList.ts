@@ -3,6 +3,7 @@
 import type { EpubParsedChapter } from '../types';
 import { markAsSection, unmarkSection } from './chapterMeta';
 
+// [Xử lý] Đánh lại số chương sau khi chọn/sắp xếp.
 /** Đánh số chương 1..n chỉ phần countsAsChapter; phần phụ chapterNumber = 0 */
 export const assignChapterNumbers = (list: EpubParsedChapter[]): EpubParsedChapter[] => {
   let n = 0;
@@ -13,6 +14,7 @@ export const assignChapterNumbers = (list: EpubParsedChapter[]): EpubParsedChapt
   });
 };
 
+// [Xử lý] Đổi vị trí một chương trong danh sách nhập.
 /** Đổi STT (1-based): chuyển phần fromIdx tới vị trí toStt */
 export const moveToStt = (list: EpubParsedChapter[], fromIdx: number, toStt: number) => {
   const to = Math.max(0, Math.min(list.length - 1, Math.floor(toStt) - 1));
@@ -23,6 +25,7 @@ export const moveToStt = (list: EpubParsedChapter[], fromIdx: number, toStt: num
   return assignChapterNumbers(next);
 };
 
+// [Xử lý] Chuẩn bị danh sách chương EPUB trước khi lưu.
 /** STT = thứ tự list (1..n). Phần không tích → đánh dấu section (mục lục chỉ hiện tiêu đề). */
 export const prepareChaptersForSave = (list: EpubParsedChapter[]): EpubParsedChapter[] =>
   list.map((c, i) => {

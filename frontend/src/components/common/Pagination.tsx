@@ -4,6 +4,7 @@ interface PaginationProps {
   onChange: (page: number) => void;
 }
 
+// [Xử lý] Tính các số trang cần hiển thị quanh trang hiện tại.
 // 1 … 4 5 [6] 7 8 … 20
 const windowed = (page: number, total: number): (number | 'gap')[] => {
   const set = new Set([1, total, page - 1, page, page + 1].filter((p) => p >= 1 && p <= total));
@@ -11,6 +12,7 @@ const windowed = (page: number, total: number): (number | 'gap')[] => {
   return sorted.flatMap((p, i) => (i > 0 && p - sorted[i - 1] > 1 ? ['gap' as const, p] : [p]));
 };
 
+// [Giao diện] Thanh phân trang dưới các danh sách.
 export default function Pagination({ page, totalPages, onChange }: PaginationProps) {
   if (totalPages <= 1) return null;
   return (

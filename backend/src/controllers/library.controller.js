@@ -2,6 +2,7 @@ const pool = require('../config/db.config');
 const { success, fail, serverError } = require('../utils/response');
 const { isPositiveInt } = require('../utils/validators');
 
+// [Backend] Truy vấn sách trong thư viện của người dùng kèm tiến trình đọc.
 // Chỉ trả sách còn hoạt động; nội dung đọc lấy từ reading_progress của chính USER.
 const listRows = async (userId, readingOnly = false) => {
   const [books] = readingOnly
@@ -40,6 +41,7 @@ const listRows = async (userId, readingOnly = false) => {
   return books.map(b => ({ ...b, hasEbook: Boolean(b.hasEbook), authors: authorMap.get(b.id) || [] }));
 };
 
+// [Giao diện] Trang Thư viện: hiển thị các sách người dùng đã lưu.
 const listLibrary = async (req, res) => {
   try {
     const items = await listRows(req.user.id);
@@ -47,6 +49,7 @@ const listLibrary = async (req, res) => {
   } catch (error) { return serverError(res, 'Lấy thư viện cá nhân', error); }
 };
 
+// [Giao diện] Trang Thư viện: hiển thị mục "Đang đọc" kèm vị trí đọc dở.
 const listReading = async (req, res) => {
   try {
     const items = await listRows(req.user.id, true);
@@ -54,13 +57,16 @@ const listReading = async (req, res) => {
   } catch (error) { return serverError(res, 'Lấy sách đang đọc', error); }
 };
 
+// [Backend] Lấy và kiểm tra mã sách trên URL.
 const getBookId = req => isPositiveInt(req.params.bookId) ? Number(req.params.bookId) : null;
 
+// [Backend] Kiểm tra sách còn tồn tại và đang hiển thị.
 const bookExists = async bookId => {
   const [rows] = await pool.execute("SELECT id FROM books WHERE id = ? AND status = 'active' LIMIT 1", [bookId]);
   return rows.length > 0;
 };
 
+// [Giao diện] Nút "Lưu vào thư viện" ở trang Chi tiết sách: thêm sách vào thư viện.
 const addBook = async (req, res) => {
   try {
     const bookId = getBookId(req);
@@ -72,6 +78,7 @@ const addBook = async (req, res) => {
   } catch (error) { return serverError(res, 'Thêm sách vào thư viện', error); }
 };
 
+// [Giao diện] Trang Thư viện / Chi tiết sách: bỏ sách khỏi thư viện.
 const removeBook = async (req, res) => {
   try {
     const bookId = getBookId(req);
@@ -82,6 +89,7 @@ const removeBook = async (req, res) => {
   } catch (error) { return serverError(res, 'Xóa sách khỏi thư viện', error); }
 };
 
+// [Giao diện] Trang Chi tiết sách: cho biết sách đã được lưu chưa để hiện đúng trạng thái nút.
 const getStatus = async (req, res) => {
   try {
     const bookId = getBookId(req);

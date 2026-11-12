@@ -11,6 +11,7 @@ interface TextAreaFieldProps extends Omit<TextareaHTMLAttributes<HTMLTextAreaEle
   inputRef?: Ref<HTMLTextAreaElement>;
 }
 
+// [Giao diện] Ô nhập nhiều dòng (ghi chú, mô tả) có nhãn và lỗi.
 // Ô nhập nhiều dòng, cùng kiểu với Field (nhãn, viền đỏ + dòng lỗi)
 export default function TextAreaField({ label, name, value, onChange, error, hint, inputRef, className = '', ...rest }: TextAreaFieldProps) {
   const id = useId();

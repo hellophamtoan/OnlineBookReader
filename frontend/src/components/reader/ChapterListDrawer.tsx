@@ -14,6 +14,7 @@ interface ChapterListDrawerProps {
   freeChapterLimit?: number;
 }
 
+// [Xử lý] Kiểm tra chương có cần gói đọc không.
 /** Cần gói theo metadata chương — hiện 🔒 kể cả khi admin/user đã mở được */
 function needsPackage(c: ChapterSummary, freeLimit: number) {
   if (c.isFree === false) return true;
@@ -21,6 +22,7 @@ function needsPackage(c: ChapterSummary, freeLimit: number) {
   return c.chapterNumber > freeLimit;
 }
 
+// [Giao diện] Trình đọc: ngăn kéo mục lục để nhảy tới chương khác.
 // Mục lục dạng ngăn kéo. Chương cần gói vẫn chọn được — ReaderView/API sẽ hiện thông báo đăng ký gói nếu chưa có quyền.
 export default function ChapterListDrawer({
   open,

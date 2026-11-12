@@ -8,6 +8,7 @@ import BackButton from '../common/BackButton';
 import Logo from '../common/Logo';
 import LogoutButton from '../common/LogoutButton';
 
+// [Giao diện] Bố cục trang quản trị: menu bên trái và vùng nội dung.
 // Khung quản trị: sidebar + top bar. Trên màn hẹp: nút 3 gạch mở menu;
 // hàng tên tài khoản + đăng xuất luôn nằm trên đầu khi thu hẹp.
 export default function AdminLayout() {

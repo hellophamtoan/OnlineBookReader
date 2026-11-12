@@ -17,6 +17,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+// [Xử lý] Đọc người dùng đã lưu trong localStorage khi mở trang.
 const readStoredUser = (): AuthUser | null => {
   try {
     const raw = localStorage.getItem(USER_KEY);
@@ -26,6 +27,7 @@ const readStoredUser = (): AuthUser | null => {
   }
 };
 
+// [Xử lý] Lưu trạng thái đăng nhập cho toàn app: đăng nhập, đăng xuất, cập nhật user, tự đăng xuất khi token hết hạn.
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(readStoredUser);
 
@@ -78,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+// [Xử lý] Lấy thông tin đăng nhập hiện tại trong component.
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth phải được dùng bên trong <AuthProvider>');

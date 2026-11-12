@@ -22,6 +22,7 @@ interface AdminWalletTopupProps {
   historyKey?: number;
 }
 
+// [Giao diện] Admin > Chi tiết người dùng: khung nạp tiền thủ công và lịch sử yêu cầu nạp QR.
 export default function AdminWalletTopup({
   userOptions,
   selectedUser,

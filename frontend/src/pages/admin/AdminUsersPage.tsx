@@ -10,6 +10,7 @@ import { userAdminService } from '../../services/admin/useradminservice';
 import { formatPrice } from '../../utils/format';
 import { toMessage } from '../../utils/errors';
 
+// [Trang] Admin > Người dùng (/admin/users): danh sách tài khoản, lọc, khóa / mở khóa.
 export default function AdminUsersPage() {
   useDocumentTitle('Người dùng');
   const [sp, setSp] = useSearchParams();

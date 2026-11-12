@@ -1,10 +1,12 @@
 // middlewares/error.middleware.js
 // Bắt lỗi tập trung. Phải đăng ký SAU tất cả route trong server.js.
 
+// [Backend] Trả 404 cho đường dẫn API không tồn tại.
 const notFound = (req, res) => {
   res.status(404).json({ success: false, message: 'Không tìm thấy đường dẫn này' });
 };
 
+// [Backend] Bắt lỗi chung (JSON sai, dữ liệu quá lớn, lỗi server) và trả thông báo tiếng Việt.
 // Express nhận diện error handler nhờ đủ 4 tham số (err, req, res, next)
 // eslint-disable-next-line no-unused-vars
 const errorHandler = (err, req, res, next) => {

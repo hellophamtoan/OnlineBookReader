@@ -16,11 +16,13 @@ import { formatDelta, payLabel, rangeMonth, rangeYear } from '../../utils/report
 type RangeMode = 'month' | 'year' | 'custom';
 
 const MONTHS = Array.from({ length: 12 }, (_, i) => ({ v: i + 1, label: `Tháng ${i + 1}` }));
+// [Xử lý] Tạo danh sách năm cho ô chọn kỳ báo cáo.
 const yearOptions = () => {
   const y = new Date().getFullYear();
   return Array.from({ length: 7 }, (_, i) => y - i);
 };
 
+// [Trang] Admin > Báo cáo (/admin/reports): thẻ tổng quan, biểu đồ doanh thu, sách bán chạy, gói đọc; xuất Excel.
 export default function AdminReportsPage() {
   useDocumentTitle('Báo cáo');
   const now = useMemo(() => new Date(), []);

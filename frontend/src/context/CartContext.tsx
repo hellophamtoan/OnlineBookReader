@@ -21,6 +21,7 @@ interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 
+// [Xử lý] Lưu giỏ hàng dùng chung; cập nhật số lượng trên biểu tượng giỏ ở header.
 // Giỏ hàng chỉ dành cho USER (ADMIN gọi sẽ 403) nên chỉ tải khi vai trò là USER.
 export function CartProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -63,6 +64,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
+// [Xử lý] Lấy và thao tác giỏ hàng trong component.
 export function useCart(): CartContextValue {
   const ctx = useContext(CartContext);
   if (!ctx) throw new Error('useCart phải được dùng bên trong <CartProvider>');

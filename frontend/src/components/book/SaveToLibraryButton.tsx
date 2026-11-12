@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { libraryService } from '../../services/libraryservice';
 import type { Book } from '../../types';
 
+// [Giao diện] Chi tiết sách: nút Lưu / Bỏ lưu vào Thư viện.
 export default function SaveToLibraryButton({ book }: { book: Pick<Book, 'id'> }) {
   const { user } = useAuth();
   const [inLibrary, setInLibrary] = useState(false);

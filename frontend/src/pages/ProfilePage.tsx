@@ -12,6 +12,7 @@ import { userService } from '../services/userservice';
 import type { UserProfile } from '../types';
 import { toMessage } from '../utils/errors';
 
+// [Trang] Trang Thông tin cá nhân (/profile): xem hồ sơ, chỉnh sửa thông tin, đổi mật khẩu, đi tới Nạp ví.
 export default function ProfilePage({ variant = 'site' }: { variant?: 'site' | 'admin' }) {
   useDocumentTitle('Thông tin cá nhân');
   const { updateUser } = useAuth();

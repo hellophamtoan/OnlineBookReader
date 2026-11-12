@@ -3,6 +3,7 @@ import { READER_MESSAGES } from '../../config/reader';
 import { ROUTES } from '../../config/routes';
 import { EmptyState } from '../common/States';
 
+// [Giao diện] Trình đọc: thông báo cần mua gói đọc để đọc chương này, kèm nút tới trang Gói đọc.
 // UC006 luồng 3a: gói đọc hết hạn hoặc chưa đăng ký -> thông báo và dẫn tới trang "Gói đọc sách" (UC005)
 export default function SubscriptionRequired({ bookId, message = READER_MESSAGES.subscriptionRequired }: { bookId: number; message?: string }) {
   return (

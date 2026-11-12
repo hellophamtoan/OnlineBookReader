@@ -8,6 +8,7 @@ interface Step {
   state: StepState;
 }
 
+// [Xử lý] Dựng các bước tiến trình đơn theo trạng thái hiện tại.
 // Chuỗi bước hiển thị theo luồng PENDING -> PREPARING -> SHIPPING -> DELIVERED (BR7).
 // Hủy / giao thất bại là điểm kết thúc rẽ nhánh nên thay bước cuối bằng một bước màu đỏ.
 const buildSteps = (status: OrderStatus): Step[] => {
@@ -23,6 +24,7 @@ const buildSteps = (status: OrderStatus): Step[] => {
   }));
 };
 
+// [Giao diện] Chi tiết đơn: thanh tiến trình Đặt hàng → Xác nhận → Đang giao → Đã giao.
 export default function OrderTimeline({ status }: { status: OrderStatus }) {
   return (
     <ol className="timeline" aria-label="Tiến trình đơn hàng">

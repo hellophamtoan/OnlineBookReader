@@ -40,6 +40,7 @@ interface BookFormProps {
 
 type TextKey = 'title' | 'description' | 'coverUrl' | 'publisherId' | 'price' | 'stock' | 'status';
 
+// [Xử lý] Giá trị ban đầu của form sách (trống hoặc lấy từ sách đang sửa).
 const initialState = (b?: AdminBookDetail): BookFormState => ({
   title: b?.title ?? '',
   description: b?.description ?? '',
@@ -54,6 +55,7 @@ const initialState = (b?: AdminBookDetail): BookFormState => ({
   status: b?.status ?? 'active',
 });
 
+// [Xử lý] Chuyển dữ liệu form thành body gửi API thêm/sửa sách.
 const toPayload = (s: BookFormState, isEdit: boolean): AdminBookPayload => ({
   title: s.title.trim(),
   description: s.description.trim(),
@@ -74,6 +76,7 @@ const FIELD_MAP: Record<string, keyof BookFormErrors> = {
   authorIds: 'authorIds', categoryIds: 'categoryIds', hasPhysical: 'formats', hasEbook: 'formats',
 };
 
+// [Giao diện] Admin: form thêm/sửa sách (tên, mô tả, ảnh bìa, giá, tồn kho, tác giả, thể loại, NXB, hình thức).
 // UC007 nhánh A1/B1: nhập thông tin sách (tên, tác giả, NXB, thể loại, giá, tồn kho, ảnh bìa, hình thức giấy/e-book).
 // Thêm mới: có thể nhập EPUB (file máy hoặc URL) → điền form + xem trước chương.
 export default function BookForm({ initial, authors, categories, publishers, onSubmit, onCancel }: BookFormProps) {

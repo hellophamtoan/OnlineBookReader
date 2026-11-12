@@ -13,6 +13,7 @@ const STATUS_TEXT: Record<SaveStatus, string> = {
   error: 'Lưu thất bại',
 };
 
+// [Giao diện] Trình đọc: thanh công cụ đổi font, tăng/giảm cỡ chữ, mở mục lục.
 /** Thanh tiêu đề trên cùng trang đọc: tên sách + chương (+ trạng thái lưu). */
 export default function ReaderToolbar({ bookTitle, chapterTitle, saveStatus }: ReaderToolbarProps) {
   return (

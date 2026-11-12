@@ -1,8 +1,10 @@
 const pool = require('../config/db.config');
 const { success, fail, serverError } = require('../utils/response');
 
+// [Backend] Kiểm tra số nguyên dương (mã sách, trang, thể loại...).
 const isPositiveInteger = (value) => /^\d+$/.test(String(value)) && Number.isSafeInteger(Number(value)) && Number(value) > 0;
 
+// [Giao diện] Trang chủ / Trang Sách / ô Tìm: hiển thị danh sách sách, tìm theo tên sách hoặc tác giả, lọc, sắp xếp, phân trang.
 const getBooks = async (req, res) => {
   try {
     const { search = '', categoryId, authorId, publisherId, hasEbook, page = '1', limit = '12', sort = 'newest' } = req.query;
@@ -99,6 +101,7 @@ const getBooks = async (req, res) => {
   }
 };
 
+// [Giao diện] Trang Chi tiết sách: hiển thị ảnh bìa, giá, tồn kho, tác giả, thể loại, mô tả.
 const getBookById = async (req, res) => {
   try {
     const { id } = req.params;

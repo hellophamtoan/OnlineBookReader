@@ -21,6 +21,7 @@ interface TaxonomyFormDialogProps {
   onSaved: (message: string) => void;
 }
 
+// [Giao diện] Admin > Danh mục: nội dung form tên (và tiểu sử với tác giả).
 function TaxonomyForm({ config, item, onClose, onSaved }: Omit<TaxonomyFormDialogProps, 'open'>) {
   const { values, errors, setErrors, setFieldError, onChange } = useForm({ name: item?.name ?? '', bio: item?.bio ?? '' });
   const [generalError, setGeneralError] = useState('');
@@ -77,6 +78,7 @@ function TaxonomyForm({ config, item, onClose, onSaved }: Omit<TaxonomyFormDialo
   );
 }
 
+// [Giao diện] Admin > Danh mục: hộp thoại thêm/sửa thể loại, tác giả, NXB.
 // key = id mục (hoặc 'new') để mỗi lần mở là một form mới, không còn chữ của lần trước
 export default function TaxonomyFormDialog({ open, item, ...rest }: TaxonomyFormDialogProps) {
   if (!open) return null;

@@ -20,6 +20,7 @@ interface Options {
   persist?: boolean;
 }
 
+// [Xử lý] Trình đọc: tự lưu vị trí cuộn, chương, font, cỡ chữ (có trì hoãn và lưu khi rời trang).
 export function useReadingProgress({
   bookId,
   chapterNumber,

@@ -12,6 +12,7 @@ interface AdminListToolbarProps {
   children?: ReactNode; // nút phụ bên phải
 }
 
+// [Giao diện] Admin: thanh tìm kiếm + bộ lọc phía trên các bảng danh sách.
 // Thanh tìm kiếm + lọc trạng thái của các trang danh sách quản trị. Gõ xong 0,4 giây mới gọi (giống trang Sách).
 export default function AdminListToolbar({ search, status, placeholder, onSearch, onStatus, children }: AdminListToolbarProps) {
   const [text, setText] = useState(search);

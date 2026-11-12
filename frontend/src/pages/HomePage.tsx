@@ -19,6 +19,7 @@ interface ListState {
   reload: () => void;
 }
 
+// [Giao diện] Một hàng sách trên trang chủ (Sách mới, Sách nổi bật...) kèm link "Xem tất cả".
 // Một hàng sách của trang chủ, tự xử lý đang tải / lỗi / rỗng
 function BookSection({ title, linkTo, state }: { title: string; linkTo: string; state: ListState }) {
   const items = state.data?.items ?? [];
@@ -40,6 +41,7 @@ function BookSection({ title, linkTo, state }: { title: string; linkTo: string; 
   );
 }
 
+// [Trang] Trang chủ (/): banner giới thiệu và các hàng sách mới, sách nổi bật.
 export default function HomePage() {
   useDocumentTitle();
   const { user } = useAuth();

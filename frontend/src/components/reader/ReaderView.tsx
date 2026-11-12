@@ -24,6 +24,7 @@ interface ReaderViewProps {
   initial: ReadingProgress; // tiến trình đã lưu (API-12)
 }
 
+// [Giao diện] Trình đọc: ghép thanh công cụ, nội dung chương và điều hướng chương.
 // UC006 bước 3-9: mở đúng chỗ đọc dở, hiện chương + công cụ, tự lưu, thoát thì lưu và báo.
 // Admin xem sách: không lưu tiến trình.
 export default function ReaderView({ book, chapters, initial }: ReaderViewProps) {

@@ -18,6 +18,7 @@ interface OrderSummaryProps {
   className?: string;
 }
 
+// [Giao diện] Khung tổng tiền: tạm tính, phí giao, tổng cộng.
 // Khối tóm tắt "tên sách, số lượng x đơn giá, thành tiền, tổng". Dùng chung cho giỏ hàng, thanh toán và chi tiết đơn.
 export default function OrderSummary({ title, lines, total, totalLabel = 'Tổng cộng', children, className = '' }: OrderSummaryProps) {
   return (

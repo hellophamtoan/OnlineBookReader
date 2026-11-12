@@ -14,6 +14,7 @@ export const BANK_OPTIONS = [
 
 export type BankOption = (typeof BANK_OPTIONS)[number];
 
+// [Xử lý] Tra mã BIN theo tên ngân hàng (tạo QR).
 export function binFromBankName(bankName: string): string | null {
   const n = bankName.trim().toLowerCase();
   const found = BANK_OPTIONS.find(
@@ -22,6 +23,7 @@ export function binFromBankName(bankName: string): string | null {
   return found?.bin ?? null;
 }
 
+// [Xử lý] Tra tên ngân hàng theo mã BIN.
 export function bankNameFromBin(bin: string): string {
   const found = BANK_OPTIONS.find((b) => b.bin === bin);
   return found?.name ?? '';

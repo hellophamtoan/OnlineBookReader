@@ -6,19 +6,24 @@ import type {
 import { bool, isObj, mapPagination, num, resolveAssetUrl } from '../mappers';
 import type { Raw } from '../mappers';
 
+// [Xử lý] Chuẩn hóa trạng thái active/inactive.
 const status = (v: unknown): EntityStatus => (v === 'inactive' ? 'inactive' : 'active');
+// [Xử lý] Đổi sang chuỗi an toàn.
 const str = (v: unknown) => (typeof v === 'string' ? v : null);
 
+// [Xử lý] Chuẩn hóa một thể loại/tác giả/NXB.
 export const mapTaxonomyItem = (raw: unknown): TaxonomyItem => {
   const r: Raw = isObj(raw) ? raw : {};
   return { id: Number(r.id), name: String(r.name ?? ''), status: status(r.status), bio: str(r.bio) };
 };
 
+// [Xử lý] Chuẩn hóa danh sách danh mục.
 export const mapTaxonomyList = (data: unknown): TaxonomyItem[] => {
   const d: Raw = isObj(data) ? data : {};
   return Array.isArray(d.items) ? d.items.map(mapTaxonomyItem) : [];
 };
 
+// [Xử lý] Chuẩn hóa một dòng trong bảng sách Admin.
 const mapBookListItem = (raw: unknown): AdminBookListItem => {
   const r: Raw = isObj(raw) ? raw : {};
   return {
@@ -35,12 +40,14 @@ const mapBookListItem = (raw: unknown): AdminBookListItem => {
   };
 };
 
+// [Xử lý] Chuẩn hóa bảng sách Admin.
 export const mapAdminBookList = (data: unknown): AdminBookListResult => {
   const d: Raw = isObj(data) ? data : {};
   const items = Array.isArray(d.items) ? d.items.map(mapBookListItem) : [];
   return { items, pagination: mapPagination(d, items.length) };
 };
 
+// [Xử lý] Chuẩn hóa chi tiết sách Admin.
 export const mapAdminBookDetail = (data: unknown): AdminBookDetail => {
   const r: Raw = isObj(data) ? data : {};
   return {
@@ -62,6 +69,7 @@ export const mapAdminBookDetail = (data: unknown): AdminBookDetail => {
   };
 };
 
+// [Xử lý] Chuẩn hóa một chương (Admin).
 export const mapAdminChapter = (data: unknown): AdminChapter => {
   const r: Raw = isObj(data) ? data : {};
   return {
@@ -73,6 +81,7 @@ export const mapAdminChapter = (data: unknown): AdminChapter => {
   };
 };
 
+// [Xử lý] Chuẩn hóa kết quả lưu chương.
 export const mapChapterSaved = (data: unknown): AdminChapterSaved => {
   const r: Raw = isObj(data) ? data : {};
   return { id: Number(r.id), bookId: Number(r.bookId), chapterNumber: Number(r.chapterNumber), title: String(r.title ?? '') };

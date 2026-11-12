@@ -11,6 +11,7 @@ const wallet = require('../controllers/wallet.admin.controller');
 
 router.use(verifyToken, requireRole(ROLES.ADMIN));
 
+// [Backend] Tạo nhóm route CRUD cho thể loại / tác giả / NXB.
 const catalogRoutes = (ctrl) => {
   const r = express.Router();
   r.get('/', ctrl.list);

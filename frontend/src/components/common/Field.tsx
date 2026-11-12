@@ -11,6 +11,7 @@ interface FieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChan
   password?: boolean; // true -> có nút Hiện/Ẩn mật khẩu
 }
 
+// [Giao diện] Ô nhập dùng chung: nhãn, gợi ý và thông báo lỗi bên dưới.
 // 1 ô nhập của form: nhãn, viền đỏ + dòng lỗi khi có lỗi (đọc được bằng trình đọc màn hình)
 export default function Field({ label, name, value, onChange, error, hint, password, type = 'text', ...rest }: FieldProps) {
   const id = useId();

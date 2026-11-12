@@ -3,6 +3,7 @@ import { BRAND_NAME } from '../../config/rules';
 import { ROUTES } from '../../config/routes';
 import { useStoreInfo } from '../../hooks/useStoreInfo';
 
+// [Giao diện] Chân trang: thông tin cửa hàng, liên hệ.
 export default function Footer() {
   // Hotline, địa chỉ, email lấy từ API (mock hoặc backend thật), xem services/storeservice.ts
   const info = useStoreInfo();

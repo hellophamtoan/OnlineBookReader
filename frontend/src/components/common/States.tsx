@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 // Ba trạng thái dùng lại ở mọi trang: đang tải / lỗi / rỗng.
 // Lỗi nói rõ chuyện gì xảy ra và cách xử lý; trạng thái rỗng gợi ý việc nên làm tiếp.
 
+// [Giao diện] Khối "Đang tải..." khi chờ dữ liệu.
 export function LoadingBlock({ label = 'Đang tải...' }: { label?: string }) {
   return (
     <div className="state" role="status" aria-live="polite">
@@ -12,6 +13,7 @@ export function LoadingBlock({ label = 'Đang tải...' }: { label?: string }) {
   );
 }
 
+// [Giao diện] Khối báo lỗi kèm nút Thử lại.
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
     <div className="state state--error" role="alert">
@@ -22,6 +24,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
   );
 }
 
+// [Giao diện] Khối báo danh sách trống (chưa có sách, đơn hàng...).
 export function EmptyState({ title, hint, action }: { title: string; hint?: string; action?: ReactNode }) {
   return (
     <div className="state">

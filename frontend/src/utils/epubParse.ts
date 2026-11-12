@@ -33,9 +33,11 @@ const IMAGE_EXT = /\.(jpe?g|png|gif|webp|svg)$/i;
 const COVER_MAX_DATA_CHARS = 350_000;
 const COVER_MAX_EDGE = 900;
 
+// [Xử lý] Bỏ thẻ HTML lấy chữ.
 const stripTags = (html: string) =>
   html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
 
+// [Xử lý] Chuẩn hóa chuỗi.
 const normalize = (s: string) =>
   stripTags(s)
     .toLowerCase()
@@ -46,6 +48,7 @@ const normalize = (s: string) =>
 const STORY_CHAPTER_TITLE =
   /^(chương\s*\d+|(?:phần|hồi|mục)\s*\d+|\d+\s*[.．。:：)）\-—–])\b/iu;
 
+// [Xử lý] Nhận biết trang không phải chương.
 const isFrontMatterTitle = (title: string) => {
   const t = title.replace(/\s+/g, ' ').trim();
   if (!t) return false;
@@ -54,6 +57,7 @@ const isFrontMatterTitle = (title: string) => {
   return false;
 };
 
+// [Xử lý] Kiểm tra trang đủ dài để tính là chương.
 /** true = tích (tính số chương); false = phần phụ trong mục lục */
 const countsAsStoryChapter = (title: string) => {
   if (isFrontMatterTitle(title)) return false;
@@ -63,10 +67,13 @@ const countsAsStoryChapter = (title: string) => {
   return true;
 };
 
+// [Xử lý] Thoát ký tự regex.
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+// [Xử lý] Lấy thư mục của đường dẫn trong file EPUB.
 const dirname = (p: string) => (p.includes('/') ? p.slice(0, p.lastIndexOf('/') + 1) : '');
 
+// [Xử lý] Ghép đường dẫn tương đối trong EPUB.
 const resolvePath = (baseDir: string, href: string) => {
   const raw = href.split('#')[0];
   let decoded = raw;
@@ -84,6 +91,7 @@ const resolvePath = (baseDir: string, href: string) => {
   return out.join('/');
 };
 
+// [Xử lý] Lấy phần <body> của trang XHTML.
 const extractBody = (html: string) => {
   const m = /<body[^>]*>([\s\S]*)<\/body>/i.exec(html);
   return m ? m[1] : html;
@@ -147,6 +155,7 @@ const cleanChapterHtml = (
   return out;
 };
 
+// [Xử lý] Giải nén dữ liệu trong file zip.
 async function inflateRaw(data: Uint8Array): Promise<Uint8Array> {
   if (typeof DecompressionStream === 'undefined') {
     throw new Error(
@@ -167,6 +176,7 @@ type ZipContent = {
   binary: Map<string, Uint8Array>;
 };
 
+// [Xử lý] Đoán loại ảnh theo đuôi file.
 const mimeFromPath = (path: string) => {
   const lower = path.toLowerCase();
   if (lower.endsWith('.png')) return 'image/png';
@@ -176,6 +186,7 @@ const mimeFromPath = (path: string) => {
   return 'image/jpeg';
 };
 
+// [Xử lý] Đổi ảnh sang data URL.
 const bytesToDataUrl = (path: string, bytes: Uint8Array) => {
   const chunk = 0x2000;
   let binary = '';
@@ -186,6 +197,7 @@ const bytesToDataUrl = (path: string, bytes: Uint8Array) => {
   return `data:${mimeFromPath(path)};base64,${btoa(binary)}`;
 };
 
+// [Xử lý] Thu nhỏ ảnh bìa nếu quá lớn.
 /** Thu nhỏ JPEG/PNG qua canvas nếu data URL quá lớn (giữ hiển thị, dễ lưu mock/DB) */
 async function maybeCompressCover(dataUrl: string): Promise<string> {
   if (dataUrl.length <= COVER_MAX_DATA_CHARS) return dataUrl;
@@ -218,6 +230,7 @@ async function maybeCompressCover(dataUrl: string): Promise<string> {
   }
 }
 
+// [Xử lý] Tìm mục lục của file zip.
 function findEocdOffset(bytes: Uint8Array, view: DataView): number {
   const maxBack = Math.min(bytes.length, 22 + 65535);
   for (let i = bytes.length - 22; i >= bytes.length - maxBack; i--) {
@@ -227,6 +240,7 @@ function findEocdOffset(bytes: Uint8Array, view: DataView): number {
   return -1;
 }
 
+// [Xử lý] Đọc zip theo cách quét tuần tự (dự phòng).
 async function readZipLocalScan(buf: ArrayBuffer): Promise<ZipContent> {
   const bytes = new Uint8Array(buf);
   const view = new DataView(buf);
@@ -279,6 +293,7 @@ async function readZipLocalScan(buf: ArrayBuffer): Promise<ZipContent> {
   return { text, binary };
 }
 
+// [Xử lý] Đọc toàn bộ file trong EPUB (zip).
 async function readZip(buf: ArrayBuffer): Promise<ZipContent> {
   const bytes = new Uint8Array(buf);
   const view = new DataView(buf);
@@ -361,11 +376,13 @@ const getZipEntry = <T>(map: Map<string, T>, path: string): T | undefined => {
 type TocEntry = { file: string; frag: string; title: string };
 type ManifestItem = { href: string; type: string; props: string };
 
+// [Xử lý] Lấy thuộc tính thẻ XML.
 const attr = (tag: string, name: string) => {
   const m = new RegExp(`${name}\\s*=\\s*["']([^"']+)["']`, 'i').exec(tag);
   return m ? m[1] : '';
 };
 
+// [Xử lý] Đọc mục lục EPUB (nav / ncx).
 const readToc = (manifest: Record<string, ManifestItem>, read: (p: string) => string): TocEntry[] => {
   const entries: TocEntry[] = [];
   const seen = new Set<string>();
@@ -423,6 +440,7 @@ const readToc = (manifest: Record<string, ManifestItem>, read: (p: string) => st
   return entries;
 };
 
+// [Xử lý] Tách một trang thành nhiều chương theo mục lục.
 const splitByAnchors = (body: string, entries: TocEntry[]) => {
   const marks: { index: number; title: string }[] = [];
   for (const e of entries) {
@@ -445,6 +463,7 @@ const splitByAnchors = (body: string, entries: TocEntry[]) => {
   }));
 };
 
+// [Xử lý] Tách chương theo tiêu đề.
 /** Tách file lớn theo heading h1–h2 khi TOC không đủ mốc */
 const splitByHeadings = (body: string) => {
   const re = /<h([12])\b[^>]*>([\s\S]*?)<\/h\1>/gi;
@@ -540,6 +559,7 @@ const inferChapterTitle = (
   return '';
 };
 
+// [Xử lý] Tìm ảnh bìa trong EPUB.
 function findCoverPath(
   opfXml: string,
   manifest: Record<string, ManifestItem>,
@@ -585,6 +605,7 @@ function findCoverPath(
   return null;
 }
 
+// [Xử lý] Đọc EPUB: tên sách, ảnh bìa, danh sách chương.
 /** Parse EPUB từ ArrayBuffer */
 export async function parseEpubBuffer(buf: ArrayBuffer): Promise<EpubParseResult> {
   if (buf.byteLength < 4) throw new Error('File EPUB không hợp lệ hoặc rỗng');
@@ -994,6 +1015,7 @@ export async function parseEpubBuffer(buf: ArrayBuffer): Promise<EpubParseResult
   };
 }
 
+// [Xử lý] Đọc EPUB từ file người dùng chọn.
 export async function parseEpubFile(file: File): Promise<EpubParseResult> {
   if (!file || file.size === 0) throw new Error('File EPUB rỗng');
   if (file.size > 40 * 1024 * 1024) throw new Error('File EPUB tối đa 40MB');
@@ -1009,6 +1031,7 @@ export async function parseEpubFile(file: File): Promise<EpubParseResult> {
   }
 }
 
+// [Xử lý] Đọc EPUB từ đường link.
 export async function parseEpubUrl(url: string): Promise<EpubParseResult> {
   const u = url.trim();
   if (!/^https?:\/\//i.test(u)) throw new Error('URL phải bắt đầu bằng http:// hoặc https://');

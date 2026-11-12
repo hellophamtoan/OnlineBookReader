@@ -8,6 +8,7 @@ export interface OrderFilterState {
   page: number;
 }
 
+// [Xử lý] Đọc bộ lọc đơn hàng từ URL.
 export const parseOrderFilters = (sp: URLSearchParams): OrderFilterState => {
   const status = sp.get('status');
   const page = Number(sp.get('page'));
@@ -17,6 +18,7 @@ export const parseOrderFilters = (sp: URLSearchParams): OrderFilterState => {
   };
 };
 
+// [Xử lý] Cập nhật bộ lọc đơn lên URL.
 // Đổi trạng thái thì quay về trang 1
 export const patchOrderParams = (sp: URLSearchParams, patch: { status?: OrderStatus | ''; page?: number }) => {
   const next = new URLSearchParams(sp);
@@ -32,4 +34,5 @@ export const patchOrderParams = (sp: URLSearchParams, patch: { status?: OrderSta
   return next;
 };
 
+// [Xử lý] Đổi bộ lọc thành tham số API.
 export const toOrderQuery = (f: OrderFilterState, limit: number): OrderQuery => ({ status: f.status, page: f.page, limit });

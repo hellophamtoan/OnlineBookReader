@@ -13,6 +13,7 @@ import { toMessage } from '../../utils/errors';
 import { statusMeta } from '../../utils/order';
 import type { OrderStatus } from '../../types';
 
+// [Trang] Admin > Đơn hàng (/admin/orders): bảng đơn, lọc theo trạng thái / ngày / từ khóa.
 export default function AdminOrdersPage() {
   useDocumentTitle('Đơn hàng');
   const [sp, setSp] = useSearchParams();

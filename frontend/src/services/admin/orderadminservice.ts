@@ -47,11 +47,13 @@ export type AdminOrderQuery = {
   to?: string;
 };
 
+// [Xử lý] Lấy số từ nhiều tên trường có thể có.
 function pickNum(v: unknown, fallback = 0) {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
 }
 
+// [Xử lý] Chuẩn hóa một dòng đơn (Admin).
 function mapItem(raw: Record<string, unknown>): AdminOrderListItem {
   const status = normalizeOrderStatus(String(raw.status ?? '')) ?? ('PENDING' as OrderStatus);
   return {
@@ -71,6 +73,7 @@ function mapItem(raw: Record<string, unknown>): AdminOrderListItem {
   };
 }
 
+// [Xử lý] Chuẩn hóa chi tiết đơn (Admin).
 function mapDetail(raw: Record<string, unknown>): AdminOrderDetail {
   const base = mapItem(raw);
   const userRaw = (raw.user as Record<string, unknown> | null | undefined) ?? null;
@@ -97,6 +100,7 @@ function mapDetail(raw: Record<string, unknown>): AdminOrderDetail {
   };
 }
 
+// [Xử lý] Chuẩn hóa danh sách đơn (Admin).
 function normalizeList(raw: unknown): AdminOrderListResult {
   const d = (raw ?? {}) as Record<string, unknown>;
   const arr = (Array.isArray(d.items) ? d.items : Array.isArray(raw) ? raw : []) as Record<string, unknown>[];
@@ -109,6 +113,7 @@ function normalizeList(raw: unknown): AdminOrderListResult {
 }
 
 export const orderAdminService = {
+  // [Gọi API] GET /admin/orders – bảng đơn hàng.
   async list(q: AdminOrderQuery = {}): Promise<AdminOrderListResult> {
     // BE thật dùng CONFIRMED; FE dùng PREPARING để hiển thị
     let status = q.status ? normalizeOrderStatus(q.status) ?? q.status : undefined;
@@ -122,11 +127,13 @@ export const orderAdminService = {
     return normalizeList(data);
   },
 
+  // [Gọi API] GET /admin/orders/:id – chi tiết đơn.
   async get(id: number): Promise<AdminOrderDetail> {
     const data = (await api.get(ENDPOINTS.admin.orders.detail(id))).data as Record<string, unknown>;
     return mapDetail(data);
   },
 
+  // [Gọi API] PATCH /admin/orders/:id/status – chuyển trạng thái đơn.
   async updateStatus(id: number, status: OrderStatus | string, note?: string) {
     let normalized = normalizeOrderStatus(String(status)) ?? (status as OrderStatus);
     // Gửi CONFIRMED cho BE khi FE chọn PREPARING
@@ -136,6 +143,7 @@ export const orderAdminService = {
     ).data as { id: number; status: OrderStatus; paymentStatus: string; updatedAt: string };
   },
 
+  // [Gọi API] POST /admin/orders/:id/confirm – xác nhận đơn.
   /** API-63: xác nhận = PENDING → PREPARING (không gửi CONFIRMED) */
   async confirm(id: number) {
     return (await api.post(ENDPOINTS.admin.orders.confirm(id), {})).data as {
@@ -145,6 +153,7 @@ export const orderAdminService = {
     };
   },
 
+  // [Gọi API] POST /admin/orders/:id/cancel – hủy đơn (hoàn kho, hoàn tiền ví).
   async cancel(id: number, reason?: string) {
     const data = (await api.post(ENDPOINTS.admin.orders.cancel(id), { reason })).data as Record<string, unknown>;
     // Một số BE trả object rút gọn — cố map detail nếu đủ field

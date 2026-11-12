@@ -20,6 +20,7 @@ import { parseAdminFilters, patchAdminParams } from '../../utils/adminFilters';
 import { toMessage } from '../../utils/errors';
 import { formatPrice } from '../../utils/format';
 
+// [Trang] Admin > Quản lý sách (/admin/books): bảng sách, tìm kiếm, lọc trạng thái, ẩn/hiện sách.
 export default function AdminBooksPage() {
   useDocumentTitle('Quản lý sách');
   const [sp, setSp] = useSearchParams();

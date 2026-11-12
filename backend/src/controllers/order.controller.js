@@ -1,5 +1,6 @@
 const {pool,success,bad,posId,qty,money,validation,replyError,withTx,claimRequest,finishRequest,audit,sendTransaction} = require('../services/week3.common');
 const validStatuses = new Set(['PENDING','CONFIRMED','SHIPPING','DELIVERED','FAILED','CANCELLED']);
+// [Backend] Kiểm tra dữ liệu form thanh toán (người nhận, SĐT, địa chỉ, phương thức).
 const validateCheckout = b => {
   const errors=[];
   const receiverName=typeof b?.receiverName==='string'?b.receiverName.trim():'';
@@ -24,6 +25,7 @@ const validateCheckout = b => {
   if(errors.length)bad(400,'VALIDATION_ERROR','Dữ liệu đặt hàng không hợp lệ',errors);
   return {receiverName,receiverPhone,shippingAddress,paymentMethod,note:note.trim()||null,source,items:selected?.sort((a,b)=>a.bookId-b.bookId)??null};
 };
+// [Backend] Lấy một đơn hàng kèm các sách trong đơn.
 const selectOrder = async (conn,id,userId) => {
   const [rows]=await conn.execute(`SELECT id,status,payment_method AS paymentMethod,payment_status AS paymentStatus,
     total_amount AS totalAmount,shipping_fee AS shippingFee,receiver_name AS receiverName,receiver_phone AS receiverPhone,
@@ -35,6 +37,7 @@ const selectOrder = async (conn,id,userId) => {
   const b=rows[0];return {...b,status:b.status.toUpperCase(),paymentStatus:b.paymentStatus,
     totalAmount:money(b.totalAmount),shippingFee:money(b.shippingFee),items:items.map(i=>({...i,quantity:Number(i.quantity),unitPrice:money(i.unitPrice),subtotal:money(i.subtotal)}))};
 };
+// [Giao diện] Trang Thanh toán / nút "Mua ngay": tạo đơn, trừ tồn kho và trừ ví nếu chọn ví; báo hết hàng hoặc thiếu tiền.
 const create=async(req,res)=>{
  try {
   const body=validateCheckout(req.body);
@@ -108,6 +111,7 @@ const create=async(req,res)=>{
   return sendTransaction(res,outcome);
  }catch(e){return replyError(res,'Đặt hàng',e);}
 };
+// [Giao diện] Trang Đơn hàng: hiển thị danh sách đơn của người dùng, phân trang.
 const list=async(req,res)=>{
  try {
   const {status}=req.query;
@@ -122,6 +126,7 @@ const list=async(req,res)=>{
   return success(res,200,'Lấy danh sách đơn hàng thành công',{items,page,limit,total:Number(n),totalPages:Math.max(1,Math.ceil(Number(n)/limit))});
  }catch(e){return replyError(res,'Danh sách đơn hàng',e);}
 };
+// [Giao diện] Trang Chi tiết đơn: hiển thị sách, người nhận, trạng thái và thanh toán của đơn.
 const detail=async(req,res)=>{
  try {const id=posId(req.params.id);if(!id)validation('id','Mã đơn hàng không hợp lệ');
   const order=await selectOrder(pool,id,req.user.id);
@@ -129,6 +134,7 @@ const detail=async(req,res)=>{
   return success(res,200,'Lấy chi tiết đơn hàng thành công',{order});
  }catch(e){return replyError(res,'Chi tiết đơn hàng',e);}
 };
+// [Giao diện] Trang Chi tiết đơn: nút Hủy đơn khi còn chờ xác nhận; hoàn kho và hoàn tiền ví.
 const cancel=async(req,res)=>{
  try {const id=posId(req.params.id);if(!id)validation('id','Mã đơn hàng không hợp lệ');
   const order=await withTx(async conn=>{

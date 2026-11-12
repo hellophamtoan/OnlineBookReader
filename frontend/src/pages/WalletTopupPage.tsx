@@ -17,6 +17,7 @@ const MAX = 50_000_000;
 
 type Step = 'form' | 'qr' | 'success' | 'failed';
 
+// [Trang] Trang Nạp ví (/wallet/topup): nhập số tiền, hiện mã QR chuyển khoản, theo dõi trạng thái và lịch sử nạp.
 export default function WalletTopupPage() {
   useDocumentTitle('Nạp tiền vào ví');
   const { user } = useAuth();

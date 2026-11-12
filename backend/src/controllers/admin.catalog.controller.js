@@ -4,17 +4,20 @@ const { isPositiveInt, isNonEmptyString } = require('../utils/validators');
 
 // UC007 - CRUD dùng chung cho thể loại, tác giả, NXB.
 // `table` chỉ lấy từ cấu hình cố định bên dưới (không bao giờ từ request) nên nối vào SQL an toàn;
-// mọi giá trị người dùng đều đi qua dấu ?.
+// [Backend] Tạo bộ hàm CRUD dùng chung cho thể loại, tác giả, NXB.
 const makeCatalogController = ({ table, label, hasBio = false }) => {
   const cols = hasBio ? 'id, name, bio, status' : 'id, name, status';
+  // [Backend] Tìm một mục theo mã.
   const findOne = async (id) => {
     const [rows] = await pool.execute(`SELECT ${cols} FROM ${table} WHERE id = ? LIMIT 1`, [id]);
     return rows[0];
   };
+  // [Backend] Kiểm tra tên đã tồn tại (chặn trùng).
   const nameTaken = async (name, exceptId) => {
     const [rows] = await pool.execute(`SELECT id FROM ${table} WHERE name = ? AND id <> ? LIMIT 1`, [name, exceptId]);
     return rows.length > 0;
   };
+  // [Backend] Kiểm tra dữ liệu form thêm/sửa.
   const parseBody = (body, isUpdate) => {
     const b = body || {};
     if (!isNonEmptyString(b.name) || b.name.trim().length > 150) {
@@ -29,6 +32,7 @@ const makeCatalogController = ({ table, label, hasBio = false }) => {
     return { value: { name: b.name.trim(), bio: b.bio, status: b.status } };
   };
 
+  // [Giao diện] Admin > Danh mục (Thể loại / Tác giả / NXB): hiển thị danh sách, lọc theo trạng thái.
   const list = async (req, res) => {
     try {
       const { status, search = '' } = req.query;
@@ -48,6 +52,7 @@ const makeCatalogController = ({ table, label, hasBio = false }) => {
     }
   };
 
+  // [Giao diện] Admin > Danh mục: thêm mục mới; mục mới xuất hiện trong form sách và bộ lọc trang Sách.
   const create = async (req, res) => {
     try {
       const { error, value } = parseBody(req.body, false);
@@ -63,6 +68,7 @@ const makeCatalogController = ({ table, label, hasBio = false }) => {
     }
   };
 
+  // [Giao diện] Admin > Danh mục: sửa tên/trạng thái, cập nhật ngay trên giao diện.
   const update = async (req, res) => {
     try {
       const { id } = req.params;
@@ -83,6 +89,7 @@ const makeCatalogController = ({ table, label, hasBio = false }) => {
     }
   };
 
+  // [Giao diện] Admin > Danh mục: ngừng hoạt động một mục (xóa mềm), mục không còn trong bộ lọc.
   // Xóa mềm (quy tắc 3): status = 'inactive', không DELETE
   const remove = async (req, res) => {
     try {

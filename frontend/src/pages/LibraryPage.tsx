@@ -24,6 +24,7 @@ type LibraryCardModel = {
   onSecondary?: () => void;
 };
 
+// [Giao diện] Thẻ một sách trong Thư viện (ảnh bìa, tiến độ đọc, nút đọc tiếp / bỏ lưu).
 function LibraryCard({ item }: { item: LibraryCardModel }) {
   return (
     <article className="book-card library-item">
@@ -62,6 +63,7 @@ function LibraryCard({ item }: { item: LibraryCardModel }) {
   );
 }
 
+// [Xử lý] Chuyển dữ liệu sách đang đọc sang dạng thẻ hiển thị.
 function toReadingCard(book: LibraryBook): LibraryCardModel {
   const meta = book.lastChapterNumber
     ? `Đang ở chương ${book.lastChapterNumber}${book.lastChapterTitle ? `: ${book.lastChapterTitle}` : ''}`
@@ -79,6 +81,7 @@ function toReadingCard(book: LibraryBook): LibraryCardModel {
   };
 }
 
+// [Xử lý] Chuyển dữ liệu sách đã lưu sang dạng thẻ hiển thị.
 function toSavedCard(book: LibraryBook, onRemove: () => void): LibraryCardModel {
   const meta = book.lastChapterNumber
     ? `Đã đọc đến chương ${book.lastChapterNumber}${book.lastChapterTitle ? `: ${book.lastChapterTitle}` : ''}`
@@ -100,6 +103,7 @@ function toSavedCard(book: LibraryBook, onRemove: () => void): LibraryCardModel 
   };
 }
 
+// [Trang] Trang Thư viện (/library): sách đang đọc dở và sách đã lưu.
 export default function LibraryPage() {
   useDocumentTitle('Thư viện của tôi');
   const [tab, setTab] = useState<Tab>('reading');

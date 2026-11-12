@@ -3,7 +3,7 @@ const { success, fail, serverError } = require('../utils/response');
 const { isPositiveInt } = require('../utils/validators');
 const { hasActiveSubscription, FREE_CHAPTER_LIMIT } = require('../middlewares/subscription.middleware');
 
-// Sách phải đang hiển thị và có bản e-book
+// [Backend] Kiểm tra sách đang hiển thị và có bản e-book.
 const findReadableBook = async (bookId) => {
   const [rows] = await pool.execute(
     "SELECT id, title FROM books WHERE id = ? AND status = 'active' AND has_ebook = 1 LIMIT 1",
@@ -12,7 +12,7 @@ const findReadableBook = async (bookId) => {
   return rows[0];
 };
 
-// UC006 - Mục lục chương (không kèm nội dung)
+// [Giao diện] Trình đọc: hiển thị mục lục chương, đánh dấu khóa chương > 10 khi chưa có gói (UC006).
 const listChapters = async (req, res) => {
   try {
     const { id } = req.params;
@@ -37,6 +37,7 @@ const listChapters = async (req, res) => {
   }
 };
 
+// [Giao diện] Trình đọc: hiển thị nội dung một chương; chương trả phí mà chưa có gói thì báo cần mua gói.
 // UC006 - Nội dung MỘT chương (quy tắc 9: API chỉ trả từng chương)
 const getChapter = async (req, res) => {
   try {

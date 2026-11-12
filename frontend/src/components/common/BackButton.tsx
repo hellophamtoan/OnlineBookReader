@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../config/routes';
 
+// [Giao diện] Nút quay lại trang trước.
 /** Nút mũi tên trở về trang trước; không có lịch sử thì về fallback (mặc định trang chủ). */
 export default function BackButton({
   fallback = ROUTES.HOME,

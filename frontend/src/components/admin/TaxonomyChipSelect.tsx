@@ -14,6 +14,7 @@ interface Props {
   onRemovePending?: (name: string) => void;
 }
 
+// [Giao diện] Admin > Form sách: ô chọn nhiều tác giả / thể loại dạng thẻ.
 export default function TaxonomyChipSelect({
   legend,
   options,

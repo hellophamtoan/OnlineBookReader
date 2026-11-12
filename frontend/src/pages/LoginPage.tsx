@@ -19,6 +19,7 @@ interface LocationState {
   registered?: boolean;
 }
 
+// [Trang] Trang Đăng nhập (/login): form email, mật khẩu; đăng nhập xong chuyển về trang trước hoặc trang quản trị.
 export default function LoginPage() {
   useDocumentTitle('Đăng nhập');
   const { login } = useAuth();

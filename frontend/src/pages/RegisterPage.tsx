@@ -14,6 +14,7 @@ import { toMessage } from '../utils/errors';
 import { hasErrors, validateRegister } from '../utils/validators';
 import { scheduleFocusFirstFieldError } from '../utils/focusFieldError';
 
+// [Trang] Trang Đăng ký (/register): form họ tên, email, mật khẩu, xác nhận mật khẩu.
 export default function RegisterPage() {
   useDocumentTitle('Đăng ký');
   const navigate = useNavigate();

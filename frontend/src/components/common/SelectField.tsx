@@ -11,6 +11,7 @@ interface SelectFieldProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>,
   children: ReactNode; // các <option>
 }
 
+// [Giao diện] Ô chọn (dropdown) dùng chung có nhãn và lỗi.
 // Ô chọn có nhãn + dòng lỗi, cùng kiểu với Field
 export default function SelectField({ label, name, value, onChange, error, hint, children, ...rest }: SelectFieldProps) {
   const id = useId();

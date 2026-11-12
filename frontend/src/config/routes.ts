@@ -60,7 +60,9 @@ export const ROUTE_PATTERNS = {
   ADMIN_USER_DETAIL: '/admin/users/:id',
 } as const;
 
+// [Xử lý] Trang mặc định sau đăng nhập theo vai trò (USER → trang chủ, ADMIN → quản trị).
 /** Sau đăng nhập: vào trang chủ bán sách (cả USER và ADMIN). Admin vào quản trị qua menu. */
 export const homeFor = (_role: Role) => ROUTES.HOME;
 
+// [Xử lý] Đường dẫn trang hồ sơ theo vai trò.
 export const profileFor = (role: Role) => (role === 'ADMIN' ? ROUTES.ADMIN_PROFILE : ROUTES.PROFILE);

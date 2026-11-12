@@ -3,6 +3,7 @@ import { fontStack } from '../../config/reader';
 import type { Chapter, ReadingSettings } from '../../types';
 import { sanitizeChapterHtml } from '../../utils/sanitize';
 
+// [Giao diện] Trình đọc: hiển thị nội dung chương (đã làm sạch HTML) theo font và cỡ chữ đang chọn.
 // Nội dung một chương. HTML từ BE LUÔN được làm sạch bằng DOMPurify trước khi đưa vào trang (utils/sanitize.ts).
 export default function ChapterContent({ chapter, settings }: { chapter: Chapter; settings: ReadingSettings }) {
   const html = useMemo(() => sanitizeChapterHtml(chapter.content), [chapter.content]);

@@ -6,6 +6,7 @@ import { ENDPOINTS } from './endpoints';
 import { mapBookDetail, mapBookList, mapOptions } from './mappers';
 
 export const bookService = {
+  // [Gọi API] GET /books – trang chủ, trang Sách, ô tìm kiếm.
   async getBooks(q: BookQuery = {}): Promise<BookListResult> {
     const res = await api.get(ENDPOINTS.books.list, {
       search: q.search?.trim() || undefined,
@@ -20,14 +21,17 @@ export const bookService = {
     return mapBookList(res.data);
   },
 
+  // [Gọi API] GET /books/:id – trang Chi tiết sách.
   async getBook(id: number): Promise<Book> {
     return mapBookDetail((await api.get(ENDPOINTS.books.detail(id))).data);
   },
 
+  // [Gọi API] GET /categories – bộ lọc thể loại.
   async getCategories(): Promise<Option[]> {
     return mapOptions((await api.get(ENDPOINTS.categories)).data);
   },
 
+  // [Gọi API] GET /authors – bộ lọc tác giả.
   async getAuthors(): Promise<Option[]> {
     try {
       return mapOptions((await api.get(ENDPOINTS.authors)).data);
@@ -36,6 +40,7 @@ export const bookService = {
     }
   },
 
+  // [Gọi API] GET /publishers – bộ lọc NXB.
   async getPublishers(): Promise<Option[]> {
     try {
       return mapOptions((await api.get(ENDPOINTS.publishers)).data);

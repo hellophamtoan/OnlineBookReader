@@ -15,6 +15,7 @@ interface CartItemRowProps {
   onRemove: (bookId: number) => void;
 }
 
+// [Giao diện] Giỏ hàng: một dòng sách (ảnh, giá, số lượng, thành tiền, nút xóa, cảnh báo hết hàng).
 export default function CartItemRow({ item, busy, selected, onToggle, onQuantity, onRemove }: CartItemRowProps) {
   const problem = lineProblem(item);
   const locked = !!problem;

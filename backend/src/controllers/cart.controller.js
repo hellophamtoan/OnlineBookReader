@@ -1,5 +1,6 @@
 const { pool, success, bad, posId, qty, money, validation, replyError, withTx } = require('../services/week3.common');
 const MAX_QTY = 99;
+// [Backend] Tính dữ liệu giỏ hàng: tổng tiền, sách hết hàng, có được thanh toán hay không.
 const cartData = async (executor, userId) => {
   const [rows] = await executor.execute(
     `SELECT ci.book_id AS bookId, ci.quantity, b.title, b.cover_url AS coverUrl,
@@ -15,7 +16,9 @@ const cartData = async (executor, userId) => {
   });
   return {items, totalAmount:items.reduce((v,b)=>v+b.subtotal,0),canCheckout:items.length>0 && items.every(i=>i.available)};
 };
+// [Giao diện] Trang Giỏ hàng / biểu tượng giỏ trên header: hiển thị các sách trong giỏ và tổng tiền.
 const read = async (req,res) => { try { return success(res,200,'Lấy giỏ hàng thành công',await cartData(pool,req.user.id)); } catch(e) {return replyError(res,'Lấy giỏ hàng',e);} };
+// [Giao diện] Nút "Thêm vào giỏ" ở trang Chi tiết sách: thêm sách vào giỏ.
 const add = async (req,res) => {
   try {
     const id=posId(req.body?.bookId), n=qty(req.body?.quantity);
@@ -36,6 +39,7 @@ const add = async (req,res) => {
     return success(res,200,'Đã thêm vào giỏ hàng',data);
   } catch(e) {return replyError(res,'Thêm giỏ hàng',e);}
 };
+// [Giao diện] Trang Giỏ hàng: tăng/giảm số lượng một sách.
 const update = async(req,res)=>{
   try {
     const id=posId(req.params.bookId),n=qty(req.body?.quantity);
@@ -53,6 +57,7 @@ const update = async(req,res)=>{
     return success(res,200,'Đã cập nhật giỏ hàng',data);
   } catch(e) {return replyError(res,'Cập nhật giỏ hàng',e);}
 };
+// [Giao diện] Trang Giỏ hàng: xóa một sách khỏi giỏ.
 const remove=async(req,res)=>{
  try {
   const id=posId(req.params.bookId);if(!id) validation('bookId','Mã sách không hợp lệ');
@@ -64,6 +69,7 @@ const remove=async(req,res)=>{
   });return success(res,200,'Đã xóa khỏi giỏ hàng',data);
  }catch(e){return replyError(res,'Xóa dòng giỏ hàng',e);}
 };
+// [Giao diện] Trang Giỏ hàng: xóa toàn bộ giỏ.
 const clear=async(req,res)=>{
  try {const data=await withTx(async conn=>{
    await conn.execute('SELECT id FROM users WHERE id=? FOR UPDATE',[req.user.id]);

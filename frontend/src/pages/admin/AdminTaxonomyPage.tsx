@@ -17,6 +17,7 @@ import type { TaxonomyItem, TaxonomyKind } from '../../types';
 import { parseAdminFilters, patchAdminParams } from '../../utils/adminFilters';
 import { toMessage } from '../../utils/errors';
 
+// [Trang] Admin > Danh mục (/admin/categories, /admin/authors, /admin/publishers): quản lý Thể loại / Tác giả / NXB (thêm, sửa, ngừng hoạt động).
 export default function AdminTaxonomyPage({ kind }: { kind: TaxonomyKind }) {
   const config = TAXONOMY[kind];
   useDocumentTitle(config.title);

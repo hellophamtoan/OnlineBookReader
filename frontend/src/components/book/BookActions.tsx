@@ -11,6 +11,7 @@ import { formatPrice } from '../../utils/format';
 import { toMessage } from '../../utils/errors';
 import ReadBookButton from '../reader/ReadBookButton';
 
+// [Giao diện] Chi tiết sách: cụm nút Thêm vào giỏ / Mua ngay / Đọc sách theo hình thức sách.
 export default function BookActions({ book, hideRead = false }: { book: Book; hideRead?: boolean }) {
   const { user } = useAuth();
   const { addItem } = useCart();

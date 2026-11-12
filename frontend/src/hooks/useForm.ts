@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { ChangeEvent } from 'react';
 
+// [Xử lý] Quản lý giá trị, lỗi và trạng thái gửi của form.
 export function useForm<T extends Record<string, string>>(initial: T) {
   type Errors = Record<keyof T, string>;
   const [values, setValues] = useState<T>(initial);

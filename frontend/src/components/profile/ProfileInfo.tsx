@@ -5,6 +5,7 @@ import type { UserProfile } from '../../types';
 import { formatDate, formatPrice } from '../../utils/format';
 import Avatar from '../common/Avatar';
 
+// [Giao diện] Hồ sơ: thẻ thông tin (ảnh, email, SĐT, địa chỉ, vai trò, ngày tham gia, số dư ví).
 export default function ProfileInfo({
   profile,
   onEdit,

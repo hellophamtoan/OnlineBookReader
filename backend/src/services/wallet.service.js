@@ -10,14 +10,14 @@ const MAX_BALANCE = 9999999999;
 
 // ---------- Hàm thuần (dễ test) ----------
 
-// Mã yêu cầu = nội dung chuyển khoản: chỉ chữ + số, in hoa, <= 25 ký tự
+// [Backend] Sinh mã nạp (nội dung chuyển khoản): chữ + số, tối đa 25 ký tự.
 const buildOrderCode = (userId) => {
   const time = Date.now().toString(36).toUpperCase();
   const rand = crypto.randomBytes(2).toString('hex').toUpperCase().slice(0, 3);
   return `NAP${userId}${time}${rand}`.slice(0, 25);
 };
 
-// Link ảnh QR VietQR động (app ngân hàng quét được)
+// [Giao diện] Trang Nạp ví: tạo link ảnh QR VietQR mà người dùng quét bằng app ngân hàng.
 const buildQrUrl = (bank, amount, content) => {
   const q = new URLSearchParams({
     amount: String(Math.round(amount)),
@@ -27,6 +27,7 @@ const buildQrUrl = (bank, amount, content) => {
   return `https://img.vietqr.io/image/${bank.bin}-${bank.accountNo}-print.jpg?${q.toString()}`;
 };
 
+// [Backend] Kiểm tra số tiền và phương thức nạp.
 const validateTopupBody = (body) => {
   const amount = body?.amount;
   const note = body?.note ?? '';
@@ -39,6 +40,7 @@ const validateTopupBody = (body) => {
   return { amount, note: note.trim() || null };
 };
 
+// [Backend] Kiểm tra thông tin tài khoản ngân hàng.
 const validateBankBody = (body) => {
   const bin = String(body?.bin ?? body?.bankBin ?? '').trim();
   const accountNo = String(body?.accountNo ?? '').replace(/\D/g, '');
@@ -53,6 +55,7 @@ const validateBankBody = (body) => {
 
 // ---------- Truy vấn dùng chung ----------
 
+// [Backend] Lấy tài khoản ngân hàng nhận tiền của cửa hàng.
 const getBank = async (executor = pool) => {
   const [rows] = await executor.execute(
     'SELECT bin, account_no AS accountNo, account_name AS accountName, bank_name AS bankName FROM store_bank_accounts WHERE id = 1 LIMIT 1'
@@ -63,6 +66,7 @@ const getBank = async (executor = pool) => {
 const requestColumns = `id, user_id AS userId, order_code AS orderCode, amount, gateway, status, note,
   gateway_txn_id AS gatewayTxnId, paid_at AS paidAt, created_at AS createdAt`;
 
+// [Backend] Định dạng dữ liệu yêu cầu nạp trả về.
 const mapRequest = (r) => ({
   id: r.id,
   amount: money(r.amount),
@@ -78,6 +82,7 @@ const mapRequest = (r) => ({
 
 // ---------- USER: tạo yêu cầu nạp ----------
 
+// [Backend] Tạo yêu cầu nạp (giới hạn số yêu cầu đang chờ).
 const createTopup = async (user, body) => {
   const { amount, note } = validateTopupBody(body);
   const bank = await getBank();
@@ -110,6 +115,7 @@ const createTopup = async (user, body) => {
   };
 };
 
+// [Backend] Lấy trạng thái một yêu cầu nạp.
 const getTopupStatus = async (userId, orderCode) => {
   const [rows] = await pool.execute(
     `SELECT ${requestColumns} FROM wallet_topup_requests WHERE order_code = ? AND user_id = ? LIMIT 1`,
@@ -129,6 +135,7 @@ const getTopupStatus = async (userId, orderCode) => {
 
 // ---------- ADMIN: xác nhận đã nhận tiền -> cộng ví ----------
 
+// [Backend] Xác nhận nạp trong transaction: cộng ví, ghi giao dịch, chặn cộng hai lần.
 const confirmTopup = async (adminId, userId, orderCode) => {
   return withTx(async (conn) => {
     // Khóa dòng yêu cầu: 2 admin bấm cùng lúc thì chỉ 1 người cộng được

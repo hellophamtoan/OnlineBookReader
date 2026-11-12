@@ -5,14 +5,18 @@ const PLAN_KINDS = ['fixed','custom','lifetime'];
 const MIN_CUSTOM_DAYS = 30;
 const MAX_CUSTOM_DAYS = 3650;
 const LIFETIME_DAYS = 36500;
+// [Backend] Đổi thời gian sang chuỗi ISO.
 const iso = v => v == null ? null : v instanceof Date ? v.toISOString() : new Date(String(v).replace(' ','T')+'Z').toISOString();
+// [Backend] Lấy phần ngày (YYYY-MM-DD).
 const dateOnly = v => iso(v)?.slice(0,10);
+// [Backend] Định dạng dữ liệu một gói đọc trả về cho frontend.
 const planView = r => ({
   id:r.id,name:r.name,description:r.description??'',price:money(r.price),durationDays:Number(r.duration_days),
   planKind:r.plan_kind??'fixed',basePrice30:money(r.base_price_30??r.price),
   isFree:(r.plan_kind??'fixed')==='fixed'&&money(r.price)===0,
   status:r.status,createdAt:iso(r.created_at),updatedAt:iso(r.updated_at)
 });
+// [Backend] Định dạng dữ liệu một lượt đăng ký gói trả về cho frontend.
 const subscriptionView = r => {
   const start=iso(r.start_date),end=iso(r.end_date),now=Date.now();
   const kind=r.plan_kind??'fixed';
@@ -21,6 +25,7 @@ const subscriptionView = r => {
     planKind:kind,isLifetime:kind==='lifetime',
     status:new Date(start).getTime()>now?'UPCOMING':new Date(end).getTime()<=now?'EXPIRED':'ACTIVE'};
 };
+// [Backend] Tính giá gói tùy chọn số ngày theo giá chuẩn 30 ngày.
 const progressivePlanPrice=(days,base)=>{
   if(!Number.isInteger(days)||days<MIN_CUSTOM_DAYS||days>MAX_CUSTOM_DAYS)validation('endDate','Thời hạn tùy chọn từ 30 đến 3650 ngày');
   let total=0,remaining=days,index=0;
@@ -33,12 +38,14 @@ const progressivePlanPrice=(days,base)=>{
   }
   return Math.round(total/1000)*1000;
 };
+// [Giao diện] Trang Gói đọc: hiển thị các gói đang mở bán (tên, giá, thời hạn).
 const listPublic=async(req,res)=>{
  try{
   const [rows]=await pool.execute("SELECT * FROM reading_plans WHERE status='active' ORDER BY duration_days,price,id");
   return success(res,200,'Lấy danh sách gói đọc thành công',{items:rows.map(planView)});
  }catch(e){return replyError(res,'Danh sách gói đọc',e);}
 };
+// [Giao diện] Trang Gói đọc: mua gói bằng ví, cộng dồn thời hạn; báo thiếu tiền nếu ví không đủ.
 const subscribe=async(req,res)=>{
  try{
   const planId=posId(req.body?.planId);
@@ -102,6 +109,7 @@ const subscribe=async(req,res)=>{
   });return sendTransaction(res,outcome);
  }catch(e){return replyError(res,'Đăng ký gói đọc',e);}
 };
+// [Giao diện] Trang Gói đọc / Hồ sơ: hiển thị gói đang dùng và ngày hết hạn.
 const mine=async(req,res)=>{
  try{
   const [rows]=await pool.execute('SELECT * FROM subscriptions WHERE user_id=? ORDER BY start_date DESC,id DESC',[req.user.id]);
@@ -119,6 +127,7 @@ const mine=async(req,res)=>{
   });
  }catch(e){return replyError(res,'Gói đọc của tôi',e);}
 };
+// [Backend] Kiểm tra dữ liệu form gói đọc và tính lại giá, số ngày ở server.
 const planBody=(body,base=null)=>{
   const b=body||{};const keys=Object.keys(b);
   if(base&&!keys.length)validation('body','Cần ít nhất một thuộc tính');
@@ -147,6 +156,7 @@ const planBody=(body,base=null)=>{
   }
   return {...v,name:v.name.trim(),description:v.description?.trim()||null};
 };
+// [Giao diện] Admin > Gói đọc: hiển thị toàn bộ gói (cả gói ngừng bán).
 const listAdmin=async(req,res)=>{
  try{
   const {status}=req.query;
@@ -155,6 +165,7 @@ const listAdmin=async(req,res)=>{
   return success(res,200,'Lấy danh sách gói quản trị thành công',{items:rows.map(planView)});
  }catch(e){return replyError(res,'Danh sách gói quản trị',e);}
 };
+// [Giao diện] Admin > Sửa gói: lấy thông tin gói để điền vào form.
 const getAdmin=async(req,res)=>{
  try{
   const id=posId(req.params.id);if(!id)validation('id','Mã gói không hợp lệ');
@@ -163,12 +174,14 @@ const getAdmin=async(req,res)=>{
   return success(res,200,'Lấy chi tiết gói thành công',planView(row));
  }catch(e){return replyError(res,'Chi tiết gói đọc',e);}
 };
+// [Backend] Chặn hai gói đang bán trùng tên.
 const ensureUnique=async(conn,b,id)=>{
   if(b.status!=='active')return;
   const [rows]=await conn.execute(`SELECT id FROM reading_plans WHERE status='active'
     AND LOWER(TRIM(name))=LOWER(?) AND id<>? LIMIT 1 FOR UPDATE`,[b.name,id||0]);
   if(rows.length)bad(409,'DUPLICATE_PLAN_NAME','Tên gói đang được sử dụng');
 };
+// [Giao diện] Admin > Thêm gói: tạo gói mới, hiện ngay ở trang Gói đọc.
 const createAdmin=async(req,res)=>{
  try{
   const b=planBody(req.body);
@@ -180,6 +193,7 @@ const createAdmin=async(req,res)=>{
   });return success(res,201,'Thêm gói đọc thành công',row);
  }catch(e){return replyError(res,'Thêm gói đọc',e);}
 };
+// [Giao diện] Admin > Sửa gói: lưu thay đổi (chỉ áp dụng cho lượt mua mới).
 const updateAdmin=async(req,res)=>{
  try{
   const id=posId(req.params.id);if(!id)validation('id','Mã gói không hợp lệ');
@@ -193,6 +207,7 @@ const updateAdmin=async(req,res)=>{
   });return success(res,200,'Cập nhật gói đọc thành công',row);
  }catch(e){return replyError(res,'Cập nhật gói đọc',e);}
 };
+// [Giao diện] Admin > Ngừng bán gói: ẩn gói khỏi trang Gói đọc (xóa mềm).
 const deleteAdmin=async(req,res)=>{
  try{
   const id=posId(req.params.id);if(!id)validation('id','Mã gói không hợp lệ');

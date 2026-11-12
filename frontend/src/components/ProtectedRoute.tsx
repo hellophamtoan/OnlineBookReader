@@ -8,6 +8,7 @@ interface Props {
   roles?: Role[];
 }
 
+// [Xử lý] Chặn trang cần đăng nhập / sai vai trò: chưa đăng nhập thì chuyển tới Đăng nhập, sai quyền thì về trang chủ.
 // Dùng làm route cha: <Route element={<ProtectedRoute roles={['ADMIN']} />}> ...các route con... </Route>
 // Lưu ý: đây chỉ là lớp giao diện, quyền thật sự luôn do backend kiểm tra.
 export default function ProtectedRoute({ roles }: Props) {

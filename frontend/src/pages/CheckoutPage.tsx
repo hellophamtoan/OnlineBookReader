@@ -35,6 +35,7 @@ type CheckoutLocationState = {
   buyNow?: boolean;
 };
 
+// [Trang] Trang Thanh toán (/checkout): nhập người nhận, địa chỉ, chọn COD hoặc ví rồi đặt hàng.
 export default function CheckoutPage() {
   useDocumentTitle('Đặt hàng');
   const navigate = useNavigate();

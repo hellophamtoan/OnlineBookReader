@@ -9,6 +9,7 @@ interface QuantityStepperProps {
   onChange: (next: number) => void; // chỉ gọi khi giá trị thật sự đổi và đã nằm trong [min, max]
 }
 
+// [Giao diện] Nút - / + chọn số lượng (giỏ hàng, chi tiết sách).
 // Ô chọn số lượng: nút -/+ và ô nhập tay (nhập xong bấm Enter hoặc rời ô thì mới áp dụng).
 // Dùng cho trang chi tiết sách (chỉ đổi state) và dòng giỏ hàng (đổi xong gọi API).
 export default function QuantityStepper({ value, max, min = 1, disabled, label = 'Số lượng', onChange }: QuantityStepperProps) {

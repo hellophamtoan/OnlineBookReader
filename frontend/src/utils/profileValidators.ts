@@ -11,11 +11,13 @@ export type ProfileFormValues = Record<
   string
 >;
 
+// [Xử lý] Kiểm tra SĐT (không bắt buộc).
 export const validatePhoneOptional = (v: string) => {
   const s = v.trim();
   return !s || RULES.PHONE_REGEX.test(s) ? '' : MESSAGES.phoneInvalid;
 };
 
+// [Xử lý] Kiểm tra địa chỉ (không bắt buộc).
 /** Địa chỉ không bắt buộc; nếu nhập thì phải đủ độ dài rõ ràng */
 export const validateAddressOptional = (v: string) => {
   const s = v.trim();
@@ -29,6 +31,7 @@ export const validateAddressOptional = (v: string) => {
   return '';
 };
 
+// [Xử lý] Kiểm tra link ảnh đại diện.
 export const validateAvatarUrl = (v: string) => {
   const s = v.trim();
   if (!s) return '';
@@ -37,6 +40,7 @@ export const validateAvatarUrl = (v: string) => {
   return PROFILE_RULES.AVATAR_URL_REGEX.test(s) ? '' : PROFILE_MESSAGES.avatarInvalid;
 };
 
+// [Xử lý] Kiểm tra toàn bộ form hồ sơ.
 export const validateProfile = (v: ProfileFormValues): FormErrors<ProfileFormValues> => {
   const newPw = v.newPassword.trim();
   const confirm = v.confirmNewPassword.trim();

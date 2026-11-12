@@ -1,3 +1,4 @@
+// [Xử lý] Chuẩn hóa chữ (bỏ dấu, chữ thường) để tìm kiếm / so sánh.
 // utils/text.ts
 // Bỏ dấu + chữ thường: gõ "nha gia kim" vẫn khớp "Nhà giả kim". Dùng cho mock và có thể dùng cho lọc phía client.
 export const normalizeText = (s: string) =>

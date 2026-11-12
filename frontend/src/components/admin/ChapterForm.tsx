@@ -33,6 +33,7 @@ const TAGS: [string, string, string][] = [
   ['Danh sách', '<ul>\n<li>', '</li>\n</ul>'],
 ];
 
+// [Giao diện] Admin: form thêm/sửa một chương (số chương, tên, nội dung).
 /**
  * STT gắn với số chương. Bỏ tích «Tính số chương» → không ghi số chương trên mục lục
  * (lời nói đầu, giới thiệu…). Đổi STT → số chương đổi theo khi đang tích.
